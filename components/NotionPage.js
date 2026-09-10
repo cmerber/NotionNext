@@ -119,6 +119,10 @@ const NotionPage = ({ post, className }) => {
   // const cleanBlockMap = cleanBlocksWithWarn(post?.blockMap);
   // console.log('NotionPage render with post:', post);
 
+  if (!post?.blockMap?.block) {
+    return null
+  }
+
   return (
     <div
       id='notion-article'
