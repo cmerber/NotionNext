@@ -106,7 +106,12 @@ export async function getStaticPaths() {
   const from = 'slug-paths'
   const { allPages } = await fetchGlobalAllData({ from })
   const paths = allPages
-    ?.filter(row => checkSlugHasNoSlash(row))
+    ?.filter(
+      row =>
+        checkSlugHasNoSlash(row) &&
+        typeof row.slug === 'string' &&
+        !row.slug.startsWith('#')
+    )
     .map(row => ({ params: { prefix: row.slug } }))
   return {
     paths: paths,
