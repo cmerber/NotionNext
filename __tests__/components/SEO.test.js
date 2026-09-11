@@ -29,9 +29,12 @@ const baseSiteConfig = {
   TITLE: 'Example Blog'
 }
 
-const renderSeo = fontUrl => {
+const renderSeo = (fontUrl, configOverrides = {}) => {
   siteConfig.mockImplementation((key, defaultVal) => {
     if (key === 'FONT_URL') return fontUrl
+    if (Object.prototype.hasOwnProperty.call(configOverrides, key)) {
+      return configOverrides[key]
+    }
     return Object.prototype.hasOwnProperty.call(baseSiteConfig, key)
       ? baseSiteConfig[key]
       : defaultVal
@@ -136,6 +139,28 @@ describe('SEO font resource hints', () => {
     expect(
       container.querySelector('link[href="https://fonts.gstatic.com"]')
     ).toBeInTheDocument()
+  })
+})
+
+describe('SEO favicon', () => {
+  it('uses the Notion site icon when no favicon is configured', () => {
+    const { container } = renderSeo('', { BLOG_FAVICON: null })
+
+    expect(container.querySelector('link[rel="icon"]')).toHaveAttribute(
+      'href',
+      '/logo.png'
+    )
+  })
+
+  it('keeps an explicitly configured favicon', () => {
+    const { container } = renderSeo('', {
+      BLOG_FAVICON: 'https://example.com/custom-icon.png'
+    })
+
+    expect(container.querySelector('link[rel="icon"]')).toHaveAttribute(
+      'href',
+      'https://example.com/custom-icon.png'
+    )
   })
 })
 
