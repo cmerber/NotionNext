@@ -6,3 +6,89 @@
 .fa-info:before {
     content: "\f05a";
 }
+
+/* QCODE.IM：轻量阅读进度与交互反馈 */
+html {
+    scroll-behavior: smooth;
+}
+
+::selection {
+    color: #fff;
+    background: #4f65f0;
+}
+
+#qcode-scroll-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 9999;
+    height: 3px;
+    pointer-events: none;
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left center;
+    background: linear-gradient(90deg, #4f65f0, #8b5cf6, #f59e0b);
+    box-shadow: 0 0 10px rgba(79, 101, 240, .45);
+    transition: opacity .2s ease;
+}
+
+#qcode-scroll-progress.is-visible {
+    opacity: 1;
+}
+
+.qcode-click-pop {
+    --qcode-pop-hue: 230;
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+    color: hsl(var(--qcode-pop-hue) 82% 58%);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-shadow: 0 2px 8px hsl(var(--qcode-pop-hue) 82% 58% / .28);
+    animation: qcode-click-pop .8s cubic-bezier(.2, .8, .2, 1) forwards;
+}
+
+#theme-heo .wow,
+#theme-heo article img {
+    will-change: transform, opacity;
+}
+
+#theme-heo article img {
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+
+#theme-heo article img:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes qcode-click-pop {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -25%) scale(.75);
+    }
+    18% {
+        opacity: 1;
+        transform: translate(-50%, -55%) scale(1.05);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -145%) scale(.95);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .qcode-click-pop {
+        display: none;
+    }
+
+    #qcode-scroll-progress,
+    #theme-heo article img {
+        transition: none;
+    }
+}

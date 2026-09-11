@@ -1,7 +1,7 @@
 {
-  "name": "NotionNext Blog",
-  "short_name": "NotionNext",
-  "description": "A blog powered by NotionNext",
+  "name": "橙子星球",
+  "short_name": "橙子星球",
+  "description": "一个努力的程序员运气不会太差",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

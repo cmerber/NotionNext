@@ -90,13 +90,14 @@ describe('writePwaManifest', () => {
   })
 
   it('falls back to BLOG.PWA_ENABLE when notionConfig has no PWA_ENABLE', () => {
-    // BLOG.PWA_ENABLE is false by default in blog.config.js
+    // This site enables PWA by default in blog.config.js.
     const { fs, writePwaManifest } = getFreshModule()
     writePwaManifest({
       siteInfo: { title: 'Test' },
       notionConfig: {},
     })
-    expect(fs.writeFileSync).not.toHaveBeenCalled()
+    expect(fs.writeFileSync).toHaveBeenCalledTimes(1)
+    expect(fs.writeFileSync.mock.calls[0][1]).toContain('"name": "Test"')
   })
 
   it('respects explicit false in notionConfig over BLOG fallback', () => {
