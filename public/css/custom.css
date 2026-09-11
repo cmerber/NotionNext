@@ -1,94 +1,219 @@
 /* 静态文件导入 自定义样式*/
 
-#theme-fukasawa .sideLeft hr{
-    opacity: .04;
+#theme-fukasawa .sideLeft hr {
+  opacity: 0.04;
 }
 .fa-info:before {
-    content: "\f05a";
+  content: '\f05a';
 }
 
 /* QCODE.IM：轻量阅读进度与交互反馈 */
 html {
-    scroll-behavior: smooth;
+  scroll-behavior: smooth;
 }
 
 ::selection {
-    color: #fff;
-    background: #4f65f0;
+  color: #fff;
+  background: #f59e0b;
 }
 
 #qcode-scroll-progress {
-    position: fixed;
-    inset: 0 0 auto 0;
-    z-index: 9999;
-    height: 3px;
-    pointer-events: none;
-    opacity: 0;
-    transform: scaleX(0);
-    transform-origin: left center;
-    background: linear-gradient(90deg, #4f65f0, #8b5cf6, #f59e0b);
-    box-shadow: 0 0 10px rgba(79, 101, 240, .45);
-    transition: opacity .2s ease;
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 9999;
+  height: 3px;
+  pointer-events: none;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #f59e0b, #fb923c, #f97316);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.38);
+  transition: opacity 0.2s ease;
 }
 
 #qcode-scroll-progress.is-visible {
-    opacity: 1;
+  opacity: 1;
 }
 
 .qcode-click-pop {
-    --qcode-pop-hue: 230;
-    position: fixed;
-    z-index: 10000;
-    pointer-events: none;
-    user-select: none;
-    white-space: nowrap;
-    color: hsl(var(--qcode-pop-hue) 82% 58%);
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-shadow: 0 2px 8px hsl(var(--qcode-pop-hue) 82% 58% / .28);
-    animation: qcode-click-pop .8s cubic-bezier(.2, .8, .2, 1) forwards;
-}
-
-#theme-heo .wow,
-#theme-heo article img {
-    will-change: transform, opacity;
+  --qcode-pop-hue: 230;
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  color: hsl(var(--qcode-pop-hue) 82% 58%);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px hsl(var(--qcode-pop-hue) 82% 58% / 0.28);
+  animation: qcode-click-pop 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 #theme-heo article img {
-    transition: transform .3s ease, box-shadow .3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 #theme-heo article img:hover {
-    transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+/* 超长 Notion 文章仅渲染视口附近的一级区块，减少首屏布局开销。 */
+#notion-article .notion-page-content > .notion-block {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 240px;
+}
+
+.qcode-pet-widget {
+  position: relative;
+  width: 280px;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.qcode-pet-message {
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  left: 50%;
+  max-width: 230px;
+  padding: 8px 12px;
+  transform: translateX(-50%);
+  color: #7c2d12;
+  background: rgba(255, 247, 237, 0.96);
+  border: 1px solid rgba(251, 146, 60, 0.45);
+  border-radius: 14px 14px 14px 4px;
+  box-shadow: 0 8px 24px rgba(124, 45, 18, 0.12);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+  animation: qcode-pet-message-in 0.22s ease-out;
+}
+
+.qcode-pet-close {
+  position: absolute;
+  z-index: 3;
+  top: 4px;
+  right: 7px;
+  width: 26px;
+  height: 26px;
+  color: #9a3412;
+  background: rgba(255, 247, 237, 0.88);
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  border-radius: 999px;
+  line-height: 22px;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.qcode-pet-widget:hover .qcode-pet-close,
+.qcode-pet-close:focus-visible {
+  opacity: 1;
+}
+
+.qcode-pet-close:hover {
+  transform: scale(1.08);
+}
+
+.qcode-pet-close:focus-visible,
+.qcode-pet-restore:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 3px;
+}
+
+.qcode-pet-hint {
+  margin-top: -12px;
+  padding-bottom: 8px;
+  color: #9ca3af;
+  font-size: 11px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.qcode-pet-widget:hover .qcode-pet-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.qcode-pet-restore {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin: 18px auto;
+  place-items: center;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(124, 45, 18, 0.12);
+  font-size: 23px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.qcode-pet-restore:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(124, 45, 18, 0.18);
+}
+
+.dark .qcode-pet-message,
+.dark .qcode-pet-close,
+.dark .qcode-pet-restore {
+  color: #fed7aa;
+  background: rgba(41, 37, 36, 0.94);
+  border-color: rgba(251, 146, 60, 0.42);
 }
 
 @keyframes qcode-click-pop {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -25%) scale(.75);
-    }
-    18% {
-        opacity: 1;
-        transform: translate(-50%, -55%) scale(1.05);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -145%) scale(.95);
-    }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -25%) scale(0.75);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -55%) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -145%) scale(0.95);
+  }
+}
+
+@keyframes qcode-pet-message-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    html {
-        scroll-behavior: auto;
-    }
+  html {
+    scroll-behavior: auto;
+  }
 
-    .qcode-click-pop {
-        display: none;
-    }
+  .qcode-click-pop {
+    display: none;
+  }
 
-    #qcode-scroll-progress,
-    #theme-heo article img {
-        transition: none;
-    }
+  #qcode-scroll-progress,
+  #theme-heo article img,
+  .qcode-pet-message,
+  .qcode-pet-hint,
+  .qcode-pet-close,
+  .qcode-pet-restore {
+    transition: none;
+    animation: none;
+  }
 }

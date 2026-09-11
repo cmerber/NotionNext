@@ -95,7 +95,8 @@ const LayoutBase = props => {
   return (
     <div
       id='theme-heo'
-      className={`${siteConfig('FONT_STYLE')} bg-[var(--heo-color-bg)] dark:bg-[var(--heo-color-bg-dark)] h-full min-h-screen flex flex-col scroll-smooth`}>
+      className={`${siteConfig('FONT_STYLE')} bg-[var(--heo-color-bg)] dark:bg-[var(--heo-color-bg-dark)] h-full min-h-screen flex flex-col scroll-smooth`}
+    >
       <Style />
 
       {/* 顶部嵌入 导航栏，首页放hero，文章页放文章详情 */}
@@ -104,10 +105,12 @@ const LayoutBase = props => {
       {/* 主区块 */}
       <main
         id='wrapper-outer'
-        className={`flex-grow w-full ${maxWidth} mx-auto relative md:px-5`}>
+        className={`flex-grow w-full ${maxWidth} mx-auto relative md:px-5`}
+      >
         <div
           id='container-inner'
-          className={`${HEO_HERO_BODY_REVERSE ? 'flex-row-reverse' : ''} w-full mx-auto lg:flex justify-center relative z-10`}>
+          className={`${HEO_HERO_BODY_REVERSE ? 'flex-row-reverse' : ''} w-full mx-auto lg:flex justify-center relative z-10`}
+        >
           <div className={`w-full h-auto ${className || ''}`}>
             {/* 主区上部嵌入 */}
             {slotTop}
@@ -274,28 +277,26 @@ const LayoutSlug = props => {
   useEffect(() => {
     // 404
     if (!post) {
-      const timer = setTimeout(
-        () => {
-          if (isBrowser) {
-            const article = document.querySelector(
-              '#article-wrapper #notion-article'
-            )
-            if (!article) {
-              router.push('/404').then(() => {
-                console.warn('找不到页面', router.asPath)
-              })
-            }
+      const timer = setTimeout(() => {
+        if (isBrowser) {
+          const article = document.querySelector(
+            '#article-wrapper #notion-article'
+          )
+          if (!article) {
+            router.push('/404').then(() => {
+              console.warn('找不到页面', router.asPath)
+            })
           }
-        },
-        waiting404
-      )
+        }
+      }, waiting404)
       return () => clearTimeout(timer)
     }
   }, [post, router, waiting404])
   return (
     <>
       <div
-        className={`article h-full w-full ${fullWidth ? '' : 'xl:max-w-5xl'} ${hasCode ? 'xl:w-[73.15vw]' : ''}  bg-[var(--heo-color-card)] dark:bg-[var(--heo-color-bg-dark)] dark:border-gray-600 lg:hover:shadow lg:border rounded-2xl lg:px-2 lg:py-4 `}>
+        className={`article h-full w-full ${fullWidth ? '' : 'xl:max-w-5xl'} ${hasCode ? 'xl:w-[73.15vw]' : ''}  bg-[var(--heo-color-card)] dark:bg-[var(--heo-color-bg-dark)] dark:border-gray-600 lg:hover:shadow lg:border rounded-2xl lg:px-2 lg:py-4 `}
+      >
         {/* 文章锁 */}
         {lock && <PostLock validPassword={validPassword} />}
 
@@ -306,7 +307,8 @@ const LayoutSlug = props => {
               {/* Notion文章主体 */}
               <section
                 className='wow fadeInUp p-5 justify-center mx-auto'
-                data-wow-delay='.2s'>
+                data-wow-delay='.2s'
+              >
                 <ArticleExpirationNotice post={post} />
                 <AISummary aiSummary={post.aiSummary} />
                 <WWAds orientation='horizontal' className='w-full' />
@@ -369,7 +371,8 @@ const Layout404 = props => {
       {/* 主区块 */}
       <main
         id='wrapper-outer'
-        className={`flex-grow ${fullWidth ? '' : 'max-w-4xl'} w-screen mx-auto px-5`}>
+        className={`flex-grow ${fullWidth ? '' : 'max-w-4xl'} w-screen mx-auto px-5`}
+      >
         <div id='error-wrapper' className={'w-full mx-auto justify-center'}>
           <Transition
             show={!onLoading}
@@ -380,27 +383,46 @@ const Layout404 = props => {
             leave='transition ease-in-out duration-300 transform'
             leaveFrom='opacity-100 translate-y-0'
             leaveTo='opacity-0 -translate-y-16'
-            unmount={false}>
+            unmount={false}
+          >
             {/* 404卡牌 */}
             <div className='error-content flex flex-col md:flex-row w-full mt-12 h-[30rem] md:h-96 justify-center items-center bg-white dark:bg-[#1B1C20] border dark:border-gray-800 rounded-3xl'>
-              {/* 左侧动图 */}
-              <LazyImage
-                className='error-img h-60 md:h-full p-4'
-                src={
-                  'https://bu.dusays.com/2023/03/03/6401a7906aa4a.gif'
-                }></LazyImage>
+              {/* 品牌化的本地轻量插画，避免404页再请求外部GIF。 */}
+              <div
+                className='error-img h-60 md:h-full min-w-[45%] p-4 flex items-center justify-center'
+                aria-hidden='true'
+              >
+                <div className='relative text-[8rem] md:text-[10rem] leading-none select-none'>
+                  🍊
+                  <span className='absolute -right-3 bottom-3 text-5xl'>
+                    🐾
+                  </span>
+                </div>
+              </div>
 
               {/* 右侧文字 */}
               <div className='error-info flex-1 flex flex-col justify-center items-center space-y-4'>
                 <h1 className='error-title font-extrabold md:text-9xl text-7xl dark:text-white'>
                   404
                 </h1>
-                <div className='dark:text-white'>请尝试站内搜索寻找文章</div>
-                <SmartLink href='/'>
-                  <button className='bg-[var(--heo-color-primary)] py-2 px-4 text-[var(--heo-color-primary-text)] shadow rounded-lg hover:bg-[var(--heo-color-primary-hover)] hover:shadow-md duration-200 transition-all'>
-                    回到主页
-                  </button>
-                </SmartLink>
+                <div className='text-xl font-bold dark:text-white'>
+                  小橙子迷路了
+                </div>
+                <div className='text-gray-500 dark:text-gray-400 text-center'>
+                  这个页面暂时找不到，去首页或搜索看看吧。
+                </div>
+                <div className='flex gap-3'>
+                  <SmartLink href='/'>
+                    <button className='bg-[var(--heo-color-primary)] py-2 px-4 text-[var(--heo-color-primary-text)] shadow rounded-lg hover:bg-[var(--heo-color-primary-hover)] hover:shadow-md duration-200 transition-all'>
+                      回到主页
+                    </button>
+                  </SmartLink>
+                  <SmartLink href='/search'>
+                    <button className='py-2 px-4 text-[var(--heo-color-primary)] border border-[var(--heo-color-primary)] rounded-lg hover:bg-orange-50 dark:hover:bg-gray-800 duration-200 transition-all'>
+                      站内搜索
+                    </button>
+                  </SmartLink>
+                </div>
               </div>
             </div>
 
@@ -431,18 +453,21 @@ const LayoutCategoryIndex = props => {
       </div>
       <div
         id='category-list'
-        className='duration-200 flex flex-wrap m-10 justify-center'>
+        className='duration-200 flex flex-wrap m-10 justify-center'
+      >
         {categoryOptions?.map(category => {
           return (
             <SmartLink
               key={category.name}
               href={`/category/${category.name}`}
               passHref
-              legacyBehavior>
+              legacyBehavior
+            >
               <div
                 className={
                   'group mr-5 mb-5 flex flex-nowrap items-center border bg-[var(--heo-color-card)] text-2xl rounded-xl dark:hover:text-white px-4 cursor-pointer py-3 hover:text-[var(--heo-color-primary-text)] hover:bg-[var(--heo-color-primary)] transition-all hover:scale-110 duration-150'
-                }>
+                }
+              >
                 <HashTag className={'w-5 h-5 stroke-gray-500 stroke-2'} />
                 {category.name}
                 <div className='bg-[var(--heo-color-card-muted)] ml-1 px-2 rounded-lg group-hover:text-[var(--heo-color-primary)] '>
@@ -473,18 +498,21 @@ const LayoutTagIndex = props => {
       </div>
       <div
         id='tag-list'
-        className='duration-200 flex flex-wrap space-x-5 space-y-5 m-10 justify-center'>
+        className='duration-200 flex flex-wrap space-x-5 space-y-5 m-10 justify-center'
+      >
         {tagOptions.map(tag => {
           return (
             <SmartLink
               key={tag.name}
               href={`/tag/${tag.name}`}
               passHref
-              legacyBehavior>
+              legacyBehavior
+            >
               <div
                 className={
                   'group flex flex-nowrap items-center border bg-[var(--heo-color-card)] text-2xl rounded-xl dark:hover:text-white px-4 cursor-pointer py-3 hover:text-[var(--heo-color-primary-text)] hover:bg-[var(--heo-color-primary)] transition-all hover:scale-110 duration-150'
-                }>
+                }
+              >
                 <HashTag className={'w-5 h-5 stroke-gray-500 stroke-2'} />
                 {tag.name}
                 <div className='bg-[var(--heo-color-card-muted)] ml-1 px-2 rounded-lg group-hover:text-[var(--heo-color-primary)] '>

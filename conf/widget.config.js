@@ -11,7 +11,9 @@ module.exports = {
     process.env.NEXT_PUBLIC_WIDGET_PET_LINK ||
     'https://cdn.jsdelivr.net/npm/live2d-widget-model-wanko@1.0.5/assets/wanko.model.json', // 挂件模型地址 @see https://github.com/xiazeyu/live2d-widget-models
   WIDGET_PET_SWITCH_THEME:
-    process.env.NEXT_PUBLIC_WIDGET_PET_SWITCH_THEME || true, // 点击宠物挂件切换博客主题
+    process.env.NEXT_PUBLIC_WIDGET_PET_SWITCH_THEME === 'true' || false, // 兼容旧行为：单击切换整套主题；默认关闭，避免误操作
+  WIDGET_PET_DOUBLE_CLICK_DARK_MODE:
+    process.env.NEXT_PUBLIC_WIDGET_PET_DOUBLE_CLICK_DARK_MODE !== 'false', // 双击挂件切换明暗模式
 
   SPOILER_TEXT_TAG: process.env.NEXT_PUBLIC_SPOILER_TEXT_TAG || '', // Spoiler文本隐藏功能，如Notion中 [sp]希望被spoiler的文字[sp]，填入[sp] 即可
 

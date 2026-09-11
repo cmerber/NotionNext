@@ -40,6 +40,13 @@
 
   document.addEventListener('click', event => {
     if (event.button !== 0) return
+    if (
+      event.target.closest(
+        'a, button, input, textarea, select, canvas, [role="button"]'
+      )
+    ) {
+      return
+    }
 
     const popup = document.createElement('span')
     popup.className = 'qcode-click-pop'
