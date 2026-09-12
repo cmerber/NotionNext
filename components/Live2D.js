@@ -4,8 +4,10 @@ import { useGlobal } from '@/lib/global'
 import { isMobile, loadExternalResource } from '@/lib/utils'
 import { useEffect, useRef, useState } from 'react'
 
-const LIVE2D_SCRIPT =
-  'https://cdn.jsdelivr.net/gh/stevenjoezhang/live2d-widget@34b27cc8bcbac20e56344429e890b9bad885d002/live2d.min.js'
+const LIVE2D_SCRIPTS = [
+  'https://cdn.jsdelivr.net/gh/stevenjoezhang/live2d-widget@v0.9.2/live2d.min.js',
+  'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@v0.9.2/live2d.min.js'
+]
 const PET_MESSAGES = [
   '欢迎来到橙子星球 🍊',
   '今天也要保持好奇呀',
@@ -39,16 +41,20 @@ export default function Live2D() {
 
     setHidden(window.localStorage.getItem('qcode-pet-hidden') === 'true')
 
-    const loadPet = () => {
-      loadExternalResource(LIVE2D_SCRIPT, 'js').then(() => {
-        if (typeof window?.loadlive2d !== 'undefined') {
-          try {
+    const loadPet = async () => {
+      for (const scriptUrl of LIVE2D_SCRIPTS) {
+        try {
+          await loadExternalResource(scriptUrl, 'js')
+          if (typeof window?.loadlive2d !== 'undefined') {
             loadlive2d('live2d', petLink)
-          } catch (error) {
-            console.error('读取PET模型', error)
+            return
           }
+        } catch (error) {
+          console.warn('小狗脚本加载失败，尝试备用地址', scriptUrl, error)
         }
-      })
+      }
+
+      console.error('小狗加载失败：主地址和备用地址均不可用')
     }
 
     const idleId = window.requestIdleCallback
