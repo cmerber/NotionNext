@@ -138,6 +138,11 @@ html {
     transform 0.2s ease;
 }
 
+.qcode-pet-loading {
+  cursor: wait;
+  pointer-events: none;
+}
+
 .qcode-pet-widget:hover .qcode-pet-hint {
   opacity: 1;
   transform: translateY(0);

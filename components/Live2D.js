@@ -31,15 +31,18 @@ export default function Live2D() {
     String(siteConfig('WIDGET_PET_DOUBLE_CLICK_DARK_MODE')) !== 'false'
   const [message, setMessage] = useState('')
   const [hidden, setHidden] = useState(false)
+  const [petReady, setPetReady] = useState(false)
   const clickTimerRef = useRef(null)
   const messageTimerRef = useRef(null)
+  const readyTimerRef = useRef(null)
 
   useEffect(() => {
-    if (!showPet || isMobile()) {
+    if (!showPet || hidden || isMobile()) {
       return
     }
 
     setHidden(window.localStorage.getItem('qcode-pet-hidden') === 'true')
+    setPetReady(false)
 
     const loadPet = async () => {
       for (const scriptUrl of LIVE2D_SCRIPTS) {
@@ -47,6 +50,12 @@ export default function Live2D() {
           await loadExternalResource(scriptUrl, 'js')
           if (typeof window?.loadlive2d !== 'undefined') {
             loadlive2d('live2d', petLink)
+            // Live2D 会继续异步读取模型、纹理和动作文件。在这段时间禁用
+            // 画布点击，避免动作尚未就绪时触发第三方脚本异常。
+            readyTimerRef.current = window.setTimeout(
+              () => setPetReady(true),
+              6000
+            )
             return
           }
         } catch (error) {
@@ -69,8 +78,9 @@ export default function Live2D() {
       }
       window.clearTimeout(clickTimerRef.current)
       window.clearTimeout(messageTimerRef.current)
+      window.clearTimeout(readyTimerRef.current)
     }
-  }, [petLink, showPet])
+  }, [hidden, petLink, showPet])
 
   const showMessage = () => {
     const nextMessage =
@@ -143,15 +153,17 @@ export default function Live2D() {
         id='live2d'
         width='280'
         height='250'
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
-        title='轻点互动，双击切换明暗模式'
+        onClick={petReady ? handleClick : undefined}
+        onDoubleClick={petReady ? handleDoubleClick : undefined}
+        title={petReady ? '轻点互动，双击切换明暗模式' : '小狗正在加载'}
         aria-label='橙子星球互动小狗'
-        className='cursor-grab'
+        className={petReady ? 'cursor-grab' : 'qcode-pet-loading'}
         onMouseDown={e => e.target.classList.add('cursor-grabbing')}
         onMouseUp={e => e.target.classList.remove('cursor-grabbing')}
       />
-      <div className='qcode-pet-hint'>轻点互动 · 双击切换明暗</div>
+      <div className='qcode-pet-hint'>
+        {petReady ? '轻点互动 · 双击切换明暗' : '小狗加载中…'}
+      </div>
     </div>
   )
 }
