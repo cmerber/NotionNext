@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import NetworkTool from './NetworkTool'
 
 const TOOL_CARDS = [
+  {
+    id: 'network',
+    icon: '🌐',
+    title: '网络工程箱',
+    description: '计算 IPv4 子网、掩码、地址范围并规划主机容量。',
+    category: '网络',
+    features: ['子网计算', '主机规划', 'CIDR 速查'],
+    featured: true
+  },
   {
     id: 'json',
     icon: '🪞',
@@ -86,16 +96,20 @@ function nowForDateTimeInput() {
 
 function Section({ title, hint, children }) {
   return (
-    <section className='rounded-3xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-[var(--heo-color-card-dark)] md:p-7'>
-      <div className='mb-5'>
-        <h2 className='text-xl font-black text-gray-900 dark:text-white md:text-2xl'>
-          {title}
-        </h2>
-        {hint && (
-          <p className='mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400'>
-            {hint}
-          </p>
-        )}
+    <section className='relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.07)] dark:border-gray-700 dark:bg-[var(--heo-color-card-dark)] md:p-7'>
+      <div className='absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-orange-400' />
+      <div className='mb-5 flex items-start gap-3'>
+        <span className='mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--heo-color-primary)]' />
+        <div>
+          <h2 className='text-xl font-black text-gray-900 dark:text-white md:text-2xl'>
+            {title}
+          </h2>
+          {hint && (
+            <p className='mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400'>
+              {hint}
+            </p>
+          )}
+        </div>
       </div>
       {children}
     </section>
@@ -113,7 +127,7 @@ function ActionButton({
       type='button'
       disabled={disabled}
       onClick={onClick}
-      className={`rounded-xl px-4 py-2.5 text-sm font-bold transition duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
+      className={`min-h-[44px] rounded-xl px-4 py-2.5 text-sm font-bold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 ${
         primary
           ? 'bg-[var(--heo-color-primary)] text-white shadow-sm hover:-translate-y-0.5 hover:shadow-md'
           : 'border border-gray-200 bg-gray-50 text-gray-700 hover:border-[var(--heo-color-primary)] hover:text-[var(--heo-color-primary)] dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
@@ -822,7 +836,7 @@ function ClassroomTool({ copy }) {
 export default function DaVinciToolbox() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('全部')
-  const [active, setActive] = useState('json')
+  const [active, setActive] = useState('network')
   const [notice, setNotice] = useState('')
   const toolAreaRef = useRef(null)
   const categories = ['全部', ...new Set(TOOL_CARDS.map(tool => tool.category))]
@@ -864,6 +878,7 @@ export default function DaVinciToolbox() {
   }
 
   const activeTool = {
+    network: <NetworkTool copy={copy} />,
     json: <JsonTool copy={copy} />,
     text: <TextTool copy={copy} />,
     time: <TimeTool copy={copy} />,
@@ -875,7 +890,8 @@ export default function DaVinciToolbox() {
 
   return (
     <div className='mx-auto w-full max-w-6xl px-4 pb-16 pt-8 md:px-6 md:pt-12'>
-      <header className='relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-violet-600 to-orange-400 px-6 py-10 text-white shadow-xl md:px-10 md:py-14'>
+      <header className='relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-violet-600 to-orange-400 px-6 py-10 text-white shadow-[0_24px_70px_rgba(79,70,229,0.28)] md:px-10 md:py-14'>
+        <div className='absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.7)_1px,transparent_1px)] [background-size:32px_32px]' />
         <div className='absolute -right-12 -top-16 h-56 w-56 rounded-full bg-white/15 blur-2xl' />
         <div className='absolute -bottom-20 left-1/3 h-44 w-44 rounded-full bg-orange-200/20 blur-2xl' />
         <div className='relative max-w-3xl'>
@@ -886,7 +902,7 @@ export default function DaVinciToolbox() {
             达闻西实用工具箱
           </h1>
           <p className='mt-4 max-w-2xl text-sm leading-7 text-white/85 md:text-base'>
-            不一定改变世界，但可能刚好有用。第一批工具全部在浏览器本地运行，不上传你的文字、名单、密码和图片。
+            不一定改变世界，但可能刚好有用。工具按场景组成套件，全部在浏览器本地运行，不上传你的文字、名单、密码、图片和网络配置。
           </p>
           <div className='mt-6 flex flex-wrap gap-3 text-xs font-bold text-white/90'>
             <span className='rounded-full bg-black/15 px-3 py-2'>
@@ -897,6 +913,9 @@ export default function DaVinciToolbox() {
             </span>
             <span className='rounded-full bg-black/15 px-3 py-2'>
               ✓ 本地处理
+            </span>
+            <span className='rounded-full bg-black/15 px-3 py-2'>
+              ✓ 套件式设计
             </span>
           </div>
         </div>
@@ -909,7 +928,7 @@ export default function DaVinciToolbox() {
               选择一件装备
             </h2>
             <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-              现有 {TOOL_CARDS.length} 件，后续会继续加入高频实用工具。
+              现有 {TOOL_CARDS.length} 套工具，功能集中归类，用完即走。
             </p>
           </div>
           <div className='relative w-full md:w-80'>
@@ -918,17 +937,28 @@ export default function DaVinciToolbox() {
               value={query}
               onChange={event => setQuery(event.target.value)}
               placeholder='搜索工具或用途'
-              className='w-full rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[var(--heo-color-primary)] focus:ring-2 focus:ring-indigo-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:ring-indigo-900'
+              className='h-12 w-full rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-11 text-sm outline-none transition focus:border-[var(--heo-color-primary)] focus:ring-2 focus:ring-indigo-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:ring-indigo-900'
             />
+            {query && (
+              <button
+                type='button'
+                onClick={() => setQuery('')}
+                aria-label='清除搜索'
+                className='absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-white'
+              >
+                ×
+              </button>
+            )}
           </div>
         </div>
-        <div className='mt-4 flex gap-2 overflow-x-auto pb-2'>
+        <div className='mt-4 flex snap-x gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
           {categories.map(item => (
             <button
               key={item}
               type='button'
               onClick={() => setCategory(item)}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition ${category === item ? 'bg-[var(--heo-color-primary)] text-white shadow' : 'border border-gray-200 bg-white text-gray-600 hover:border-[var(--heo-color-primary)] dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}
+              aria-pressed={category === item}
+              className={`min-h-[42px] snap-start whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition ${category === item ? 'bg-[var(--heo-color-primary)] text-white shadow' : 'border border-gray-200 bg-white text-gray-600 hover:border-[var(--heo-color-primary)] dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}
             >
               {item}
             </button>
@@ -940,14 +970,24 @@ export default function DaVinciToolbox() {
               key={tool.id}
               type='button'
               onClick={() => openTool(tool.id)}
-              className={`group rounded-3xl border p-5 text-left transition duration-300 hover:-translate-y-1 hover:shadow-lg ${active === tool.id ? 'border-[var(--heo-color-primary)] bg-indigo-50/70 shadow-md dark:bg-indigo-950/20' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-[var(--heo-color-card-dark)]'}`}
+              aria-pressed={active === tool.id}
+              className={`group relative min-h-[242px] overflow-hidden rounded-3xl border p-5 text-left transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 hover:-translate-y-1 hover:shadow-lg ${active === tool.id ? 'border-[var(--heo-color-primary)] bg-indigo-50/70 shadow-md dark:bg-indigo-950/20' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-[var(--heo-color-card-dark)]'}`}
             >
+              {tool.featured && (
+                <span className='absolute right-0 top-0 rounded-bl-2xl bg-gradient-to-r from-sky-500 to-indigo-500 px-3 py-1.5 text-[11px] font-black text-white'>
+                  推荐套件
+                </span>
+              )}
               <div className='flex items-start justify-between gap-4'>
                 <span className='flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 text-2xl transition group-hover:rotate-6 group-hover:scale-110 dark:bg-gray-800'>
                   {tool.icon}
                 </span>
-                <span className='rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-500 dark:bg-gray-800 dark:text-gray-400'>
-                  {tool.category}
+                <span
+                  className={`rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-500 dark:bg-gray-800 dark:text-gray-400 ${tool.featured ? 'mr-16' : ''}`}
+                >
+                  {tool.features
+                    ? `${tool.features.length} 项功能`
+                    : tool.category}
                 </span>
               </div>
               <h3 className='mt-4 text-lg font-black text-gray-900 dark:text-white'>
@@ -956,6 +996,18 @@ export default function DaVinciToolbox() {
               <p className='mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400'>
                 {tool.description}
               </p>
+              {tool.features && (
+                <div className='mt-3 flex flex-wrap gap-1.5'>
+                  {tool.features.map(feature => (
+                    <span
+                      key={feature}
+                      className='rounded-lg bg-sky-50 px-2 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-950/40 dark:text-sky-300'
+                    >
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className='mt-4 text-sm font-bold text-[var(--heo-color-primary)]'>
                 立即使用{' '}
                 <span className='inline-block transition group-hover:translate-x-1'>
@@ -973,6 +1025,21 @@ export default function DaVinciToolbox() {
       </section>
 
       <div ref={toolAreaRef} className='scroll-mt-24 mt-10'>
+        <div className='mb-3 flex items-center justify-between gap-3 px-1'>
+          <div className='text-sm font-bold text-gray-500 dark:text-gray-400'>
+            正在使用：
+            <span className='text-gray-900 dark:text-white'>
+              {TOOL_CARDS.find(tool => tool.id === active)?.title}
+            </span>
+          </div>
+          <button
+            type='button'
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className='min-h-[40px] rounded-xl border border-gray-200 bg-white px-3 text-xs font-bold text-gray-500 transition hover:border-indigo-300 hover:text-indigo-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300'
+          >
+            ↑ 返回工具列表
+          </button>
+        </div>
         {activeTool}
       </div>
 
@@ -982,8 +1049,8 @@ export default function DaVinciToolbox() {
           工具会继续增加
         </h2>
         <p className='mx-auto mt-2 max-w-2xl text-sm leading-6 text-gray-600 dark:text-gray-300'>
-          下一批可以加入二维码、颜色与渐变、图片裁剪、Markdown
-          预览、正则测试等。优先选择高频、免费、无需上传数据的功能。
+          后续功能优先收进现有套件，例如网络工程箱可继续加入 DNS、端口与 IPv6
+          辅助，保持入口少、能力完整、无需付费。
         </p>
       </section>
 

@@ -19,7 +19,7 @@ export default function ToolboxPromo() {
                   达闻西实用工具箱
                 </h2>
                 <p className='mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400'>
-                  JSON、文本清理、时间戳、编码、密码、图片压缩、课堂分组 ·
+                  网络子网、JSON、文本、时间、密码、图片与课堂工具 ·
                   免费且本地处理
                 </p>
               </div>
