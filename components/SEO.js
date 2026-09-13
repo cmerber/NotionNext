@@ -406,7 +406,7 @@ const getSEOMeta = (props, router, locale) => {
       return {
         title: `达闻西实用工具箱 | ${siteInfo?.title}`,
         description:
-          '免费、无需登录、在浏览器本地运行的网络子网、密码、图片和课堂实用工具。',
+          '免费、无需登录的网络子网、密码、图片、课堂和视频实用工具。',
         image: `${siteInfo?.pageCover}`,
         slug: 'tools',
         type: 'website'

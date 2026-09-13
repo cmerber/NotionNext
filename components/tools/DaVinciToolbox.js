@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import NetworkTool from './NetworkTool'
+import VideoTool from './VideoTool'
 
 const TOOL_CARDS = [
   {
@@ -31,6 +32,13 @@ const TOOL_CARDS = [
     title: '课堂点将台',
     description: '随机点名，或把名单快速随机分组。',
     category: '教学'
+  },
+  {
+    id: 'video',
+    icon: '🎞️',
+    title: '视频取件箱',
+    description: '视频直链直接保存，为 B站等平台生成本机最高画质下载任务。',
+    category: '视频'
   }
 ]
 
@@ -679,7 +687,8 @@ export default function DaVinciToolbox() {
     network: <NetworkTool copy={copy} />,
     password: <PasswordTool copy={copy} />,
     image: <ImageTool />,
-    classroom: <ClassroomTool copy={copy} />
+    classroom: <ClassroomTool copy={copy} />,
+    video: <VideoTool />
   }
 
   return (
