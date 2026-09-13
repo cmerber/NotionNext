@@ -1007,14 +1007,19 @@ export default function DaVinciToolbox() {
   const categories = ['全部', ...new Set(TOOL_CARDS.map(tool => tool.category))]
 
   useEffect(() => {
-    const hashTool = window.location.hash.replace(/^#tool=/, '')
-    const savedTool = window.localStorage.getItem('qcode-last-tool')
-    const nextTool = TOOL_CARDS.some(tool => tool.id === hashTool)
-      ? hashTool
-      : TOOL_CARDS.some(tool => tool.id === savedTool)
-        ? savedTool
-        : null
-    if (nextTool) setActive(nextTool)
+    const syncToolFromLocation = () => {
+      const hashTool = window.location.hash.replace(/^#tool=/, '')
+      const savedTool = window.localStorage.getItem('qcode-last-tool')
+      const nextTool = TOOL_CARDS.some(tool => tool.id === hashTool)
+        ? hashTool
+        : TOOL_CARDS.some(tool => tool.id === savedTool)
+          ? savedTool
+          : null
+      if (nextTool) setActive(nextTool)
+    }
+    syncToolFromLocation()
+    window.addEventListener('hashchange', syncToolFromLocation)
+    return () => window.removeEventListener('hashchange', syncToolFromLocation)
   }, [])
 
   const filteredTools = useMemo(() => {
