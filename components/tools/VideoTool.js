@@ -27,6 +27,26 @@ const SYSTEMS = {
   }
 }
 
+const VIDEO_MODES = {
+  compatible: {
+    label: '通用兼容（推荐）',
+    description: '优先 H.264 + AAC，Windows、手机和电视更容易直接播放',
+    command: '-t mp4'
+  },
+  maximum: {
+    label: '极致画质',
+    description: '允许 AV1、VP9 等新编码，画质更高但部分播放器不支持',
+    command: '-f "bv*+ba/b" --merge-output-format mp4'
+  }
+}
+
+const LOGIN_BROWSERS = [
+  ['none', '不读取登录状态'],
+  ['chrome', 'Chrome'],
+  ['edge', 'Edge'],
+  ['firefox', 'Firefox']
+]
+
 function classifyUrl(value) {
   let parsed
   try {
@@ -70,10 +90,11 @@ function triggerDownload(url, filename) {
   anchor.remove()
 }
 
-function buildCommand(url, system, useCookies) {
+function buildCommand(url, system, videoMode, loginBrowser) {
   const config = SYSTEMS[system]
-  const cookieOption = useCookies ? ' --cookies-from-browser chrome' : ''
-  return `yt-dlp${cookieOption} -f "bv*+ba/b" --merge-output-format mp4 --embed-metadata --embed-thumbnail ${config.folder} ${config.quote(url)}`
+  const cookieOption =
+    loginBrowser === 'none' ? '' : ` --cookies-from-browser ${loginBrowser}`
+  return `yt-dlp${cookieOption} ${VIDEO_MODES[videoMode].command} --embed-metadata --embed-thumbnail ${config.folder} ${config.quote(url)}`
 }
 
 export default function VideoTool() {
@@ -81,15 +102,16 @@ export default function VideoTool() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [system, setSystem] = useState('windows')
-  const [useCookies, setUseCookies] = useState(false)
+  const [videoMode, setVideoMode] = useState('compatible')
+  const [loginBrowser, setLoginBrowser] = useState('none')
   const [notice, setNotice] = useState('')
   const classification = useMemo(() => classifyUrl(url.trim()), [url])
   const command = useMemo(
     () =>
       result?.type === 'platform'
-        ? buildCommand(result.url, system, useCookies)
+        ? buildCommand(result.url, system, videoMode, loginBrowser)
         : '',
-    [result, system, useCookies]
+    [result, system, videoMode, loginBrowser]
   )
 
   const updateUrl = value => {
@@ -150,7 +172,7 @@ export default function VideoTool() {
             🎞️ 视频取件箱
           </h2>
           <p className='mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400'>
-            视频直链直接保存；B站等平台生成本机最高画质下载任务，自动合并声音和画面。
+            视频直链直接保存；B站等平台生成本机下载任务，默认兼顾清晰度和播放兼容性。
           </p>
         </div>
       </div>
@@ -231,11 +253,11 @@ export default function VideoTool() {
               已识别 · {result.platform}
             </div>
             <h3 className='mt-2 text-lg font-black text-gray-900 dark:text-white'>
-              在你的电脑本地下载最高可用画质
+              在你的电脑本地下载清晰、可播放的视频
             </h3>
             <p className='mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300'>
-              平台音视频通常分开传输，本机助手会自动选择最高画质、最高音质并合并成
-              MP4。
+              默认优先选择兼容性更好的 H.264 视频和 AAC
+              音频，也可以切换为极致画质。
             </p>
           </div>
 
@@ -276,27 +298,54 @@ export default function VideoTool() {
               </div>
             </div>
 
-            <label className='flex cursor-pointer items-start gap-3 rounded-2xl border border-gray-200 p-4 dark:border-gray-700'>
-              <input
-                type='checkbox'
-                checked={useCookies}
-                onChange={event => setUseCookies(event.target.checked)}
-                className='mt-1 h-4 w-4 accent-[var(--heo-color-primary)]'
-              />
-              <span>
-                <span className='block text-sm font-black text-gray-800 dark:text-white'>
-                  使用 Chrome 登录状态获取登录专享画质
-                </span>
-                <span className='mt-1 block text-xs leading-5 text-gray-500 dark:text-gray-400'>
-                  登录信息只由你电脑上的下载程序本地读取，不会发送给
-                  qcode.im。会员和付费内容仍受原平台权限限制。
-                </span>
-              </span>
-            </label>
+            <div>
+              <div className='mb-2 text-sm font-black text-gray-800 dark:text-white'>
+                3. 选择画质和登录状态
+              </div>
+              <div className='grid gap-2 sm:grid-cols-2'>
+                {Object.entries(VIDEO_MODES).map(([id, mode]) => (
+                  <button
+                    key={id}
+                    type='button'
+                    onClick={() => setVideoMode(id)}
+                    className={`rounded-2xl border p-4 text-left transition ${videoMode === id ? 'border-[var(--heo-color-primary)] bg-indigo-50 ring-2 ring-indigo-100 dark:bg-indigo-950/30 dark:ring-indigo-900' : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800'}`}
+                  >
+                    <span className='block text-sm font-black text-gray-800 dark:text-white'>
+                      {mode.label}
+                    </span>
+                    <span className='mt-1 block text-xs leading-5 text-gray-500 dark:text-gray-400'>
+                      {mode.description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className='mt-4 text-xs font-bold text-gray-600 dark:text-gray-300'>
+                登录浏览器（可选）
+              </div>
+              <div className='mt-2 flex flex-wrap gap-2'>
+                {LOGIN_BROWSERS.map(([id, label]) => (
+                  <button
+                    key={id}
+                    type='button'
+                    onClick={() => setLoginBrowser(id)}
+                    className={`min-h-[40px] rounded-xl px-3 text-xs font-bold transition ${loginBrowser === id ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'border border-gray-200 bg-white text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className='mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400'>
+                只有需要登录专享画质时才选择浏览器，并请使用与该浏览器相同的
+                Windows
+                账户打开普通终端，不要用其他管理员账户。登录信息不会发送给
+                qcode.im。
+              </p>
+            </div>
 
             <div>
               <div className='mb-2 text-sm font-black text-gray-800 dark:text-white'>
-                3. 开始下载
+                4. 开始下载
               </div>
               <div className='rounded-2xl bg-gray-950 p-3 text-gray-100'>
                 <code className='block max-h-28 overflow-auto break-all text-xs leading-6'>
@@ -309,7 +358,7 @@ export default function VideoTool() {
                   onClick={() => void copy(command)}
                   className='min-h-[46px] rounded-xl bg-[var(--heo-color-primary)] px-5 text-sm font-bold text-white shadow-sm'
                 >
-                  复制最高画质命令
+                  复制{videoMode === 'compatible' ? '兼容 MP4' : '极致画质'}命令
                 </button>
                 <button
                   type='button'
@@ -336,7 +385,7 @@ export default function VideoTool() {
           {[
             ['①', '复制网址', '从视频分享菜单复制完整链接'],
             ['②', '生成任务', '自动识别直链或视频平台'],
-            ['③', '本地保存', '最高画质处理不经过博客服务器']
+            ['③', '本地保存', '清晰度与兼容性可以自由选择']
           ].map(([number, title, description]) => (
             <div
               key={title}

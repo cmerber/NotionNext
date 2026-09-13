@@ -37,7 +37,7 @@ const TOOL_CARDS = [
     id: 'video',
     icon: '🎞️',
     title: '视频取件箱',
-    description: '视频直链直接保存，为 B站等平台生成本机最高画质下载任务。',
+    description: '视频直链直接保存，为 B站等平台生成兼容或极致画质下载任务。',
     category: '视频'
   }
 ]
