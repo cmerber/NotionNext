@@ -81,7 +81,36 @@ function Field({ label, hint, children }) {
   )
 }
 
-function ResultItem({ label, value, accent = false }) {
+function ResultItem({ label, value, accent = false, onCopy }) {
+  const content = (
+    <>
+      <div className='text-xs font-bold uppercase tracking-wider text-gray-400'>
+        {label}
+      </div>
+      <div className='mt-1 break-all font-mono text-sm font-black text-gray-900 dark:text-white md:text-base'>
+        {value}
+      </div>
+      {onCopy && (
+        <div className='mt-2 text-[11px] font-bold text-indigo-500 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100'>
+          点击复制
+        </div>
+      )}
+    </>
+  )
+  const className = `group w-full rounded-2xl border p-4 text-left transition ${
+    accent
+      ? 'border-indigo-200 bg-indigo-50/80 dark:border-indigo-800 dark:bg-indigo-950/30'
+      : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+  } ${onCopy ? 'cursor-pointer hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400' : ''}`
+
+  if (onCopy) {
+    return (
+      <button type='button' onClick={onCopy} className={className}>
+        {content}
+      </button>
+    )
+  }
+
   return (
     <div
       className={`rounded-2xl border p-4 ${
@@ -90,12 +119,7 @@ function ResultItem({ label, value, accent = false }) {
           : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
       }`}
     >
-      <div className='text-xs font-bold uppercase tracking-wider text-gray-400'>
-        {label}
-      </div>
-      <div className='mt-1 break-all font-mono text-sm font-black text-gray-900 dark:text-white md:text-base'>
-        {value}
-      </div>
+      {content}
     </div>
   )
 }
@@ -107,7 +131,24 @@ function SubnetCalculator({ copy }) {
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
 
+  const clearResult = () => {
+    setResult(null)
+    setError('')
+  }
+
+  const setIpValue = value => {
+    const cidrInput = value.trim().match(/^(.+)\/(\d{1,2})$/)
+    if (cidrInput) {
+      setIp(cidrInput[1])
+      setPrefixValue(cidrInput[2])
+      return
+    }
+    setIp(value)
+    clearResult()
+  }
+
   const setPrefixValue = value => {
+    clearResult()
     const next = Number(value)
     setPrefix(value)
     if (Number.isInteger(next) && next >= 0 && next <= 32) {
@@ -116,6 +157,7 @@ function SubnetCalculator({ copy }) {
   }
 
   const setMaskValue = value => {
+    clearResult()
     setMask(value)
     const nextPrefix = maskToPrefix(value)
     if (nextPrefix !== null) setPrefix(nextPrefix)
@@ -178,10 +220,11 @@ function SubnetCalculator({ copy }) {
   return (
     <div>
       <div className='grid gap-4 lg:grid-cols-[1.2fr_0.7fr_1fr]'>
-        <Field label='IPv4 地址' hint='例如 192.168.1.100'>
+        <Field label='IPv4 地址' hint='也可粘贴 IP/24'>
           <input
             value={ip}
-            onChange={event => setIp(event.target.value)}
+            onChange={event => setIpValue(event.target.value)}
+            onKeyDown={event => event.key === 'Enter' && calculate()}
             className='h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 font-mono text-sm outline-none transition focus:border-[var(--heo-color-primary)] focus:ring-2 focus:ring-indigo-100 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:focus:ring-indigo-900'
             inputMode='decimal'
           />
@@ -197,6 +240,7 @@ function SubnetCalculator({ copy }) {
               max='32'
               value={prefix}
               onChange={event => setPrefixValue(event.target.value)}
+              onKeyDown={event => event.key === 'Enter' && calculate()}
               className='min-w-0 flex-1 bg-transparent px-2 font-mono text-sm outline-none dark:text-white'
             />
           </div>
@@ -205,6 +249,7 @@ function SubnetCalculator({ copy }) {
           <input
             value={mask}
             onChange={event => setMaskValue(event.target.value)}
+            onKeyDown={event => event.key === 'Enter' && calculate()}
             className='h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 font-mono text-sm outline-none transition focus:border-[var(--heo-color-primary)] focus:ring-2 focus:ring-indigo-100 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:focus:ring-indigo-900'
             inputMode='decimal'
           />
@@ -265,12 +310,34 @@ function SubnetCalculator({ copy }) {
             </span>
           </div>
           <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
-            <ResultItem label='CIDR 网段' value={result.cidr} accent />
-            <ResultItem label='子网掩码' value={result.mask} />
-            <ResultItem label='网络地址' value={result.network} />
-            <ResultItem label='广播地址' value={result.broadcast} />
+            <ResultItem
+              label='CIDR 网段'
+              value={result.cidr}
+              accent
+              onCopy={() => copy(result.cidr)}
+            />
+            <ResultItem
+              label='子网掩码'
+              value={result.mask}
+              onCopy={() => copy(result.mask)}
+            />
+            <ResultItem
+              label='网络地址'
+              value={result.network}
+              onCopy={() => copy(result.network)}
+            />
+            <ResultItem
+              label='广播地址'
+              value={result.broadcast}
+              onCopy={() => copy(result.broadcast)}
+            />
             <div className='sm:col-span-2'>
-              <ResultItem label='可用主机范围' value={result.range} accent />
+              <ResultItem
+                label='可用主机范围'
+                value={result.range}
+                accent
+                onCopy={() => copy(result.range)}
+              />
             </div>
             <ResultItem label='地址总数' value={result.total} />
             <ResultItem label='可用主机数' value={result.usable} />

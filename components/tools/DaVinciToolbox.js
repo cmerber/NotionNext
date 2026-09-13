@@ -181,7 +181,20 @@ function JsonTool({ copy }) {
           格式化并校验
         </ActionButton>
         <ActionButton onClick={() => transform(true)}>压缩成一行</ActionButton>
-        <ActionButton onClick={() => copy(input)}>复制结果</ActionButton>
+        <ActionButton
+          disabled={Boolean(input)}
+          onClick={() => {
+            setInput(
+              '{\n  "site": "qcode.im",\n  "tools": ["network", "image"],\n  "useful": true\n}'
+            )
+            setMessage('已载入示例，可以直接尝试格式化或压缩')
+          }}
+        >
+          载入示例
+        </ActionButton>
+        <ActionButton disabled={!input} onClick={() => copy(input)}>
+          复制结果
+        </ActionButton>
         <ActionButton
           onClick={() => {
             setInput('')
@@ -204,6 +217,7 @@ function JsonTool({ copy }) {
 
 function TextTool({ copy }) {
   const [text, setText] = useState('')
+  const [previousText, setPreviousText] = useState('')
   const stats = useMemo(() => {
     const trimmed = text.trim()
     const chinese = (text.match(/[\u3400-\u9fff]/g) || []).length
@@ -219,6 +233,7 @@ function TextTool({ copy }) {
   }, [text])
 
   const clean = mode => {
+    setPreviousText(text)
     const lines = text.split(/\r?\n/)
     if (mode === 'duplicate') {
       const seen = new Set()
@@ -277,8 +292,27 @@ function TextTool({ copy }) {
         </ActionButton>
         <ActionButton onClick={() => clean('blank')}>删除空行</ActionButton>
         <ActionButton onClick={() => clean('duplicate')}>按行去重</ActionButton>
-        <ActionButton onClick={() => copy(text)}>复制结果</ActionButton>
-        <ActionButton onClick={() => setText('')}>清空</ActionButton>
+        <ActionButton
+          disabled={!previousText}
+          onClick={() => {
+            const current = text
+            setText(previousText)
+            setPreviousText(current)
+          }}
+        >
+          撤销上一步
+        </ActionButton>
+        <ActionButton disabled={!text} onClick={() => copy(text)}>
+          复制结果
+        </ActionButton>
+        <ActionButton
+          onClick={() => {
+            setPreviousText(text)
+            setText('')
+          }}
+        >
+          清空
+        </ActionButton>
       </div>
     </Section>
   )
@@ -343,6 +377,7 @@ function TimeTool({ copy }) {
               现在
             </ActionButton>
             <ActionButton
+              disabled={!parsedStamp}
               onClick={() => parsedStamp && copy(parsedStamp.toLocaleString())}
             >
               复制日期
@@ -365,11 +400,13 @@ function TimeTool({ copy }) {
           </div>
           <div className='mt-3 flex flex-wrap gap-2'>
             <ActionButton
+              disabled={!dateStamp}
               onClick={() => dateStamp && copy(String(dateStamp.seconds))}
             >
               复制秒
             </ActionButton>
             <ActionButton
+              disabled={!dateStamp}
               onClick={() => dateStamp && copy(String(dateStamp.milliseconds))}
             >
               复制毫秒
@@ -418,17 +455,45 @@ function CodecTool({ copy }) {
         />
       </div>
       <div className='mt-4 flex flex-wrap gap-2'>
-        <ActionButton primary onClick={() => run('urlEncode')}>
+        <ActionButton
+          primary
+          disabled={!input}
+          onClick={() => run('urlEncode')}
+        >
           URL 编码
         </ActionButton>
-        <ActionButton onClick={() => run('urlDecode')}>URL 解码</ActionButton>
-        <ActionButton onClick={() => run('base64Encode')}>
+        <ActionButton disabled={!input} onClick={() => run('urlDecode')}>
+          URL 解码
+        </ActionButton>
+        <ActionButton disabled={!input} onClick={() => run('base64Encode')}>
           Base64 编码
         </ActionButton>
-        <ActionButton onClick={() => run('base64Decode')}>
+        <ActionButton disabled={!input} onClick={() => run('base64Decode')}>
           Base64 解码
         </ActionButton>
-        <ActionButton onClick={() => copy(output)}>复制结果</ActionButton>
+        <ActionButton
+          disabled={!output}
+          onClick={() => {
+            setInput(output)
+            setOutput(input)
+            setError('')
+          }}
+        >
+          交换输入输出
+        </ActionButton>
+        <ActionButton disabled={!output} onClick={() => copy(output)}>
+          复制结果
+        </ActionButton>
+        <ActionButton
+          disabled={!input && !output}
+          onClick={() => {
+            setInput('')
+            setOutput('')
+            setError('')
+          }}
+        >
+          清空
+        </ActionButton>
       </div>
       {error && (
         <div className='mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300'>
@@ -449,13 +514,28 @@ function PasswordTool({ copy }) {
   })
   const [password, setPassword] = useState('')
 
+  const pools = {
+    lower: 'abcdefghijkmnopqrstuvwxyz',
+    upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
+    number: '23456789',
+    symbol: '!@#$%^&*_-+=?'
+  }
+  const enabledSets = Object.keys(sets).filter(key => sets[key])
+  const poolLength = enabledSets.reduce(
+    (total, key) => total + pools[key].length,
+    0
+  )
+  const entropy = poolLength ? Math.floor(length * Math.log2(poolLength)) : 0
+  const strength =
+    entropy >= 100
+      ? { label: '很强', width: '100%', color: 'bg-emerald-500' }
+      : entropy >= 70
+        ? { label: '强', width: '75%', color: 'bg-blue-500' }
+        : entropy >= 45
+          ? { label: '一般', width: '50%', color: 'bg-amber-500' }
+          : { label: '较弱', width: '25%', color: 'bg-red-500' }
+
   const generate = () => {
-    const pools = {
-      lower: 'abcdefghijkmnopqrstuvwxyz',
-      upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
-      number: '23456789',
-      symbol: '!@#$%^&*_-+=?'
-    }
     const enabled = Object.keys(sets).filter(key => sets[key])
     if (!enabled.length) return setPassword('请至少选择一类字符')
     const pool = enabled.map(key => pools[key]).join('')
@@ -495,9 +575,23 @@ function PasswordTool({ copy }) {
             min='8'
             max='64'
             value={length}
-            onChange={event => setLength(Number(event.target.value))}
+            onChange={event => {
+              setLength(Number(event.target.value))
+              setPassword('')
+            }}
             className='w-full accent-indigo-600'
           />
+          <div className='mt-3 flex items-center gap-3'>
+            <div className='h-2 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
+              <div
+                className={`h-full rounded-full transition-all ${strength.color}`}
+                style={{ width: strength.width }}
+              />
+            </div>
+            <span className='min-w-[6rem] text-right text-xs font-bold text-gray-500 dark:text-gray-400'>
+              {strength.label} · 约 {entropy} bit
+            </span>
+          </div>
         </div>
         <div className='mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4'>
           {[
@@ -513,9 +607,10 @@ function PasswordTool({ copy }) {
               <input
                 type='checkbox'
                 checked={sets[key]}
-                onChange={() =>
+                onChange={() => {
                   setSets(current => ({ ...current, [key]: !current[key] }))
-                }
+                  setPassword('')
+                }}
                 className='accent-indigo-600'
               />
               {label}
@@ -526,7 +621,9 @@ function PasswordTool({ copy }) {
           <ActionButton primary onClick={generate}>
             生成新密码
           </ActionButton>
-          <ActionButton onClick={() => copy(password)}>复制密码</ActionButton>
+          <ActionButton disabled={!password} onClick={() => copy(password)}>
+            复制密码
+          </ActionButton>
         </div>
       </div>
     </Section>
@@ -535,29 +632,63 @@ function PasswordTool({ copy }) {
 
 function ImageTool() {
   const inputRef = useRef(null)
+  const objectUrlsRef = useRef(new Set())
   const [source, setSource] = useState(null)
   const [result, setResult] = useState(null)
   const [quality, setQuality] = useState(82)
   const [format, setFormat] = useState('image/webp')
   const [maxWidth, setMaxWidth] = useState(1920)
   const [message, setMessage] = useState('')
+  const [processing, setProcessing] = useState(false)
 
-  const chooseFile = event => {
-    const file = event.target.files?.[0]
+  useEffect(
+    () => () => {
+      objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url))
+      objectUrlsRef.current.clear()
+    },
+    []
+  )
+
+  const createLocalUrl = value => {
+    const url = URL.createObjectURL(value)
+    objectUrlsRef.current.add(url)
+    return url
+  }
+
+  const revokeLocalUrl = url => {
+    if (!url) return
+    URL.revokeObjectURL(url)
+    objectUrlsRef.current.delete(url)
+  }
+
+  const loadFile = file => {
     if (!file) return
     if (!file.type.startsWith('image/')) {
       setMessage('请选择图片文件')
       return
     }
-    if (source?.url) URL.revokeObjectURL(source.url)
-    if (result?.url) URL.revokeObjectURL(result.url)
-    setSource({ file, url: URL.createObjectURL(file) })
+    revokeLocalUrl(source?.url)
+    revokeLocalUrl(result?.url)
+    setSource({ file, url: createLocalUrl(file) })
     setResult(null)
     setMessage('图片只在当前浏览器中处理，不会上传。')
   }
 
+  const chooseFile = event => {
+    loadFile(event.target.files?.[0])
+    event.target.value = ''
+  }
+
+  const clearProcessedResult = () => {
+    revokeLocalUrl(result?.url)
+    setResult(null)
+    if (source) setMessage('参数已改变，请重新处理图片。')
+  }
+
   const compress = () => {
     if (!source) return
+    setProcessing(true)
+    setMessage('正在处理图片……')
     const image = new Image()
     image.onload = () => {
       const ratio = Math.min(1, maxWidth / image.naturalWidth)
@@ -574,13 +705,15 @@ function ImageTool() {
       context.drawImage(image, 0, 0, width, height)
       canvas.toBlob(
         blob => {
-          if (!blob)
+          if (!blob) {
+            setProcessing(false)
             return setMessage('当前浏览器无法生成该格式，请换一种格式重试。')
-          if (result?.url) URL.revokeObjectURL(result.url)
+          }
+          revokeLocalUrl(result?.url)
           const extension = format.split('/')[1].replace('jpeg', 'jpg')
           setResult({
             blob,
-            url: URL.createObjectURL(blob),
+            url: createLocalUrl(blob),
             width,
             height,
             extension
@@ -593,12 +726,16 @@ function ImageTool() {
               ? `处理完成，体积减少约 ${saved}%`
               : '处理完成；这张图片已经很紧凑，转换后体积可能略有增加。'
           )
+          setProcessing(false)
         },
         format,
         quality / 100
       )
     }
-    image.onerror = () => setMessage('图片读取失败，请换一张图片重试。')
+    image.onerror = () => {
+      setProcessing(false)
+      setMessage('图片读取失败，请换一张图片重试。')
+    }
     image.src = source.url
   }
 
@@ -609,6 +746,7 @@ function ImageTool() {
     link.href = result.url
     link.download = `${baseName}-qcode.${result.extension}`
     link.click()
+    link.remove()
   }
 
   return (
@@ -626,6 +764,11 @@ function ImageTool() {
       <div className='grid gap-5 lg:grid-cols-[1.2fr_1fr]'>
         <div
           onClick={() => inputRef.current?.click()}
+          onDragOver={event => event.preventDefault()}
+          onDrop={event => {
+            event.preventDefault()
+            loadFile(event.dataTransfer.files?.[0])
+          }}
           className='flex min-h-[18rem] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center transition hover:border-[var(--heo-color-primary)] dark:border-gray-600 dark:bg-gray-900'
         >
           {source ? (
@@ -638,7 +781,7 @@ function ImageTool() {
             <div>
               <div className='text-5xl'>🖼️</div>
               <div className='mt-3 font-bold text-gray-700 dark:text-gray-200'>
-                点击选择图片
+                点击选择或拖入图片
               </div>
               <div className='mt-1 text-sm text-gray-400'>
                 JPG、PNG、WebP 等常见格式
@@ -651,7 +794,10 @@ function ImageTool() {
             输出格式
             <select
               value={format}
-              onChange={event => setFormat(event.target.value)}
+              onChange={event => {
+                setFormat(event.target.value)
+                clearProcessedResult()
+              }}
               className='mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 dark:border-gray-600 dark:bg-gray-800'
             >
               <option value='image/webp'>WebP（推荐）</option>
@@ -663,7 +809,10 @@ function ImageTool() {
             最大宽度
             <select
               value={maxWidth}
-              onChange={event => setMaxWidth(Number(event.target.value))}
+              onChange={event => {
+                setMaxWidth(Number(event.target.value))
+                clearProcessedResult()
+              }}
               className='mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 dark:border-gray-600 dark:bg-gray-800'
             >
               <option value='1280'>1280 px</option>
@@ -679,7 +828,10 @@ function ImageTool() {
               min='35'
               max='100'
               value={quality}
-              onChange={event => setQuality(Number(event.target.value))}
+              onChange={event => {
+                setQuality(Number(event.target.value))
+                clearProcessedResult()
+              }}
               className='mt-3 w-full accent-indigo-600'
             />
           </label>
@@ -695,8 +847,12 @@ function ImageTool() {
             </div>
           )}
           <div className='flex flex-wrap gap-2'>
-            <ActionButton primary disabled={!source} onClick={compress}>
-              开始处理
+            <ActionButton
+              primary
+              disabled={!source || processing}
+              onClick={compress}
+            >
+              {processing ? '正在处理…' : '开始处理'}
             </ActionButton>
             <ActionButton disabled={!result} onClick={download}>
               下载结果
@@ -725,6 +881,9 @@ function ClassroomTool({ copy }) {
         .filter(Boolean),
     [names]
   )
+  const duplicateCount = list.length - new Set(list).size
+
+  useEffect(() => setResult([]), [names])
 
   const shuffled = () => {
     const next = [...list]
@@ -788,6 +947,12 @@ function ClassroomTool({ copy }) {
               组
             </label>
           </div>
+          {duplicateCount > 0 && (
+            <div className='mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-950/30 dark:text-amber-300'>
+              检测到 {duplicateCount}{' '}
+              个重复名字；为避免同名同学被漏掉，当前仍按原名单参与随机。
+            </div>
+          )}
           <div className='mt-4 flex flex-wrap gap-2'>
             <ActionButton primary disabled={!list.length} onClick={pickOne}>
               随机点一位
@@ -841,6 +1006,17 @@ export default function DaVinciToolbox() {
   const toolAreaRef = useRef(null)
   const categories = ['全部', ...new Set(TOOL_CARDS.map(tool => tool.category))]
 
+  useEffect(() => {
+    const hashTool = window.location.hash.replace(/^#tool=/, '')
+    const savedTool = window.localStorage.getItem('qcode-last-tool')
+    const nextTool = TOOL_CARDS.some(tool => tool.id === hashTool)
+      ? hashTool
+      : TOOL_CARDS.some(tool => tool.id === savedTool)
+        ? savedTool
+        : null
+    if (nextTool) setActive(nextTool)
+  }, [])
+
   const filteredTools = useMemo(() => {
     const keyword = query.trim().toLowerCase()
     return TOOL_CARDS.filter(tool => {
@@ -856,17 +1032,41 @@ export default function DaVinciToolbox() {
 
   const copy = async value => {
     if (!value) return
+    const fallbackCopy = () => {
+      const textarea = document.createElement('textarea')
+      textarea.value = value
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      const copied = document.execCommand('copy')
+      textarea.remove()
+      if (!copied) throw new Error('copy failed')
+    }
     try {
-      await navigator.clipboard.writeText(value)
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value)
+      } else {
+        fallbackCopy()
+      }
       setNotice('已复制到剪贴板')
     } catch {
-      setNotice('复制失败，请手动选择内容复制')
+      try {
+        fallbackCopy()
+        setNotice('已复制到剪贴板')
+      } catch {
+        setNotice('复制失败，请手动选择内容复制')
+      }
     }
     window.setTimeout(() => setNotice(''), 1800)
   }
 
   const openTool = id => {
     setActive(id)
+    window.localStorage.setItem('qcode-last-tool', id)
+    const url = new URL(window.location.href)
+    url.hash = `tool=${id}`
+    window.history.replaceState(window.history.state, '', url)
     window.setTimeout(
       () =>
         toolAreaRef.current?.scrollIntoView({
@@ -877,7 +1077,7 @@ export default function DaVinciToolbox() {
     )
   }
 
-  const activeTool = {
+  const toolPanels = {
     network: <NetworkTool copy={copy} />,
     json: <JsonTool copy={copy} />,
     text: <TextTool copy={copy} />,
@@ -886,7 +1086,7 @@ export default function DaVinciToolbox() {
     password: <PasswordTool copy={copy} />,
     image: <ImageTool />,
     classroom: <ClassroomTool copy={copy} />
-  }[active]
+  }
 
   return (
     <div className='mx-auto w-full max-w-6xl px-4 pb-16 pt-8 md:px-6 md:pt-12'>
@@ -1040,7 +1240,11 @@ export default function DaVinciToolbox() {
             ↑ 返回工具列表
           </button>
         </div>
-        {activeTool}
+        {Object.entries(toolPanels).map(([id, panel]) => (
+          <div key={id} hidden={active !== id} aria-hidden={active !== id}>
+            {panel}
+          </div>
+        ))}
       </div>
 
       <section className='mt-8 rounded-3xl border border-dashed border-orange-300 bg-orange-50/70 p-6 text-center dark:border-orange-800 dark:bg-orange-950/20'>
