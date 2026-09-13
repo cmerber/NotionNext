@@ -43,6 +43,17 @@ export const MenuListSide = props => {
     links = customMenu
   }
 
+  const toolboxLink = {
+    id: 'qcode-toolbox',
+    icon: 'fas fa-toolbox',
+    name: '实用工具',
+    href: '/tools',
+    show: true
+  }
+  if (!links?.some(link => link?.href === toolboxLink.href)) {
+    links = [toolboxLink, ...(links || [])]
+  }
+
   if (!links || links.length === 0) {
     return null
   }

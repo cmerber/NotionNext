@@ -402,6 +402,15 @@ const getSEOMeta = (props, router, locale) => {
         slug: 'archive',
         type: 'website'
       }
+    case '/tools':
+      return {
+        title: `达闻西实用工具箱 | ${siteInfo?.title}`,
+        description:
+          '免费、无需登录、在浏览器本地运行的 JSON、文本、时间、编码、密码、图片和课堂实用工具。',
+        image: `${siteInfo?.pageCover}`,
+        slug: 'tools',
+        type: 'website'
+      }
     case '/page/[page]':
       return {
         title: `${page} | Page | ${siteInfo?.title}`,

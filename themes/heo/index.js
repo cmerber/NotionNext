@@ -44,6 +44,7 @@ import CONFIG from './config'
 import { Style } from './style'
 import AISummary from '@/components/AISummary'
 import ArticleExpirationNotice from '@/components/ArticleExpirationNotice'
+import ToolboxPromo from '@/components/tools/ToolboxPromo'
 
 /**
  * 基础布局 采用上中下布局，移动端使用顶部侧边导航栏
@@ -143,6 +144,7 @@ const LayoutBase = props => {
 const LayoutIndex = props => {
   return (
     <div id='post-outer-wrapper' className='px-5 md:px-0'>
+      <ToolboxPromo />
       {/* 文章分类条 */}
       <CategoryBar {...props} />
       {siteConfig('POST_LIST_STYLE') === 'page' ? (
