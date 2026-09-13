@@ -14,7 +14,7 @@ export default function ToolsPage({ siteInfo }) {
         <title>{`达闻西实用工具箱 | ${siteTitle}`}</title>
         <meta
           name='description'
-          content='免费、无需登录、在浏览器本地运行的实用工具：JSON 格式化、文本清理、时间戳转换、编码、密码、图片压缩和课堂分组。'
+          content='免费、无需登录、在浏览器本地运行的实用工具：网络子网计算、密码生成、图片压缩和课堂分组。'
         />
         <link rel='canonical' href={canonical} />
       </Head>
