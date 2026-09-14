@@ -10,6 +10,132 @@ const Stat = ({ value, label, suffix = '' }) => (
   </div>
 )
 
+const RadarChart = ({ dimensions }) => {
+  const centerX = 210
+  const centerY = 176
+  const radius = 112
+  const labelRadius = 148
+  const angleFor = index => (Math.PI * 2 * index) / dimensions.length - Math.PI / 2
+  const pointAt = (index, distance) => {
+    const angle = angleFor(index)
+    return [
+      centerX + Math.cos(angle) * distance,
+      centerY + Math.sin(angle) * distance
+    ]
+  }
+  const pointsFor = factor =>
+    dimensions
+      .map((_, index) => pointAt(index, radius * factor).join(','))
+      .join(' ')
+  const abilityPoints = dimensions
+    .map((item, index) =>
+      pointAt(index, radius * Math.max(item.score, 8) / 100).join(',')
+    )
+    .join(' ')
+
+  return (
+    <div className='relative mx-auto w-full max-w-[460px]'>
+      <svg
+        viewBox='0 0 420 360'
+        role='img'
+        aria-label={`六维能力雷达图：${dimensions
+          .map(item => `${item.label} ${item.score}`)
+          .join('，')}`}
+        className='h-auto w-full overflow-visible text-gray-300 dark:text-gray-700'
+      >
+        <defs>
+          <linearGradient id='qcode-profile-radar' x1='0' y1='0' x2='1' y2='1'>
+            <stop offset='0%' stopColor='#6366f1' />
+            <stop offset='55%' stopColor='#8b5cf6' />
+            <stop offset='100%' stopColor='#fb923c' />
+          </linearGradient>
+          <filter id='qcode-profile-radar-glow' x='-30%' y='-30%' width='160%' height='160%'>
+            <feGaussianBlur stdDeviation='4' result='blur' />
+            <feMerge>
+              <feMergeNode in='blur' />
+              <feMergeNode in='SourceGraphic' />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {[0.2, 0.4, 0.6, 0.8, 1].map(factor => (
+          <polygon
+            key={factor}
+            points={pointsFor(factor)}
+            fill={factor % 0.4 === 0 ? 'rgba(99,102,241,.025)' : 'none'}
+            stroke='currentColor'
+            strokeWidth={factor === 1 ? 1.5 : 1}
+          />
+        ))}
+        {dimensions.map((item, index) => {
+          const [x, y] = pointAt(index, radius)
+          return (
+            <line
+              key={item.key}
+              x1={centerX}
+              y1={centerY}
+              x2={x}
+              y2={y}
+              stroke='currentColor'
+              strokeWidth='1'
+            />
+          )
+        })}
+
+        <polygon
+          points={abilityPoints}
+          fill='url(#qcode-profile-radar)'
+          fillOpacity='.24'
+          stroke='url(#qcode-profile-radar)'
+          strokeWidth='3'
+          strokeLinejoin='round'
+          filter='url(#qcode-profile-radar-glow)'
+        />
+        {dimensions.map((item, index) => {
+          const [x, y] = pointAt(
+            index,
+            radius * Math.max(item.score, 8) / 100
+          )
+          const [labelX, labelY] = pointAt(index, labelRadius)
+          return (
+            <g key={item.key}>
+              <circle
+                cx={x}
+                cy={y}
+                r='5'
+                fill={item.color}
+                stroke='white'
+                strokeWidth='2'
+              >
+                <title>{`${item.label}：${item.score}`}</title>
+              </circle>
+              <text
+                x={labelX}
+                y={labelY - 3}
+                textAnchor='middle'
+                className='fill-gray-700 text-[13px] font-bold dark:fill-gray-200'
+              >
+                {item.icon} {item.label}
+              </text>
+              <text
+                x={labelX}
+                y={labelY + 14}
+                textAnchor='middle'
+                className='fill-gray-400 text-[11px] font-black dark:fill-gray-500'
+              >
+                {item.score}
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      <div className='pointer-events-none absolute inset-x-0 bottom-3 text-center text-[10px] font-bold tracking-[0.16em] text-gray-300 dark:text-gray-600'>
+        0 — 100
+      </div>
+    </div>
+  )
+}
+
 export default function AdventurerProfile({ profile }) {
   useEffect(() => {
     const key = 'qcode-adventurer-level'
@@ -109,29 +235,32 @@ export default function AdventurerProfile({ profile }) {
             </div>
             <span className='text-xs text-gray-400'>优先统计近 90 天</span>
           </div>
-          <div className='mt-7 space-y-5'>
-            {profile.dimensions.map(item => (
-              <div key={item.key}>
-                <div className='mb-2 flex items-center justify-between text-sm'>
-                  <span className='font-bold text-gray-700 dark:text-gray-200'>
-                    <span className='mr-2' style={{ color: item.color }}>
-                      {item.icon}
+          <div className='mt-5 grid items-center gap-4 md:grid-cols-[minmax(0,1.08fr)_minmax(210px,.92fr)]'>
+            <RadarChart dimensions={profile.dimensions} />
+            <div className='space-y-4'>
+              {profile.dimensions.map(item => (
+                <div key={item.key}>
+                  <div className='mb-1.5 flex items-center justify-between text-sm'>
+                    <span className='font-bold text-gray-700 dark:text-gray-200'>
+                      <span className='mr-2' style={{ color: item.color }}>
+                        {item.icon}
+                      </span>
+                      {item.label}
                     </span>
-                    {item.label}
-                  </span>
-                  <span className='font-black text-gray-400'>{item.score}</span>
+                    <span className='font-black text-gray-400'>{item.score}</span>
+                  </div>
+                  <div className='h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800'>
+                    <div
+                      className='h-full rounded-full transition-all duration-1000'
+                      style={{
+                        width: `${item.score}%`,
+                        backgroundColor: item.color
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className='h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800'>
-                  <div
-                    className='h-full rounded-full transition-all duration-1000'
-                    style={{
-                      width: `${item.score}%`,
-                      backgroundColor: item.color
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
