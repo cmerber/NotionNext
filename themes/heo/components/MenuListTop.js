@@ -51,6 +51,17 @@ export const MenuListTop = props => {
     links = [toolboxLink, ...(links || [])]
   }
 
+  const profileLink = {
+    id: 'qcode-profile',
+    icon: 'fas fa-compass',
+    name: '冒险档案',
+    href: '/profile',
+    show: true
+  }
+  if (!links?.some(link => link?.href === profileLink.href)) {
+    links = [profileLink, ...(links || [])]
+  }
+
   if (!links || links.length === 0) {
     return null
   }
@@ -59,7 +70,8 @@ export const MenuListTop = props => {
     <>
       <nav
         id='nav-mobile'
-        className='leading-8 justify-center font-light w-full flex'>
+        className='leading-8 justify-center font-light w-full flex'
+      >
         {links?.map(
           (link, index) =>
             link && link.show && <MenuItemDrop key={index} link={link} />

@@ -54,6 +54,17 @@ export const MenuListSide = props => {
     links = [toolboxLink, ...(links || [])]
   }
 
+  const profileLink = {
+    id: 'qcode-profile',
+    icon: 'fas fa-compass',
+    name: '冒险档案',
+    href: '/profile',
+    show: true
+  }
+  if (!links?.some(link => link?.href === profileLink.href)) {
+    links = [profileLink, ...(links || [])]
+  }
+
   if (!links || links.length === 0) {
     return null
   }

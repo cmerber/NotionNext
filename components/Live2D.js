@@ -67,8 +67,8 @@ export default function Live2D() {
     }
 
     const idleId = window.requestIdleCallback
-      ? window.requestIdleCallback(loadPet, { timeout: 2500 })
-      : window.setTimeout(loadPet, 1200)
+      ? window.requestIdleCallback(() => void loadPet(), { timeout: 2500 })
+      : window.setTimeout(() => void loadPet(), 1200)
 
     return () => {
       if (window.cancelIdleCallback && typeof idleId === 'number') {
@@ -81,6 +81,18 @@ export default function Live2D() {
       window.clearTimeout(readyTimerRef.current)
     }
   }, [hidden, petLink, showPet])
+
+  useEffect(() => {
+    const handleProfileMessage = event => {
+      if (!event?.detail) return
+      setMessage(String(event.detail))
+      window.clearTimeout(messageTimerRef.current)
+      messageTimerRef.current = window.setTimeout(() => setMessage(''), 3600)
+    }
+    window.addEventListener('qcode:pet-message', handleProfileMessage)
+    return () =>
+      window.removeEventListener('qcode:pet-message', handleProfileMessage)
+  }, [])
 
   const showMessage = () => {
     const nextMessage =
