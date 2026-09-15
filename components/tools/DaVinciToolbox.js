@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import FileConverterTool from './FileConverterTool'
 import NetworkTool from './NetworkTool'
 import TeachingTool from './TeachingTool'
 import VideoTool from './VideoTool'
@@ -34,6 +35,14 @@ const TOOL_CARDS = [
     description: '点名分组、座位表、课堂计时、成绩换算与课程二维码。',
     category: '教学',
     features: ['点名分组', '座位表', '课堂计时', '成绩换算', '课程二维码']
+  },
+  {
+    id: 'files',
+    icon: '🗂️',
+    title: '文件变形器',
+    description: '图片、PDF、Word 内容转换，并统计中英文字数。',
+    category: '文件',
+    features: ['图片互转', '图片转 PDF', 'PDF 转图片', 'Word 内容', '文字统计']
   },
   {
     id: 'video',
@@ -692,6 +701,7 @@ export default function DaVinciToolbox() {
     password: <PasswordTool copy={copy} />,
     image: <ImageTool />,
     classroom: <TeachingTool copy={copy} />,
+    files: <FileConverterTool copy={copy} />,
     video: <VideoTool />
   }
 
