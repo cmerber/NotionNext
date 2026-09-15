@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import CalorieTool from './CalorieTool'
 import FileConverterTool from './FileConverterTool'
 import NetworkTool from './NetworkTool'
 import TeachingTool from './TeachingTool'
@@ -50,6 +51,14 @@ const TOOL_CARDS = [
     title: '视频取件箱',
     description: '视频直链直接保存，为 B站等平台生成兼容或极致画质下载任务。',
     category: '视频'
+  },
+  {
+    id: 'calories',
+    icon: '🍽️',
+    title: '饮食热量估算器',
+    description: '拍照、上传图片或描述一餐，识别食物并估算热量。',
+    category: '健康',
+    features: ['拍照识别', '文字分析', '份量修正']
   }
 ]
 
@@ -702,7 +711,8 @@ export default function DaVinciToolbox() {
     image: <ImageTool />,
     classroom: <TeachingTool copy={copy} />,
     files: <FileConverterTool copy={copy} />,
-    video: <VideoTool />
+    video: <VideoTool />,
+    calories: <CalorieTool />
   }
 
   return (
@@ -719,7 +729,7 @@ export default function DaVinciToolbox() {
             达闻西实用工具箱
           </h1>
           <p className='mt-4 max-w-2xl text-sm leading-7 text-white/85 md:text-base'>
-            不一定改变世界，但可能刚好有用。工具按场景组成套件，全部在浏览器本地运行，不上传你的文字、名单、密码、图片和网络配置。
+            不一定改变世界，但可能刚好有用。工具按场景组成套件，尽量在浏览器本地运行，不上传你的文字、名单、密码、图片和网络配置。
           </p>
           <div className='mt-6 flex flex-wrap gap-3 text-xs font-bold text-white/90'>
             <span className='rounded-full bg-black/15 px-3 py-2'>
@@ -871,7 +881,7 @@ export default function DaVinciToolbox() {
         </h2>
         <p className='mx-auto mt-2 max-w-2xl text-sm leading-6 text-gray-600 dark:text-gray-300'>
           后续功能优先收进现有套件，例如网络工程箱可继续加入 DNS、端口与 IPv6
-          辅助，保持入口少、能力完整、无需付费。
+          辅助，饮食工具也会逐步补充更常见的食物，保持入口少、能力完整、无需付费。
         </p>
       </section>
 
