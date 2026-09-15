@@ -33,4 +33,3 @@ export async function getStaticProps({ locale }) {
       : siteConfig('NEXT_REVALIDATE_SECOND', BLOG.NEXT_REVALIDATE_SECOND, props.NOTION_CONFIG)
   }
 }
-
