@@ -10,6 +10,36 @@ const Stat = ({ value, label, suffix = '' }) => (
   </div>
 )
 
+const MonthlyTrend = ({ months }) => {
+  const maxXp = Math.max(...months.map(item => item.xp), 1)
+  return (
+    <div className='mt-6 flex h-48 items-end gap-2 md:gap-4'>
+      {months.map(item => {
+        const height = item.xp ? Math.max(12, (item.xp / maxXp) * 100) : 4
+        return (
+          <div
+            key={item.key}
+            className='flex h-full min-w-0 flex-1 flex-col items-center justify-end'
+          >
+            <div className='mb-2 text-[10px] font-black text-gray-400'>
+              {item.xp ? `${item.xp} XP` : '—'}
+            </div>
+            <div className='flex h-32 w-full items-end overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800'>
+              <div
+                className='w-full rounded-xl bg-gradient-to-t from-indigo-500 via-violet-500 to-orange-400 transition-all duration-1000'
+                style={{ height: `${height}%` }}
+              />
+            </div>
+            <div className='mt-2 text-[11px] font-bold text-gray-500 dark:text-gray-400'>
+              {item.label}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 const RadarChart = ({ dimensions }) => {
   const centerX = 210
   const centerY = 176
@@ -39,7 +69,7 @@ const RadarChart = ({ dimensions }) => {
         viewBox='0 0 420 360'
         role='img'
         aria-label={`六维能力雷达图：${dimensions
-          .map(item => `${item.label} ${item.score}`)
+          .map(item => `${item.label} ${item.xp} XP，Lv.${item.level}`)
           .join('，')}`}
         className='h-auto w-full overflow-visible text-gray-300 dark:text-gray-700'
       >
@@ -107,7 +137,7 @@ const RadarChart = ({ dimensions }) => {
                 stroke='white'
                 strokeWidth='2'
               >
-                <title>{`${item.label}：${item.score}`}</title>
+                <title>{`${item.label}：${item.xp} XP，Lv.${item.level}`}</title>
               </circle>
               <text
                 x={labelX}
@@ -123,14 +153,14 @@ const RadarChart = ({ dimensions }) => {
                 textAnchor='middle'
                 className='fill-gray-400 text-[11px] font-black dark:fill-gray-500'
               >
-                {item.score}
+                Lv.{item.level}
               </text>
             </g>
           )
         })}
       </svg>
       <div className='pointer-events-none absolute inset-x-0 bottom-3 text-center text-[10px] font-bold tracking-[0.16em] text-gray-300 dark:text-gray-600'>
-        0 — 100
+        独立累计 · 500 XP 成长里程
       </div>
     </div>
   )
@@ -233,30 +263,45 @@ export default function AdventurerProfile({ profile }) {
                 六维能力画像
               </h2>
             </div>
-            <span className='text-xs text-gray-400'>优先统计近 90 天</span>
+            <span className='text-right text-xs leading-5 text-gray-400'>
+              独立累计经验
+              <br />
+              不会被其他能力稀释
+            </span>
           </div>
           <div className='mt-5 grid items-center gap-4 md:grid-cols-[minmax(0,1.08fr)_minmax(210px,.92fr)]'>
             <RadarChart dimensions={profile.dimensions} />
             <div className='space-y-4'>
               {profile.dimensions.map(item => (
                 <div key={item.key}>
-                  <div className='mb-1.5 flex items-center justify-between text-sm'>
+                  <div className='mb-1.5 flex items-center justify-between gap-3 text-sm'>
                     <span className='font-bold text-gray-700 dark:text-gray-200'>
                       <span className='mr-2' style={{ color: item.color }}>
                         {item.icon}
                       </span>
                       {item.label}
                     </span>
-                    <span className='font-black text-gray-400'>{item.score}</span>
+                    <span className='whitespace-nowrap font-black text-gray-500 dark:text-gray-300'>
+                      Lv.{item.level}
+                      <span className='ml-1 text-[10px] font-bold text-gray-400'>
+                        {item.xp} XP
+                      </span>
+                    </span>
                   </div>
                   <div className='h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800'>
                     <div
                       className='h-full rounded-full transition-all duration-1000'
                       style={{
-                        width: `${item.score}%`,
+                        width: `${item.levelXp}%`,
                         backgroundColor: item.color
                       }}
                     />
+                  </div>
+                  <div className='mt-1 flex justify-between text-[10px] text-gray-400'>
+                    <span>
+                      近30天 {item.recentXp > 0 ? `+${item.recentXp}` : '0'} XP
+                    </span>
+                    <span>距升级 {item.xpToNext} XP</span>
                   </div>
                 </div>
               ))}
@@ -315,6 +360,61 @@ export default function AdventurerProfile({ profile }) {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className='mt-6 grid gap-6 lg:grid-cols-[1.25fr_.75fr]'>
+        <div className='rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 md:p-8'>
+          <div className='text-xs font-black uppercase tracking-[0.18em] text-violet-500'>
+            GROWTH TREND
+          </div>
+          <div className='mt-1 flex flex-wrap items-end justify-between gap-2'>
+            <h2 className='text-2xl font-black text-gray-900 dark:text-white'>
+              近六个月成长趋势
+            </h2>
+            <span className='text-xs text-gray-400'>按记录日期汇总经验</span>
+          </div>
+          <MonthlyTrend months={profile.monthlyTrend} />
+        </div>
+
+        <div className='rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-indigo-50 p-6 dark:border-emerald-900/60 dark:from-emerald-950/25 dark:to-indigo-950/25 md:p-8'>
+          <div className='text-xs font-black uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400'>
+            MONTHLY REPORT
+          </div>
+          <h2 className='mt-1 text-2xl font-black text-gray-900 dark:text-white'>
+            本月成长报告
+          </h2>
+          <div className='mt-6 rounded-2xl bg-white/80 p-5 dark:bg-gray-900/70'>
+            <div className='text-4xl font-black text-gray-950 dark:text-white'>
+              +{profile.momentum30}
+              <span className='ml-1 text-sm text-gray-400'>XP</span>
+            </div>
+            <div className='mt-1 text-xs text-gray-500'>近30天成长动能</div>
+          </div>
+          <div className='mt-3 grid grid-cols-2 gap-3'>
+            <div className='rounded-2xl bg-white/70 p-4 dark:bg-gray-900/60'>
+              <div className={`text-lg font-black ${profile.momentumDelta >= 0 ? 'text-emerald-600' : 'text-orange-500'}`}>
+                {profile.momentumDelta >= 0 ? '+' : ''}
+                {profile.momentumDelta}
+              </div>
+              <div className='mt-1 text-[11px] text-gray-400'>较前30天</div>
+            </div>
+            <div className='rounded-2xl bg-white/70 p-4 dark:bg-gray-900/60'>
+              <div className='truncate text-lg font-black text-indigo-600 dark:text-indigo-300'>
+                {profile.fastestGrowing?.label || '积蓄中'}
+              </div>
+              <div className='mt-1 text-[11px] text-gray-400'>提升最快能力</div>
+            </div>
+          </div>
+          {profile.fastestGrowing && (
+            <div className='mt-4 text-sm leading-6 text-gray-600 dark:text-gray-300'>
+              最近30天，{profile.fastestGrowing.label} 获得了{' '}
+              <span className='font-black text-emerald-600'>
+                {profile.fastestGrowing.xp} XP
+              </span>
+              ，是当前提升最快的方向。
+            </div>
+          )}
         </div>
       </section>
 
