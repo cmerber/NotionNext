@@ -3,13 +3,15 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 const MODEL_SCRIPTS = [
   {
     id: 'qcode-tfjs',
-    src: 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js'
+    src: '/vendor/tfjs/tf-4.22.0.min.js'
   },
   {
     id: 'qcode-mobilenet',
-    src: 'https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js'
+    src: '/vendor/tfjs/mobilenet-2.1.1.min.js'
   }
 ]
+
+const FOOD_MODEL_URL = '/vendor/tfjs-models/mobilenet-v2-050/model.json'
 
 const FOODS = [
   {
@@ -381,7 +383,10 @@ function loadScript({ id, src }) {
     script.src = src
     script.async = true
     script.onload = resolve
-    script.onerror = () => reject(new Error('识别组件加载失败'))
+    script.onerror = () => {
+      script.remove()
+      reject(new Error('识别组件加载失败'))
+    }
     document.head.appendChild(script)
   })
 }
@@ -393,7 +398,9 @@ async function loadImageModel() {
   if (!window.__qcodeFoodModel) {
     window.__qcodeFoodModel = await window.mobilenet.load({
       version: 2,
-      alpha: 0.5
+      alpha: 0.5,
+      modelUrl: FOOD_MODEL_URL,
+      inputRange: [0, 1]
     })
   }
   return window.__qcodeFoodModel
