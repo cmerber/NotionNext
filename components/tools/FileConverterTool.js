@@ -632,6 +632,69 @@ function WordTool() {
 
 function TextCounter({ copy }) {
   const [value, setValue] = useState('')
+  const [sourceName, setSourceName] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const [isError, setIsError] = useState(false)
+
+  const readFile = async files => {
+    const file = files[0]
+    if (!file) return
+    setBusy(true)
+    setMessage(`正在读取 ${file.name}…`)
+    try {
+      assertFileSize([file], 40)
+      const extension = file.name.split('.').pop()?.toLowerCase()
+      let content = ''
+      if (extension === 'pdf') {
+        const pdfDocument = await loadPdfDocument(file)
+        if (pdfDocument.numPages > 100) {
+          throw new Error('文字统计最多读取 100 页 PDF。')
+        }
+        const pages = await extractPdfText(pdfDocument, (current, total) =>
+          setMessage(`正在读取 PDF 第 ${current}/${total} 页…`)
+        )
+        content = pages.join('\n\n')
+      } else if (extension === 'docx') {
+        await loadExternalResource(CDN.mammoth, 'js')
+        if (!window.mammoth) {
+          throw new Error('Word 读取组件加载失败，请检查网络。')
+        }
+        const result = await window.mammoth.extractRawText({
+          arrayBuffer: await file.arrayBuffer()
+        })
+        content = result.value
+      } else if (extension === 'html' || extension === 'htm') {
+        const html = await file.text()
+        content =
+          new DOMParser().parseFromString(html, 'text/html').body.textContent ||
+          ''
+      } else if (['txt', 'md', 'markdown', 'csv'].includes(extension)) {
+        content = await file.text()
+      } else {
+        throw new Error(
+          '暂不支持该文件，请选择 TXT、MD、CSV、HTML、DOCX 或 PDF。'
+        )
+      }
+      if (!content.trim()) {
+        throw new Error(
+          extension === 'pdf'
+            ? '没有读取到可统计文字；这可能是一份扫描版 PDF。'
+            : '文件中没有读取到可统计文字。'
+        )
+      }
+      setValue(content)
+      setSourceName(file.name)
+      setMessage(`已读取 ${file.name}，下方统计结果已更新。`)
+      setIsError(false)
+    } catch (error) {
+      setMessage(error.message || '文件读取失败。')
+      setIsError(true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const stats = useMemo(() => {
     const chinese = (value.match(/[\u3400-\u9fff]/g) || []).length
     const english = (value.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g) || []).length
@@ -677,9 +740,22 @@ function TextCounter({ copy }) {
   return (
     <div className='grid gap-5 lg:grid-cols-[1.05fr_.95fr]'>
       <div>
+        <FilePicker
+          accept='.txt,.md,.markdown,.csv,.html,.htm,.docx,.pdf,text/plain,text/markdown,text/csv,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          label={busy ? '正在读取文件…' : '上传文件并自动统计'}
+          onChange={readFile}
+        />
+        <div className='my-3 flex items-center gap-3 text-xs text-gray-400'>
+          <span className='h-px flex-1 bg-gray-200 dark:bg-gray-700' />
+          或直接粘贴文字
+          <span className='h-px flex-1 bg-gray-200 dark:bg-gray-700' />
+        </div>
         <textarea
           value={value}
-          onChange={event => setValue(event.target.value)}
+          onChange={event => {
+            setValue(event.target.value)
+            setSourceName('')
+          }}
           placeholder='在这里粘贴文章、论文摘要、作业说明或英文内容…'
           rows={16}
           className='w-full resize-y rounded-2xl border border-gray-200 bg-white p-4 text-sm leading-7 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-gray-600 dark:bg-gray-800 dark:focus:ring-indigo-900'
@@ -688,10 +764,23 @@ function TextCounter({ copy }) {
           <Button disabled={!value} onClick={() => copy(value)}>
             复制文字
           </Button>
-          <Button disabled={!value} onClick={() => setValue('')}>
+          <Button
+            disabled={!value}
+            onClick={() => {
+              setValue('')
+              setSourceName('')
+              setMessage('')
+            }}
+          >
             清空
           </Button>
+          {sourceName && (
+            <span className='flex min-h-[44px] max-w-full items-center rounded-xl bg-emerald-50 px-3 text-xs font-bold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200'>
+              <span className='truncate'>来源：{sourceName}</span>
+            </span>
+          )}
         </div>
+        <Notice message={message} error={isError} />
       </div>
       <div>
         <div className='grid grid-cols-2 gap-2'>
@@ -742,7 +831,7 @@ export default function FileConverterTool({ copy }) {
             LOCAL FILE LAB
           </div>
           <h2 className='mt-2 text-2xl font-black text-gray-900 dark:text-white md:text-3xl'>
-            🗂️ 文件变形器
+            🗂️ 格式转换工坊
           </h2>
           <p className='mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400'>
             图片、PDF、Word 内容转换与文字统计；文件不会上传到本站服务器。

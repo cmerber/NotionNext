@@ -39,7 +39,7 @@ const TOOL_CARDS = [
   {
     id: 'files',
     icon: '🗂️',
-    title: '文件变形器',
+    title: '格式转换工坊',
     description: '图片、PDF、Word 内容转换，并统计中英文字数。',
     category: '文件',
     features: ['图片互转', '图片转 PDF', 'PDF 转图片', 'Word 内容', '文字统计']
