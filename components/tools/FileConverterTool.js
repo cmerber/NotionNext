@@ -745,6 +745,9 @@ function TextCounter({ copy }) {
           label={busy ? '正在读取文件…' : '上传文件并自动统计'}
           onChange={readFile}
         />
+        <p className='mt-2 text-center text-xs leading-6 text-gray-400'>
+          支持 TXT、Markdown、CSV、HTML、DOCX 和含可选文字的 PDF
+        </p>
         <div className='my-3 flex items-center gap-3 text-xs text-gray-400'>
           <span className='h-px flex-1 bg-gray-200 dark:bg-gray-700' />
           或直接粘贴文字
