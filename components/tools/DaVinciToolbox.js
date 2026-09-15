@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import NetworkTool from './NetworkTool'
+import TeachingTool from './TeachingTool'
 import VideoTool from './VideoTool'
 
 const TOOL_CARDS = [
@@ -28,10 +29,11 @@ const TOOL_CARDS = [
   },
   {
     id: 'classroom',
-    icon: '🎲',
-    title: '课堂点将台',
-    description: '随机点名，或把名单快速随机分组。',
-    category: '教学'
+    icon: '🧰',
+    title: '教学百宝箱',
+    description: '点名分组、座位表、课堂计时、成绩换算与课程二维码。',
+    category: '教学',
+    features: ['点名分组', '座位表', '课堂计时', '成绩换算', '课程二维码']
   },
   {
     id: 'video',
@@ -470,7 +472,9 @@ function ImageTool() {
   )
 }
 
-function ClassroomTool({ copy }) {
+// 保留旧版组件，便于已有浏览器状态平滑迁移。
+// eslint-disable-next-line no-unused-vars
+function LegacyClassroomTool({ copy }) {
   const [names, setNames] = useState('')
   const [groupCount, setGroupCount] = useState(4)
   const [result, setResult] = useState([])
@@ -687,7 +691,7 @@ export default function DaVinciToolbox() {
     network: <NetworkTool copy={copy} />,
     password: <PasswordTool copy={copy} />,
     image: <ImageTool />,
-    classroom: <ClassroomTool copy={copy} />,
+    classroom: <TeachingTool copy={copy} />,
     video: <VideoTool />
   }
 

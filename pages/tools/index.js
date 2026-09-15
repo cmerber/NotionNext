@@ -14,7 +14,7 @@ export default function ToolsPage({ siteInfo }) {
         <title>{`达闻西实用工具箱 | ${siteTitle}`}</title>
         <meta
           name='description'
-          content='免费、无需登录的实用工具：网络子网计算、密码生成、图片压缩、课堂分组和视频下载。'
+          content='免费、无需登录的实用工具：网络子网计算、密码生成、图片压缩、教学百宝箱和视频下载。'
         />
         <link rel='canonical' href={canonical} />
       </Head>
