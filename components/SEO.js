@@ -411,6 +411,14 @@ const getSEOMeta = (props, router, locale) => {
         slug: 'tools',
         type: 'website'
       }
+    case '/projects':
+      return {
+        title: `作品与项目 | ${siteInfo?.title}`,
+        description: '集中展示橙子星球的工具、教学、实训、学习与研究项目。',
+        image: `${siteInfo?.pageCover}`,
+        slug: 'projects',
+        type: 'website'
+      }
     case '/page/[page]':
       return {
         title: `${page} | Page | ${siteInfo?.title}`,

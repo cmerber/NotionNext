@@ -30,7 +30,6 @@ import CategoryBar from './components/CategoryBar'
 import FloatTocButton from './components/FloatTocButton'
 import Footer from './components/Footer'
 import Header from './components/Header'
-import Hero from './components/Hero'
 import LatestPostsGroup from './components/LatestPostsGroup'
 import { NoticeBar } from './components/NoticeBar'
 import PostAdjacent from './components/PostAdjacent'
@@ -44,8 +43,7 @@ import CONFIG from './config'
 import { Style } from './style'
 import AISummary from '@/components/AISummary'
 import ArticleExpirationNotice from '@/components/ArticleExpirationNotice'
-import ToolboxPromo from '@/components/tools/ToolboxPromo'
-import ProfilePromo from '@/components/profile/ProfilePromo'
+import HomeWorkbench from '@/components/home/HomeWorkbench'
 
 /**
  * 基础布局 采用上中下布局，移动端使用顶部侧边导航栏
@@ -69,7 +67,6 @@ const LayoutBase = props => {
       {router.route === '/' ? (
         <>
           <NoticeBar />
-          <Hero {...props} />
         </>
       ) : null}
       {fullWidth ? null : <PostHeader {...props} isDarkMode={isDarkMode} />}
@@ -145,8 +142,11 @@ const LayoutBase = props => {
 const LayoutIndex = props => {
   return (
     <div id='post-outer-wrapper' className='px-5 md:px-0'>
-      <ToolboxPromo />
-      <ProfilePromo />
+      <HomeWorkbench
+        profile={props.profile}
+        projects={props.projects}
+        postCount={props.postCount || props.posts?.length || 0}
+      />
       {/* 文章分类条 */}
       <CategoryBar {...props} />
       {siteConfig('POST_LIST_STYLE') === 'page' ? (

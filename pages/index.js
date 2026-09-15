@@ -14,6 +14,8 @@ import { generateRedirectJson } from '@/lib/utils/redirect'
 import { checkDataFromAlgolia } from '@/lib/plugins/algolia'
 import pLimit from 'p-limit'
 import { adapterNotionBlockMap } from '@/lib/utils/notion.util'
+import { getAdventurerProfile } from '@/lib/profile/notionProfile'
+import { buildPublicProjects } from '@/lib/projects/projectCatalog'
 
 /**
  * 首页布局
@@ -32,7 +34,10 @@ const Index = props => {
 export async function getStaticProps(req) {
   const { locale } = req
   const from = 'index'
-  const props = await fetchGlobalAllData({ from, locale })
+  const [props, profile] = await Promise.all([
+    fetchGlobalAllData({ from, locale }),
+    getAdventurerProfile()
+  ])
   if (process.env.NODE_ENV === 'development') {
     const configTheme = BLOG.THEME
     const notionTheme = props?.NOTION_CONFIG?.THEME || null
@@ -67,6 +72,8 @@ export async function getStaticProps(req) {
   props.posts = props.allPages?.filter(
     page => page.type === 'Post' && page.status === 'Published'
   )
+  props.projects = buildPublicProjects(props.allPages)
+  props.profile = profile
 
   // 处理分页
   const POST_LIST_STYLE = siteConfig(

@@ -40,27 +40,33 @@ export const MenuListTop = props => {
     links = customMenu
   }
 
-  const toolboxLink = {
-    id: 'qcode-toolbox',
-    icon: 'fas fa-toolbox',
-    name: '实用工具',
-    href: '/tools',
-    show: true
-  }
-  if (!links?.some(link => link?.href === toolboxLink.href)) {
-    links = [toolboxLink, ...(links || [])]
-  }
-
-  const profileLink = {
-    id: 'qcode-profile',
-    icon: 'fas fa-compass',
-    name: '冒险档案',
-    href: '/profile',
-    show: true
-  }
-  if (!links?.some(link => link?.href === profileLink.href)) {
-    links = [profileLink, ...(links || [])]
-  }
+  const qcodeLinks = [
+    {
+      id: 'qcode-profile',
+      icon: 'fas fa-compass',
+      name: '冒险档案',
+      href: '/profile',
+      show: true
+    },
+    {
+      id: 'qcode-projects',
+      icon: 'fas fa-map',
+      name: '作品馆',
+      href: '/projects',
+      show: true
+    },
+    {
+      id: 'qcode-toolbox',
+      icon: 'fas fa-toolbox',
+      name: '实用工具',
+      href: '/tools',
+      show: true
+    }
+  ]
+  links = [
+    ...qcodeLinks.filter(item => !links?.some(link => link?.href === item.href)),
+    ...(links || [])
+  ]
 
   if (!links || links.length === 0) {
     return null
