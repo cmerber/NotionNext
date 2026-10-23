@@ -1,8 +1,7 @@
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import SmartLink from '@/components/SmartLink'
-import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import useIsHydrated from '@/hooks/useIsHydrated'
 import CONFIG from '../config'
 import NotByAI from '@/components/NotByAI'
 import { resolveArticleCopyrightText } from '@/lib/utils/articleCopyright'
@@ -12,11 +11,13 @@ import { resolveArticleCopyrightText } from '@/lib/utils/articleCopyright'
  * @returns
  */
 export default function PostCopyright({ post }) {
-  const router = useRouter()
-  const [path, setPath] = useState(siteConfig('LINK') + router.asPath)
-  useEffect(() => {
-    setPath(window.location.href)
-  })
+  const hydrated = useIsHydrated()
+  // Static article HTML has no preview query. Use the serialized post URL on
+  // both sides first; only show the actual browser address after hydration.
+  const articlePath = post?.href || `/${(post?.slug || post?.id || '').replace(/^\/+/, '')}`
+  const path = hydrated
+    ? window.location.href
+    : new URL(articlePath, siteConfig('LINK')).href
 
   const { locale } = useGlobal()
   const copyrightText = resolveArticleCopyrightText({
