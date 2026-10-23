@@ -801,6 +801,29 @@ export function Style() {
         }
       }
       @media (max-width: 760px) {
+        #theme-orange {
+          padding: 0 16px calc(76px + env(safe-area-inset-bottom));
+        }
+        body:has(#theme-orange) #draggableBox {
+          position: absolute;
+          left: auto !important;
+          top: 24px !important;
+          right: 16px;
+          bottom: auto;
+          border-radius: 50%;
+        }
+        body:has(#theme-orange) #draggableBox [data-drag-handle],
+        body:has(#theme-orange) #draggableBox #themeSelect ~ button,
+        body:has(#theme-orange) #themeSelect > span:last-child {
+          display: none;
+        }
+        body:has(#theme-orange) #themeSelect {
+          width: 44px;
+          height: 44px;
+          padding: 0;
+          justify-content: center;
+          border-radius: 50%;
+        }
         #theme-orange .orange-header {
           min-height: 100px;
           padding: 17px 0;
@@ -808,6 +831,7 @@ export function Style() {
           gap: 17px;
         }
         #theme-orange .orange-brand {
+          max-width: calc(100% - 64px);
           font-size: 19px;
         }
         #theme-orange .orange-brand small {
@@ -816,23 +840,28 @@ export function Style() {
         #theme-orange .orange-header nav {
           width: 100%;
           justify-content: flex-start;
-          gap: 18px;
+          gap: 12px;
           font-size: 12px;
         }
+        #theme-orange .orange-header nav > a {
+          display: inline-flex;
+          align-items: center;
+          min-height: 44px;
+        }
         #theme-orange .orange-header .orange-round-button {
-          width: 28px;
-          height: 28px;
+          width: 44px;
+          height: 44px;
           font-size: 18px;
         }
         #theme-orange .orange-studio {
           display: flex;
           flex-direction: column;
-          margin-top: 23px;
+          margin-top: 16px;
         }
         #theme-orange .orange-stage {
-          height: clamp(430px, 108vw, 590px);
+          height: clamp(400px, 108vw, 520px);
           order: 1;
-          margin-top: 24px;
+          margin-top: 16px;
         }
         #theme-orange .orange-studio-note {
           display: contents;
@@ -843,7 +872,8 @@ export function Style() {
         #theme-orange .orange-studio-note h1 {
           max-width: none;
           margin: 5px 0 10px;
-          font-size: 30px;
+          font-size: 28px;
+          line-height: 1.4;
         }
         #theme-orange .orange-intro {
           max-width: none;
@@ -851,7 +881,7 @@ export function Style() {
           font-size: 12px;
         }
         #theme-orange .orange-studio-note .orange-eyebrow {
-          margin-bottom: 8px;
+          display: none;
         }
         #theme-orange .orange-place-note {
           order: 3;
@@ -875,21 +905,32 @@ export function Style() {
         #theme-orange .orange-scene-controls {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          padding: 6px 10px;
-          height: 84px;
-          gap: 0;
+          padding: 8px;
+          min-height: 108px;
+          height: auto;
+          gap: 4px;
         }
         #theme-orange .orange-canvas {
-          bottom: 78px;
+          bottom: 108px;
         }
         #theme-orange .orange-scene-caption {
-          bottom: 97px;
+          bottom: 120px;
           font-size: 10px;
         }
         #theme-orange .orange-host-intro {
-          margin-bottom: 20px;
+          margin-bottom: 12px;
+        }
+        #theme-orange .orange-host-intro .orange-host-status {
+          writing-mode: horizontal-tb;
+          max-width: 75px;
+          text-align: right;
+          line-height: 1.7;
+          letter-spacing: 1px;
         }
         #theme-orange .orange-welcome-bubble {
+          max-width: calc(100% - 24px);
+          white-space: normal;
+          width: max-content;
           padding: 10px 14px;
           font-size: 12px;
           top: 15%;
@@ -898,8 +939,12 @@ export function Style() {
           font-size: 10px;
         }
         #theme-orange .orange-scene-controls button {
-          font-size: 10px;
+          min-height: 44px;
+          font-size: 11px;
           padding: 8px;
+        }
+        #theme-orange .orange-place-nav button {
+          min-height: 76px;
         }
         #theme-orange .orange-journal-section {
           margin: 40px 0;

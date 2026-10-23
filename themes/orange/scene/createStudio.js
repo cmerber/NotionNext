@@ -24,6 +24,7 @@ export function createStudio(host, initial, callbacks) {
   let moved = false
   let time = 0
   let previous = 0
+  let compact = false
   const materials = new Set()
   const geometries = new Set()
   const textures = new Set()
@@ -52,8 +53,8 @@ export function createStudio(host, initial, callbacks) {
   controls.mouseButtons.MIDDLE = null
   controls.enableZoom = false
   controls.touches.ONE = THREE.TOUCH.ROTATE
-  controls.touches.TWO = THREE.TOUCH.DOLLY_PAN
-  renderer.domElement.style.touchAction = 'pan-y'
+  controls.touches.TWO = null
+  renderer.domElement.style.touchAction = 'pan-y pinch-zoom'
 
   const mat = (color, extra = {}) => {
     const value = new THREE.MeshStandardMaterial({
@@ -401,6 +402,12 @@ export function createStudio(host, initial, callbacks) {
       reducedMotion.matches
     )
       return
+    // Small screens need fewer pixels and frames, while taps and camera changes
+    // still render immediately. Keep vertical swipes and browser pinch zoom free.
+    if (compact && previous && timestamp - previous < 1000 / 30) {
+      frame = requestAnimationFrame(animate)
+      return
+    }
     const delta = Math.min((timestamp - (previous || timestamp)) / 1000, 0.05)
     previous = timestamp
     time += delta
@@ -464,6 +471,15 @@ export function createStudio(host, initial, callbacks) {
     const width = host.clientWidth
     const height = host.clientHeight
     if (!width || !height) return
+    compact = width < 600
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.25 : 1.75))
+    const shadowSize = compact ? 512 : 1024
+    if (sun.shadow.mapSize.width !== shadowSize) {
+      sun.shadow.mapSize.set(shadowSize, shadowSize)
+      sun.shadow.map?.dispose()
+      sun.shadow.map = null
+      sun.shadow.needsUpdate = true
+    }
     renderer.setSize(width, height)
     const aspect = width / height
     const span = Math.max(5.2, 6.1 / aspect)
