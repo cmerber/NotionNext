@@ -9,9 +9,8 @@ import '@/styles/notion.css' //  重写部分notion样式
 import useAdjustStyle from '@/hooks/useAdjustStyle'
 import { GlobalContextProvider } from '@/lib/global'
 import { getBaseLayoutByTheme } from '@/themes/theme'
-import { useRouter } from 'next/router'
+import useThemeQuery from '@/hooks/useThemeQuery'
 import { useCallback, useEffect, useMemo } from 'react'
-import { getQueryParam } from '../lib/utils'
 import ErrorHandler from '@/lib/utils/errorHandler'
 
 // 各种扩展插件 这个要阻塞引入
@@ -68,8 +67,7 @@ const MyApp = ({ Component, pageProps }) => {
   // 一些可能出现 bug 的样式，可以统一放入该钩子进行调整
   useAdjustStyle()
 
-  const route = useRouter()
-  const queryTheme = getQueryParam(route.asPath, 'theme')
+  const queryTheme = useThemeQuery()
   const notionTheme = pageProps?.NOTION_CONFIG?.THEME
   const configTheme = BLOG.THEME
   const theme = useMemo(() => {

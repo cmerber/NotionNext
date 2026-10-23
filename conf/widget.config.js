@@ -2,7 +2,7 @@
  * 悬浮在网页上的挂件
  */
 module.exports = {
-  THEME_SWITCH: process.env.NEXT_PUBLIC_THEME_SWITCH || false, // 是否显示切换主题按钮
+  THEME_SWITCH: process.env.NEXT_PUBLIC_THEME_SWITCH ?? true, // 默认开放主题体验面板；Notion Config 可设置 THEME_SWITCH=false 关闭，不改变默认 THEME
   // AI 聊天机器人相关配置已迁移至 conf/ai.config.js
 
   // 悬浮挂件

@@ -11,6 +11,27 @@
 
 /** @type {Record<string, { name?: string, summary?: string, cover?: string, coverWebp?: string, rootId?: string, tier?: 'free' | 'paid', settings?: Array<{ key: string, label: string, type: 'boolean' | 'text' | 'number' | 'select', defaultValue: string | number | boolean, options?: Array<{ label: string, value: string | number | boolean }> }>, palette?: Array<{ key: string, cssVar: string, label: string, defaultValue: string }> }>} */
 export const THEME_SWITCH_MANIFEST = {
+  orange: {
+    name: 'Orange 3D · 橙子工作室',
+    summary: '可旋转的微缩工作室，点击书架、电脑与档案柜，探索文章、工具与成长。',
+    rootId: 'theme-orange',
+    settings: [
+      { key: 'ORANGE_SCENE_ENABLE', label: '交互 3D 场景', type: 'boolean', defaultValue: true },
+      { key: 'ORANGE_AMBIENCE_ENABLE', label: '花瓣与萤光', type: 'boolean', defaultValue: true },
+      { key: 'ORANGE_TITLE', label: '首页标题', type: 'text', defaultValue: '把好奇心，住成一颗星球。' },
+      { key: 'ORANGE_DESCRIPTION', label: '首页介绍', type: 'text', defaultValue: '写代码，做研究，也认真生活。欢迎来我的小小工作室坐一坐。' }
+    ],
+    palette: [
+      { key: 'ORANGE_COLOR_BG', cssVar: '--orange-bg', label: '页面背景', defaultValue: '#f5f2eb' },
+      { key: 'ORANGE_COLOR_SURFACE', cssVar: '--orange-surface', label: '卡片背景', defaultValue: '#fffdf8' },
+      { key: 'ORANGE_COLOR_TEXT', cssVar: '--orange-text', label: '主文字', defaultValue: '#343b35' },
+      { key: 'ORANGE_COLOR_ACCENT', cssVar: '--orange-accent', label: '强调色', defaultValue: '#c6542f' },
+      { key: 'ORANGE_COLOR_BG_DARK', cssVar: '--orange-bg', label: '深色：页面背景', defaultValue: '#192521' },
+      { key: 'ORANGE_COLOR_SURFACE_DARK', cssVar: '--orange-surface', label: '深色：卡片背景', defaultValue: '#23332b' },
+      { key: 'ORANGE_COLOR_TEXT_DARK', cssVar: '--orange-text', label: '深色：主文字', defaultValue: '#ece8dc' },
+      { key: 'ORANGE_COLOR_ACCENT_DARK', cssVar: '--orange-accent', label: '深色：强调色', defaultValue: '#ffb078' }
+    ]
+  },
   endspace: {
     name: 'Endspace',
     summary: '轻工业终末风，侧栏导航、悬浮控件与加载动画。',
