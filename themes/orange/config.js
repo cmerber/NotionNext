@@ -3,6 +3,7 @@ const CONFIG = {
   ORANGE_DESCRIPTION:
     '写代码，做研究，也认真生活。欢迎来我的小小工作室坐一坐。',
   ORANGE_SCENE_ENABLE: true,
+  ORANGE_AMBIENCE_ENABLE: true,
   ORANGE_COLOR_BG: '#f5f2eb',
   ORANGE_COLOR_SURFACE: '#fffdf8',
   ORANGE_COLOR_TEXT: '#343b35',

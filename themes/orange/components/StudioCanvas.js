@@ -4,6 +4,9 @@ export default function StudioCanvas({
   night,
   view,
   paused,
+  ambience,
+  greeting,
+  onGreet,
   onSelect,
   onHover,
   onReady,
@@ -11,10 +14,16 @@ export default function StudioCanvas({
 }) {
   const host = useRef(null)
   const api = useRef(null)
-  const callbacks = useRef({ onSelect, onHover, onReady, onUnavailable })
-  callbacks.current = { onSelect, onHover, onReady, onUnavailable }
-  const options = useRef({ night, view, paused })
-  options.current = { night, view, paused }
+  const callbacks = useRef({
+    onSelect,
+    onHover,
+    onReady,
+    onUnavailable,
+    onGreet
+  })
+  callbacks.current = { onSelect, onHover, onReady, onUnavailable, onGreet }
+  const options = useRef({ night, view, paused, ambience, greeting })
+  options.current = { night, view, paused, ambience, greeting }
 
   useEffect(() => {
     let cancelled = false
@@ -27,7 +36,8 @@ export default function StudioCanvas({
           onSelect: value => callbacks.current.onSelect(value),
           onHover: value => callbacks.current.onHover(value),
           onReady: () => callbacks.current.onReady(),
-          onUnavailable: () => callbacks.current.onUnavailable()
+          onUnavailable: () => callbacks.current.onUnavailable(),
+          onGreet: () => callbacks.current.onGreet?.()
         })
         api.current = instance
         dispose = () => instance.dispose()
@@ -43,15 +53,15 @@ export default function StudioCanvas({
   }, [])
 
   useEffect(() => {
-    api.current?.update({ night, view, paused })
-  }, [night, view, paused])
+    api.current?.update({ night, view, paused, ambience, greeting })
+  }, [night, view, paused, ambience, greeting])
 
   return (
     <div
       ref={host}
       className='orange-canvas'
       role='img'
-      aria-label='可旋转的微缩工作室，包含可点击的书架、电脑、档案柜和沙发。也可以使用下方按钮选择入口。'
+      aria-label='可旋转的治愈系微缩工作室，有棕发黑色上衣的小主人、书架、电脑和档案柜。点击人物会挥手，也可以使用下方按钮选择入口。'
     />
   )
 }

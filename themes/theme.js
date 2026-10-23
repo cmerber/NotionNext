@@ -1,8 +1,8 @@
 import BLOG, { LAYOUT_MAPPINGS } from '@/blog.config'
 import getConfig from 'next/config'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/router'
-import { getQueryParam, getQueryVariable, isBrowser } from '../lib/utils'
+import useThemeQuery from '@/hooks/useThemeQuery'
+import { getQueryVariable, isBrowser } from '../lib/utils'
 
 // 在next.config.js中扫描所有主题
 export const { THEMES = [] } = getConfig()?.publicRuntimeConfig || {}
@@ -176,8 +176,7 @@ export const getThemeConfig = async themeQuery => {
 /**
  * 获取当前主题（query 主题优先，且做合法性校验）
  */
-const getCurrentTheme = (router, fallbackTheme) => {
-  const queryTheme = getQueryParam(router?.asPath, 'theme')
+const getCurrentTheme = (queryTheme, fallbackTheme) => {
   if (queryTheme) {
     return normalizeThemeName(queryTheme)
   }
@@ -220,8 +219,8 @@ export const DynamicLayout = props => {
  * @returns
  */
 export const useLayoutByTheme = ({ layoutName, theme }) => {
-  const router = useRouter()
-  const themeQuery = getCurrentTheme(router, theme)
+  const queryTheme = useThemeQuery()
+  const themeQuery = getCurrentTheme(queryTheme, theme)
   const cacheKey = `${themeQuery}:${layoutName}`
 
   if (layoutByThemeCache.has(cacheKey)) {

@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import SmartLink from '@/components/SmartLink'
 import { useGlobal } from '@/lib/global'
 import { siteConfig } from '@/lib/config'
@@ -61,9 +62,22 @@ export default function Studio({ posts = [] }) {
   const [flat, setFlat] = useState(false)
   const [sceneStatus, setSceneStatus] = useState('loading')
   const [hover, setHover] = useState('')
+  const [greeting, setGreeting] = useState(0)
+  const [greetingVisible, setGreetingVisible] = useState(false)
+  const [ambience, setAmbience] = useState(true)
+  const greet = useCallback(() => {
+    setGreeting(value => value + 1)
+    setGreetingVisible(true)
+  }, [])
+  useEffect(() => {
+    if (!greetingVisible) return
+    const timer = setTimeout(() => setGreetingVisible(false), 4500)
+    return () => clearTimeout(timer)
+  }, [greeting, greetingVisible])
   const fallback = useCallback(() => setSceneStatus('unavailable'), [])
   const place = PLACES.find(item => item.id === selected) || PLACES[0]
   const sceneEnabled = siteConfig('ORANGE_SCENE_ENABLE', true, CONFIG)
+  const ambienceEnabled = siteConfig('ORANGE_AMBIENCE_ENABLE', true, CONFIG)
   const showScene = sceneEnabled && !flat && sceneStatus !== 'unavailable'
   const title = String(siteConfig('ORANGE_TITLE', CONFIG.ORANGE_TITLE, CONFIG))
   const titleBreak = title.indexOf('，')
@@ -80,6 +94,9 @@ export default function Studio({ posts = [] }) {
             night={isDarkMode}
             view={view}
             paused={paused}
+            ambience={ambience && ambienceEnabled}
+            greeting={greeting}
+            onGreet={greet}
             onSelect={setSelected}
             onHover={setHover}
             onReady={() => setSceneStatus('ready')}
@@ -109,11 +126,21 @@ export default function Studio({ posts = [] }) {
             </div>
           </div>
         )}
+        <div
+          className='orange-welcome-bubble'
+          role='status'
+          aria-live='polite'
+          hidden={!greetingVisible}
+        >
+          嗨，欢迎来到我的小小星球。
+          <br />
+          <span>今天也要记得，给自己一点温柔 🍊</span>
+        </div>
         <div className='orange-scene-caption' aria-live='polite'>
           {hover
             ? `${PLACES.find(item => item.id === hover)?.title || ''} · 点击探索`
             : showScene
-              ? '拖动旋转 · 点击房间里的物件'
+              ? '拖动看看小屋 · 点一下我，我会跟你打招呼'
               : '点击入口，探索星球'}
         </div>
         <div className='orange-scene-controls' aria-label='场景控制'>
@@ -129,6 +156,18 @@ export default function Studio({ posts = [] }) {
               <button type='button' onClick={() => setView(value => value + 1)}>
                 ↻ 切换视角
               </button>
+              <button type='button' onClick={greet}>
+                👋 打个招呼
+              </button>
+              {ambienceEnabled && (
+                <button
+                  type='button'
+                  onClick={() => setAmbience(value => !value)}
+                  aria-pressed={ambience}
+                >
+                  {isDarkMode ? '✧ 萤光' : '❀ 花雨'}
+                </button>
+              )}
               <button
                 type='button'
                 onClick={() => setPaused(value => !value)}
@@ -154,6 +193,19 @@ export default function Studio({ posts = [] }) {
       </div>
       <aside className='orange-studio-note'>
         <div>
+          <div className='orange-host-intro'>
+            <Image
+              src='/orange/avatar-reference.webp'
+              alt='橙子星球小主人：棕色短发、黑色翻领上衣'
+              width={48}
+              height={48}
+              unoptimized
+            />
+            <span>
+              你好呀，我是成<small>欢迎走进我的小小世界</small>
+            </span>
+            <span className='orange-host-status'>在这里，慢慢生长</span>
+          </div>
           <p className='orange-eyebrow'>A SMALL PLACE FOR BIG IDEAS</p>
           <h1>
             {titleBreak >= 0 ? (

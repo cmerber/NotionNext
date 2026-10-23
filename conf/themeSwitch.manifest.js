@@ -17,6 +17,7 @@ export const THEME_SWITCH_MANIFEST = {
     rootId: 'theme-orange',
     settings: [
       { key: 'ORANGE_SCENE_ENABLE', label: '交互 3D 场景', type: 'boolean', defaultValue: true },
+      { key: 'ORANGE_AMBIENCE_ENABLE', label: '花瓣与萤光', type: 'boolean', defaultValue: true },
       { key: 'ORANGE_TITLE', label: '首页标题', type: 'text', defaultValue: '把好奇心，住成一颗星球。' },
       { key: 'ORANGE_DESCRIPTION', label: '首页介绍', type: 'text', defaultValue: '写代码，做研究，也认真生活。欢迎来我的小小工作室坐一坐。' }
     ],

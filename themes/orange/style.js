@@ -22,6 +22,9 @@ export function Style() {
         font-size: 15px;
         line-height: 1.7;
         padding: 0 5%;
+        transition:
+          background-color 1s ease,
+          color 0.6s ease;
       }
       .dark #theme-orange {
         --orange-bg: ${value('ORANGE_COLOR_BG_DARK')};
@@ -153,13 +156,85 @@ export function Style() {
         position: relative;
         height: clamp(450px, 43vw, 640px);
         border: 1px solid var(--orange-line);
-        border-radius: 16px;
+        border-radius: 24px;
         overflow: hidden;
         background: radial-gradient(
           ellipse at 45% 45%,
           var(--orange-surface),
           var(--orange-stage) 78%
         );
+        box-shadow:
+          0 22px 65px -38px #75846e70,
+          inset 0 1px 0 #ffffff90;
+      }
+      #theme-orange .orange-stage::before {
+        content: '';
+        position: absolute;
+        width: 210px;
+        height: 210px;
+        border-radius: 50%;
+        background: #fff0d6;
+        filter: blur(45px);
+        opacity: 0.65;
+        right: 4%;
+        top: 8%;
+        pointer-events: none;
+      }
+      .dark #theme-orange .orange-stage::before {
+        background: #a7b8dc;
+        opacity: 0.12;
+      }
+      #theme-orange .orange-host-intro {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 28px;
+      }
+      #theme-orange .orange-host-intro img {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 3px solid var(--orange-surface);
+        box-shadow: 0 4px 12px #302c2310;
+      }
+      #theme-orange .orange-host-intro > span {
+        font-size: 12px;
+      }
+      #theme-orange .orange-host-intro small {
+        display: block;
+        margin-top: 3px;
+        font-size: 10px;
+        color: var(--orange-muted);
+      }
+      #theme-orange .orange-host-intro .orange-host-status {
+        font-size: 9px;
+        margin-left: auto;
+        color: var(--orange-muted);
+        writing-mode: vertical-rl;
+        letter-spacing: 2px;
+      }
+      #theme-orange .orange-welcome-bubble {
+        position: absolute;
+        z-index: 5;
+        left: 50%;
+        top: 12%;
+        transform: translateX(-50%);
+        text-align: center;
+        white-space: nowrap;
+        border: 1px solid var(--orange-line);
+        background: var(--orange-surface);
+        border-radius: 20px 20px 20px 4px;
+        padding: 14px 22px;
+        box-shadow: 0 12px 30px #293c2420;
+        font-size: 13px;
+        pointer-events: none;
+      }
+      #theme-orange .orange-welcome-bubble span {
+        color: var(--orange-muted);
+        font-size: 11px;
+      }
+      #theme-orange .orange-welcome-bubble[hidden] {
+        display: none;
       }
       #theme-orange .orange-stage-label {
         position: absolute;
@@ -226,6 +301,7 @@ export function Style() {
         gap: 8px;
         border-top: 1px solid var(--orange-line);
         background: var(--orange-surface);
+        z-index: 3;
       }
       #theme-orange .orange-scene-controls button {
         background: none;
@@ -342,6 +418,7 @@ export function Style() {
         text-align: left;
         padding: 21px 24px;
         transition: background 0.2s;
+        min-height: 92px;
       }
       #theme-orange .orange-place-nav button:last-child {
         border-right: 0;
@@ -405,6 +482,13 @@ export function Style() {
         border-radius: 10px;
         background: var(--orange-surface);
         overflow: hidden;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+      #theme-orange .orange-post-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 38px -20px #42664640;
       }
       #theme-orange .orange-post-cover {
         display: block;
@@ -746,7 +830,7 @@ export function Style() {
           margin-top: 23px;
         }
         #theme-orange .orange-stage {
-          height: clamp(370px, 94vw, 540px);
+          height: clamp(430px, 108vw, 590px);
           order: 1;
           margin-top: 24px;
         }
@@ -789,7 +873,29 @@ export function Style() {
           border-bottom: 1px solid var(--orange-line);
         }
         #theme-orange .orange-scene-controls {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          padding: 6px 10px;
+          height: 84px;
           gap: 0;
+        }
+        #theme-orange .orange-canvas {
+          bottom: 78px;
+        }
+        #theme-orange .orange-scene-caption {
+          bottom: 97px;
+          font-size: 10px;
+        }
+        #theme-orange .orange-host-intro {
+          margin-bottom: 20px;
+        }
+        #theme-orange .orange-welcome-bubble {
+          padding: 10px 14px;
+          font-size: 12px;
+          top: 15%;
+        }
+        #theme-orange .orange-welcome-bubble span {
+          font-size: 10px;
         }
         #theme-orange .orange-scene-controls button {
           font-size: 10px;

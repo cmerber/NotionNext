@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { createCharacter } from './createCharacter'
 
 // Original procedural geometry: no remote models, textures, or model service.
 export function createStudio(host, initial, callbacks) {
@@ -33,10 +34,10 @@ export function createStudio(host, initial, callbacks) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75))
   renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  renderer.shadowMap.type = THREE.PCFShadowMap
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 1.2
+  renderer.toneMappingExposure = 1.05
   host.appendChild(renderer.domElement)
   const controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = false
@@ -64,12 +65,12 @@ export function createStudio(host, initial, callbacks) {
     return value
   }
   const palette = {
-    cream: mat('#e8dbc3'),
-    wall: mat('#e6d6b9'),
-    wood: mat('#af7045'),
-    darkWood: mat('#694833'),
-    green: mat('#476a51'),
-    sage: mat('#a5b394'),
+    cream: mat('#f2e6d3'),
+    wall: mat('#eadfcf'),
+    wood: mat('#bd8e64'),
+    darkWood: mat('#805c45'),
+    green: mat('#6c8771'),
+    sage: mat('#bfccb1'),
     orange: mat('#e98536'),
     peach: mat('#eeac7c'),
     white: mat('#ffefd5'),
@@ -140,14 +141,15 @@ export function createStudio(host, initial, callbacks) {
     )
   }
 
-  const ambient = new THREE.HemisphereLight('#fff7df', '#8d9c80', 2.7)
+  const ambient = new THREE.HemisphereLight('#fff3e4', '#9cae9b', 2.1)
   scene.add(ambient)
-  const sun = new THREE.DirectionalLight('#fff0d6', 4)
+  const sun = new THREE.DirectionalLight('#ffead4', 2.8)
   sun.position.set(3, 10, 7)
   sun.castShadow = true
   sun.shadow.mapSize.set(1024, 1024)
   Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8 })
   sun.shadow.normalBias = 0.04
+  sun.shadow.radius = 4
   scene.add(sun)
   const lampLight = new THREE.PointLight('#ffb963', 4, 7, 2)
   lampLight.position.set(2.6, 3, -1.7)
@@ -282,24 +284,8 @@ export function createStudio(host, initial, callbacks) {
   box(0.48, 0.06, 0.36, palette.white, -1.48, 0.81, 1.1)
   box(0.46, 0.025, 0.36, palette.orange, -1.48, 0.85, 1.1)
 
-  // Orange explorer mascot, built from small geometric forms.
-  const explorer = group('about', 0.25, 0, 1.82)
-  for (const x of [-0.19, 0.19]) {
-    box(0.22, 0.35, 0.24, palette.orange, x, 0.36, 0, explorer)
-    box(0.26, 0.15, 0.38, palette.charcoal, x, 0.2, 0.07, explorer)
-  }
-  sphere(0.39, palette.orange, 0, 0.8, 0, explorer)
-  box(0.46, 0.32, 0.15, palette.cream, 0, 0.83, 0.32, explorer)
-  sphere(0.43, palette.white, 0, 1.43, 0, explorer)
-  const visor = sphere(0.34, palette.charcoal, 0, 1.44, 0.2, explorer)
-  visor.scale.set(1, 0.72, 0.65)
-  sphere(0.055, palette.white, -0.12, 1.51, 0.39, explorer)
-  for (const x of [-0.43, 0.43]) {
-    const arm = cylinder(0.12, 0.13, 0.52, palette.orange, x, 0.87, 0, explorer)
-    arm.rotation.z = x < 0 ? -0.28 : 0.28
-    sphere(0.14, palette.white, x * 1.13, 0.62, 0, explorer)
-  }
-  label('WELCOME, EXPLORER', 2.65, 0.35, 0, -0.27, 3.42)
+  const character = createCharacter({ mesh, mat, group })
+  label('TAKE YOUR TIME · STAY A WHILE', 2.9, 0.32, 0, -0.27, 3.42)
 
   // Orange tree, wall clock, and task lamp.
   const tree = group('about', 3.2, 0, -2.1)
@@ -328,6 +314,70 @@ export function createStudio(host, initial, callbacks) {
   box(0.025, 0.2, 0.025, palette.charcoal, -0.4, 2.3, -2.91)
   box(0.17, 0.025, 0.025, palette.charcoal, -0.33, 2.22, -2.91)
 
+  // Small garden details and soft, slow petals; no downloaded models or textures.
+  const blossom = mat('#edc2b6', { roughness: 0.85 })
+  const flowerCenter = mat('#d8af6c')
+  for (let i = 0; i < 5; i++) {
+    const x = -3.2 + i * 0.36
+    cylinder(0.045, 0.045, 0.55 + (i % 2) * 0.12, palette.green, x, 0.42, 2.48)
+    for (let p = 0; p < 5; p++) {
+      const a = (p / 5) * Math.PI * 2
+      const petal = sphere(
+        0.09,
+        blossom,
+        x + Math.cos(a) * 0.12,
+        0.72 + (i % 2) * 0.12 + Math.sin(a) * 0.12,
+        2.5
+      )
+      petal.scale.z = 0.35
+    }
+    sphere(0.065, flowerCenter, x, 0.72 + (i % 2) * 0.12, 2.54)
+  }
+  const particles = new THREE.Group()
+  scene.add(particles)
+  const petalMaterial = mat('#f2c8ba', {
+    transparent: true,
+    opacity: 0.65,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  })
+  const glowMaterial = mat('#f9df9b', {
+    transparent: true,
+    opacity: 0.8,
+    emissive: '#f9cf73',
+    emissiveIntensity: 1.1,
+    depthWrite: false
+  })
+  const drifting = []
+  for (let i = 0; i < 28; i++) {
+    const petal = mesh(
+      new THREE.SphereGeometry(0.035, 8, 6),
+      petalMaterial,
+      [
+        Math.sin(i * 4.7) * 4.2,
+        1 + ((i * 0.73) % 4.3),
+        Math.cos(i * 3.1) * 3.1
+      ],
+      particles
+    )
+    petal.scale.set(1.8, 0.4, 1)
+    petal.castShadow = false
+    petal.receiveShadow = false
+    drifting.push(petal)
+  }
+  const steamMaterial = mat('#fff4e5', {
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false
+  })
+  const steam = []
+  for (let i = 0; i < 3; i++) {
+    const puff = sphere(0.035, steamMaterial, 2.16, 1.75 + i * 0.12, -1.36)
+    puff.scale.set(0.7, 2.2, 0.7)
+    puff.castShadow = false
+    steam.push(puff)
+  }
+
   const shadowMaterial = new THREE.ShadowMaterial({ opacity: 0.15 })
   materials.add(shadowMaterial)
   const ground = mesh(
@@ -354,8 +404,21 @@ export function createStudio(host, initial, callbacks) {
     const delta = Math.min((timestamp - (previous || timestamp)) / 1000, 0.05)
     previous = timestamp
     time += delta
-    explorer.position.y = Math.sin(time * 1.3) * 0.035
+    character.update(time, false)
     leaf.rotation.y = Math.sin(time) * 0.15
+    tree.rotation.z = Math.sin(time * 0.65) * 0.012
+    drifting.forEach((petal, index) => {
+      petal.position.x = Math.sin(index * 4.7 + time * 0.07) * 4.2
+      petal.position.y = state.night
+        ? 1.3 + Math.sin(time * 0.4 + index) * 1.1
+        : 4.8 - ((index * 0.73 + time * 0.18) % 4.5)
+      petal.position.z = Math.cos(index * 3.1 + time * 0.09) * 3.1
+      petal.rotation.z = time * 0.45 + index
+    })
+    steam.forEach((puff, index) => {
+      puff.position.y = 1.65 + ((time * 0.12 + index * 0.14) % 0.45)
+      puff.position.x = 2.16 + Math.sin(time + index) * 0.035
+    })
     render()
     frame = requestAnimationFrame(animate)
   }
@@ -375,8 +438,8 @@ export function createStudio(host, initial, callbacks) {
   }
   function setView() {
     const poses = [
-      [10, 9, 13],
-      [0.4, 9, 16],
+      [8.8, 8.1, 14.5],
+      [0.4, 7.8, 16],
       [14, 10, 7]
     ]
     camera.position.set(...poses[state.view % poses.length])
@@ -384,13 +447,18 @@ export function createStudio(host, initial, callbacks) {
     controls.update()
   }
   function setLighting() {
-    ambient.intensity = state.night ? 1.15 : 2.7
-    ambient.color.set(state.night ? '#a1b9d2' : '#fff7df')
-    sun.intensity = state.night ? 1.3 : 4
-    sun.color.set(state.night ? '#b2c5e8' : '#fff0d6')
-    lampLight.intensity = state.night ? 14 : 3
+    ambient.intensity = state.night ? 1.3 : 2.1
+    ambient.color.set(state.night ? '#b4bfde' : '#fff3e4')
+    sun.intensity = state.night ? 1.3 : 2.8
+    sun.color.set(state.night ? '#b8c8ed' : '#ffead4')
+    lampLight.intensity = state.night ? 13 : 2.5
     palette.screen.emissiveIntensity = state.night ? 1 : 0.45
-    renderer.toneMappingExposure = state.night ? 1.1 : 1.2
+    renderer.toneMappingExposure = state.night ? 1.05 : 1.05
+    particles.visible = state.ambience !== false
+    drifting.forEach(petal => {
+      petal.material = state.night ? glowMaterial : petalMaterial
+      petal.scale.set(...(state.night ? [0.8, 0.8, 0.8] : [1.8, 0.4, 1]))
+    })
   }
   function resize() {
     const width = host.clientWidth
@@ -398,7 +466,7 @@ export function createStudio(host, initial, callbacks) {
     if (!width || !height) return
     renderer.setSize(width, height)
     const aspect = width / height
-    const span = Math.max(5.6, 6.6 / aspect)
+    const span = Math.max(5.2, 6.1 / aspect)
     camera.left = -span * aspect
     camera.right = span * aspect
     camera.top = span
@@ -416,6 +484,7 @@ export function createStudio(host, initial, callbacks) {
     for (const hit of raycaster.intersectObjects(scene.children, true)) {
       let item = hit.object
       while (item) {
+        if (item.userData.character) return 'character'
         if (item.userData.place) return item.userData.place
         item = item.parent
       }
@@ -431,7 +500,7 @@ export function createStudio(host, initial, callbacks) {
     if (next !== hovered) {
       hovered = next
       host.style.cursor = next ? 'pointer' : 'grab'
-      callbacks.onHover(next)
+      callbacks.onHover(next === 'character' ? 'about' : next)
     }
   }
   function pointerDown(event) {
@@ -446,7 +515,10 @@ export function createStudio(host, initial, callbacks) {
       Math.hypot(event.clientX - down.x, event.clientY - down.y) < 6
     ) {
       const place = pick(event)
-      if (place) callbacks.onSelect(place)
+      if (place === 'character') {
+        callbacks.onGreet?.()
+        callbacks.onSelect('about')
+      } else if (place) callbacks.onSelect(place)
     }
     down = null
   }
@@ -486,9 +558,12 @@ export function createStudio(host, initial, callbacks) {
   return {
     update(next) {
       const oldView = state.view
+      const oldGreeting = state.greeting
       state = { ...state, ...next }
+      if (state.greeting !== oldGreeting) character.wave()
       if (oldView !== state.view) setView()
       setLighting()
+      if (state.paused || reducedMotion.matches) character.update(time, true)
       schedule()
     },
     dispose() {

@@ -86,6 +86,24 @@ test('simplified mode can be entered and left', () => {
   expect(screen.queryByText('一颗装满好奇心的小星球')).not.toBeInTheDocument()
 })
 
+test('the host greets visitors and decorative motion is optional', () => {
+  render(<Studio />)
+  fireEvent.click(screen.getByRole('button', { name: /打个招呼/ }))
+  expect(screen.getByRole('status')).toHaveTextContent('欢迎来到我的小小星球')
+  const petals = screen.getByRole('button', { name: /花雨/ })
+  expect(petals).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(petals)
+  expect(petals).toHaveAttribute('aria-pressed', 'false')
+})
+
+test('Notion settings can disable decorative particles', () => {
+  siteConfig.mockImplementation((key, fallback) =>
+    key === 'ORANGE_AMBIENCE_ENABLE' ? false : fallback
+  )
+  render(<Studio />)
+  expect(screen.queryByRole('button', { name: /花雨/ })).not.toBeInTheDocument()
+})
+
 test('paginated collections use the current collection path', () => {
   render(<LayoutPostList posts={posts.slice(0, 3)} page={2} postCount={30} />)
   expect(screen.getByRole('link', { name: /上一页/ })).toHaveAttribute(
