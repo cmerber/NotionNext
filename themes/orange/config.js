@@ -1,0 +1,16 @@
+const CONFIG = {
+  ORANGE_TITLE: '把好奇心，住成一颗星球。',
+  ORANGE_DESCRIPTION:
+    '写代码，做研究，也认真生活。欢迎来我的小小工作室坐一坐。',
+  ORANGE_SCENE_ENABLE: true,
+  ORANGE_COLOR_BG: '#f5f2eb',
+  ORANGE_COLOR_SURFACE: '#fffdf8',
+  ORANGE_COLOR_TEXT: '#343b35',
+  ORANGE_COLOR_ACCENT: '#c6542f',
+  ORANGE_COLOR_BG_DARK: '#192521',
+  ORANGE_COLOR_SURFACE_DARK: '#23332b',
+  ORANGE_COLOR_TEXT_DARK: '#ece8dc',
+  ORANGE_COLOR_ACCENT_DARK: '#ffb078'
+}
+
+export default CONFIG

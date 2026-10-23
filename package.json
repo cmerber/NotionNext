@@ -95,7 +95,8 @@
     "react-hotkeys-hook": "^4.6.2",
     "react-notion-x": "7.12.1",
     "react-tweet-embed": "~2.0.0",
-    "remixicon-react": "^1.0.0"
+    "remixicon-react": "^1.0.0",
+    "three": "0.186.1"
   },
   "devDependencies": {
     "@ai-sdk/google": "^4.0.63",
