@@ -35,7 +35,7 @@
 
 ## 配置说明
 
-配置文件：[`themes/orange/config.js`](https://github.com/cmerber/NotionNext/blob/codex/orange-3d-theme/themes/orange/config.js)  
+配置文件：[`themes/orange/config.js`](https://github.com/cmerber/NotionNext/blob/codex/orange-3d-theme/themes/orange/config.js)
 也可在 **Notion Config** 表中填写同名键（对象/数组用 JSON）。
 
 <!-- theme-config-table -->
