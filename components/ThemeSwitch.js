@@ -719,6 +719,7 @@ const ThemeSwitch = () => {
               </div>
               <button
                 type='button'
+                aria-label='关闭主题面板'
                 className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white'
                 onClick={() => {
                   setSideBarVisible(false)
@@ -729,6 +730,26 @@ const ThemeSwitch = () => {
           </div>
 
           <div className='space-y-6 px-5 pb-10 pt-6'>
+            {currentTheme === 'orange' && (
+              <div className='grid grid-cols-2 gap-2 md:hidden'>
+                <button
+                  type='button'
+                  className='min-h-[44px] rounded-xl border border-gray-200 px-3 text-sm dark:border-gray-700'
+                  onClick={() => {
+                    setSideBarVisible(false)
+                    setConsoleMounted(true)
+                    setConsoleVisible(true)
+                  }}>
+                  配置当前主题
+                </button>
+                <button
+                  type='button'
+                  className='min-h-[44px] rounded-xl border border-gray-200 px-3 text-sm dark:border-gray-700'
+                  onClick={toggleDarkMode}>
+                  {isDarkMode ? '切换白天' : '切换夜晚'}
+                </button>
+              </div>
+            )}
 
             <div>
               <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
