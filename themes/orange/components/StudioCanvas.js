@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react'
 export default function StudioCanvas({
   night,
   view,
+  focus,
+  tour,
   paused,
   ambience,
   greeting,
@@ -22,8 +24,16 @@ export default function StudioCanvas({
     onGreet
   })
   callbacks.current = { onSelect, onHover, onReady, onUnavailable, onGreet }
-  const options = useRef({ night, view, paused, ambience, greeting })
-  options.current = { night, view, paused, ambience, greeting }
+  const options = useRef({
+    night,
+    view,
+    focus,
+    tour,
+    paused,
+    ambience,
+    greeting
+  })
+  options.current = { night, view, focus, tour, paused, ambience, greeting }
 
   useEffect(() => {
     let cancelled = false
@@ -53,8 +63,16 @@ export default function StudioCanvas({
   }, [])
 
   useEffect(() => {
-    api.current?.update({ night, view, paused, ambience, greeting })
-  }, [night, view, paused, ambience, greeting])
+    api.current?.update({
+      night,
+      view,
+      focus,
+      tour,
+      paused,
+      ambience,
+      greeting
+    })
+  }, [night, view, focus, tour, paused, ambience, greeting])
 
   return (
     <div

@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { createCharacter } from './createCharacter'
 
 // Original procedural geometry: no remote models, textures, or model service.
@@ -9,11 +10,24 @@ export function createStudio(host, initial, callbacks) {
     renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
-      powerPreference: 'low-power'
+      powerPreference: 'high-performance'
     })
-  } catch (_) {
-    callbacks.onUnavailable()
-    return { update() {}, dispose() {} }
+  } catch (error) {
+    // Retry without multisampling for devices with a smaller GPU budget.
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        alpha: true,
+        powerPreference: 'default'
+      })
+    } catch (fallbackError) {
+      console.warn(
+        '[Orange 3D] Renderer initialization failed',
+        fallbackError.message
+      )
+      callbacks.onUnavailable()
+      return { update() {}, dispose() {} }
+    }
   }
   let state = { ...initial }
   let disposed = false
@@ -25,11 +39,17 @@ export function createStudio(host, initial, callbacks) {
   let time = 0
   let previous = 0
   let compact = false
+  let contextTimer
+  let contextUnavailable = false
+  let flight = null
+  let tourTime = 0
+  let userOrbit = false
   const materials = new Set()
   const geometries = new Set()
   const textures = new Set()
   const scene = new THREE.Scene()
-  const camera = new THREE.OrthographicCamera(-7, 7, 6, -6, 0.1, 100)
+  const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 140)
+  scene.fog = new THREE.FogExp2('#e3e5db', 0.015)
   const raycaster = new THREE.Raycaster()
   const pointer = new THREE.Vector2()
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -41,14 +61,13 @@ export function createStudio(host, initial, callbacks) {
   renderer.toneMappingExposure = 1.05
   host.appendChild(renderer.domElement)
   const controls = new OrbitControls(camera, renderer.domElement)
-  controls.enableDamping = false
+  controls.enableDamping = true
+  controls.dampingFactor = 0.065
   controls.enablePan = false
-  controls.minPolarAngle = Math.PI / 5
-  controls.maxPolarAngle = Math.PI / 2.65
-  controls.minAzimuthAngle = -Math.PI / 6
-  controls.maxAzimuthAngle = Math.PI / 2.2
-  controls.minZoom = 0.78
-  controls.maxZoom = 1.6
+  controls.minPolarAngle = Math.PI / 5.5
+  controls.maxPolarAngle = Math.PI / 2.15
+  controls.minDistance = 5
+  controls.maxDistance = 30
   // Keep ordinary page scrolling available on touch screens and mouse wheels.
   controls.mouseButtons.MIDDLE = null
   controls.enableZoom = false
@@ -91,7 +110,12 @@ export function createStudio(host, initial, callbacks) {
     return item
   }
   const box = (w, h, d, material, x, y, z, parent) =>
-    mesh(new THREE.BoxGeometry(w, h, d), material, [x, y, z], parent)
+    mesh(
+      new RoundedBoxGeometry(w, h, d, 2, Math.min(w, h, d, 0.22) * 0.22),
+      material,
+      [x, y, z],
+      parent
+    )
   const sphere = (radius, material, x, y, z, parent) =>
     mesh(new THREE.SphereGeometry(radius, 20, 14), material, [x, y, z], parent)
   const cylinder = (top, bottom, height, material, x, y, z, parent) =>
@@ -162,10 +186,11 @@ export function createStudio(host, initial, callbacks) {
   box(8.2, 0.12, 6.4, palette.cream, 0, 0.04, 0)
   for (let x = -3.8; x < 4; x += 0.55)
     box(0.018, 0.012, 6.3, palette.wood, x, 0.107, 0)
-  box(8.2, 3.4, 0.18, palette.wall, 0, 1.8, -3.12)
-  box(0.18, 3.4, 6.3, palette.wall, -4.02, 1.8, 0)
+  box(8.2, 0.55, 0.18, palette.wall, 0, 0.4, -3.12)
+  box(0.18, 0.55, 6.3, palette.wall, -4.02, 0.4, 0)
+  for (const x of [-4.02, 4.02])
+    box(0.12, 3.4, 0.12, palette.wood, x, 1.8, -3.12)
   box(8.25, 0.12, 0.25, palette.darkWood, 0, 3.54, -3.12)
-  box(0.25, 0.12, 6.5, palette.darkWood, -4.02, 3.54, 0)
   box(8.2, 0.17, 0.14, palette.wood, 0, 0.23, -2.98)
   box(0.14, 0.17, 6.2, palette.wood, -3.9, 0.23, 0)
   label('QCODE · LITTLE STUDIO', 2.75, 0.6, 0, 2.95, -3.01)
@@ -177,6 +202,7 @@ export function createStudio(host, initial, callbacks) {
   box(2.3, 0.1, 0.38, palette.wood, 2.35, 1.5, -2.8)
 
   const shelf = group('journal', -2.4, 0, -2.48)
+  const animatedBooks = []
   box(2.1, 2.65, 0.08, palette.wood, 0, 1.43, -0.32, shelf)
   for (const x of [-1, 1])
     box(0.12, 2.65, 0.8, palette.darkWood, x, 1.43, 0, shelf)
@@ -203,6 +229,7 @@ export function createStudio(host, initial, callbacks) {
         shelf
       )
       b.rotation.z = book === 5 ? -0.13 : 0
+      animatedBooks.push({ mesh: b, index: book + row * 7 })
       box(
         0.12,
         0.025,
@@ -286,7 +313,7 @@ export function createStudio(host, initial, callbacks) {
   box(0.46, 0.025, 0.36, palette.orange, -1.48, 0.85, 1.1)
 
   const character = createCharacter({ mesh, mat, group })
-  label('TAKE YOUR TIME · STAY A WHILE', 2.9, 0.32, 0, -0.27, 3.42)
+  character.root.scale.setScalar(1.08)
 
   // Orange tree, wall clock, and task lamp.
   const tree = group('about', 3.2, 0, -2.1)
@@ -388,14 +415,206 @@ export function createStudio(host, initial, callbacks) {
   )
   ground.rotation.x = -Math.PI / 2
   ground.castShadow = false
+  ground.visible = false
+
+  // A floating garden, with a faceted underside and fine celestial orbits.
+  const island = group('', 0, -0.7, 0)
+  const moss = mat('#a6b69c')
+  const stone = mat('#b6beb0', { flatShading: true, roughness: 1 })
+  const islandTop = cylinder(5.15, 4.8, 0.34, moss, 0, 0, 0, island)
+  islandTop.scale.z = 0.83
+  const rock = mesh(
+    new THREE.IcosahedronGeometry(4.75, 1),
+    stone,
+    [0, -0.7, 0],
+    island
+  )
+  rock.scale.set(1, 0.36, 0.82)
+  for (let i = 0; i < 18; i++) {
+    const a = i * 2.39996
+    const shrub = sphere(
+      0.25 + (i % 3) * 0.07,
+      i % 3 ? palette.sage : palette.green,
+      Math.cos(a) * 4.55,
+      0.2,
+      Math.sin(a) * 3.65,
+      island
+    )
+    shrub.scale.y = 0.7
+  }
+  const orbitMaterial = mat('#ddc48e', {
+    metalness: 0.55,
+    roughness: 0.3,
+    emissive: '#a08045',
+    emissiveIntensity: 0.15
+  })
+  const orbit = mesh(
+    new THREE.TorusGeometry(6.65, 0.012, 5, 180),
+    orbitMaterial,
+    [0, -0.65, 0]
+  )
+  orbit.rotation.set(1.2, 0.25, -0.2)
+  const innerOrbit = mesh(
+    new THREE.TorusGeometry(6.1, 0.007, 4, 150),
+    orbitMaterial,
+    [0, -0.5, 0]
+  )
+  innerOrbit.rotation.set(1.6, -0.2, 0.3)
+  const satellite = sphere(0.28, palette.orange, 0, 0, 0)
+  const moonMaterial = mat('#ffebc2', {
+    emissive: '#ffc77d',
+    emissiveIntensity: 0.6,
+    roughness: 1
+  })
+  const moon = sphere(1.35, moonMaterial, 7, 4.6, -8)
+  const halo = mesh(
+    new THREE.TorusGeometry(1.75, 0.012, 4, 100),
+    orbitMaterial,
+    [7, 4.6, -8]
+  )
+  halo.rotation.set(0.35, 0.35, -0.4)
+  const clouds = []
+  const cloudMaterial = mat('#fff5e7', {
+    roughness: 1,
+    transparent: true,
+    opacity: 0.78,
+    depthWrite: false
+  })
+  const cloudGeometry = new THREE.SphereGeometry(1, 16, 10)
+  for (let i = 0; i < 11; i++) {
+    const cloud = new THREE.Group()
+    const a = i * 2.4
+    cloud.position.set(
+      Math.cos(a) * (9 + (i % 3)),
+      -1.9 + (i % 4) * 0.55,
+      Math.sin(a) * (7 + (i % 3))
+    )
+    for (let j = 0; j < 4; j++) {
+      const puff = mesh(
+        cloudGeometry,
+        cloudMaterial,
+        [(j - 1.5) * 0.8, Math.sin(j * 2) * 0.2, 0],
+        cloud
+      )
+      puff.scale.set(1.1, 0.48 + (j % 2) * 0.2, 0.65)
+      puff.castShadow = false
+      puff.receiveShadow = false
+    }
+    scene.add(cloud)
+    clouds.push(cloud)
+  }
+  const starPositions = []
+  for (let i = 0; i < 180; i++) {
+    starPositions.push(
+      Math.sin(i * 137.5) * 36,
+      3 + ((i * 2.31) % 22),
+      Math.cos(i * 41.7) * 34
+    )
+  }
+  const starsGeometry = new THREE.BufferGeometry()
+  starsGeometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(starPositions, 3)
+  )
+  geometries.add(starsGeometry)
+  const starsMaterial = new THREE.PointsMaterial({
+    color: '#fff1ce',
+    size: 0.065,
+    transparent: true,
+    opacity: 0.85,
+    sizeAttenuation: true
+  })
+  materials.add(starsMaterial)
+  const stars = new THREE.Points(starsGeometry, starsMaterial)
+  scene.add(stars)
+  const beacon = mesh(
+    new THREE.TorusGeometry(0.7, 0.018, 5, 64),
+    mat('#ffe8a6', {
+      emissive: '#edb96b',
+      emissiveIntensity: 1.5,
+      transparent: true,
+      opacity: 0.7
+    }),
+    [0, 0.18, 0]
+  )
+  beacon.rotation.x = -Math.PI / 2
+  beacon.castShadow = false
+  const beaconLocations = {
+    journal: [-2.4, 0.18, -1.8],
+    tools: [1.2, 0.18, -0.5],
+    profile: [3.05, 0.18, 0.85],
+    about: [0.05, 0.18, 1.8]
+  }
+  const destination = new THREE.Vector3()
+  const targetDestination = new THREE.Vector3()
+  const flightStart = new THREE.Vector3()
+  const targetStart = new THREE.Vector3()
+
+  function cameraPose(intro = false) {
+    const poses = [
+      { position: [11.5, 9, 16.5], target: [0, 0.6, 0] },
+      { position: [0.8, 7.8, 19.5], target: [0, 0.7, 0] },
+      { position: [17, 8.8, 5.8], target: [0, 0.9, 0] }
+    ]
+    const focusPoses = {
+      journal: { position: [1.1, 3.3, 5.8], target: [-2.2, 1.5, -2] },
+      tools: { position: [5.7, 4.1, 4.3], target: [1.25, 1.6, -1.2] },
+      profile: { position: [7.8, 3.6, 6], target: [3.05, 1.2, 0.85] },
+      about: { position: [3.6, 2.8, 8.5], target: [0, 1.4, 1.5] }
+    }
+    const pose = focusPoses[state.focus] || poses[state.view % poses.length]
+    destination.set(...pose.position)
+    targetDestination.set(...pose.target)
+    if (!state.focus && compact) destination.multiplyScalar(1.4)
+    if (compact) targetDestination.y += 0.8
+    if (intro) {
+      camera.position.copy(destination).multiplyScalar(1.35)
+      controls.target.copy(targetDestination)
+      controls.update()
+    }
+    flightStart.copy(camera.position)
+    targetStart.copy(controls.target)
+    userOrbit = false
+    tourTime = 0
+    if (state.paused || reducedMotion.matches) {
+      camera.position.copy(destination)
+      controls.target.copy(targetDestination)
+      controls.update()
+      flight = null
+    } else flight = { elapsed: 0, duration: intro ? 3.2 : 1.8 }
+  }
+
+  function moveCamera(delta) {
+    if (flight) {
+      flight.elapsed += delta
+      const p = Math.min(1, flight.elapsed / flight.duration)
+      const ease = p * p * (3 - 2 * p)
+      camera.position.lerpVectors(flightStart, destination, ease)
+      controls.target.lerpVectors(targetStart, targetDestination, ease)
+      if (p === 1) flight = null
+    } else if (state.tour && !state.focus && !userOrbit) {
+      tourTime += delta
+      const angle = Math.sin(tourTime * 0.12) * 0.38
+      camera.position
+        .copy(destination)
+        .applyAxisAngle(new THREE.Vector3(0, 1, 0), angle)
+      camera.position.y += Math.sin(tourTime * 0.3) * 0.32
+    }
+    controls.update()
+  }
 
   function render() {
-    if (!disposed && visible && !document.hidden) renderer.render(scene, camera)
+    host.dataset.camera = camera.position
+      .toArray()
+      .map(value => value.toFixed(2))
+      .join(',')
+    if (!disposed && !contextUnavailable) renderer.render(scene, camera)
   }
   function animate(timestamp) {
     frame = 0
     if (
       disposed ||
+      contextUnavailable ||
       !visible ||
       document.hidden ||
       state.paused ||
@@ -411,7 +630,34 @@ export function createStudio(host, initial, callbacks) {
     const delta = Math.min((timestamp - (previous || timestamp)) / 1000, 0.05)
     previous = timestamp
     time += delta
+    moveCamera(delta)
     character.update(time, false)
+    orbit.rotation.z = -0.2 + Math.sin(time * 0.1) * 0.08
+    satellite.position.set(
+      Math.cos(time * 0.22) * 6.65,
+      -0.3 + Math.sin(time * 0.22) * 1.8,
+      Math.sin(time * 0.22) * 5.7
+    )
+    clouds.forEach((cloud, index) => {
+      cloud.position.y =
+        -1.9 + (index % 4) * 0.55 + Math.sin(time * 0.18 + index) * 0.18
+      cloud.rotation.y = Math.sin(time * 0.045 + index) * 0.12
+    })
+    stars.rotation.y = time * 0.002
+    const activePlace =
+      hovered === 'character' ? 'about' : hovered || state.focus
+    beacon.visible = Boolean(beaconLocations[activePlace])
+    if (beacon.visible) {
+      beacon.position.set(...beaconLocations[activePlace])
+      beacon.scale.setScalar(1 + Math.sin(time * 2) * 0.08)
+    }
+    animatedBooks.forEach(book => {
+      const offset =
+        activePlace === 'journal'
+          ? 0.07 + Math.sin(time * 1.3 + book.index) * 0.035
+          : 0
+      book.mesh.position.z += (0.13 + offset - book.mesh.position.z) * 0.09
+    })
     leaf.rotation.y = Math.sin(time) * 0.15
     tree.rotation.z = Math.sin(time * 0.65) * 0.012
     drifting.forEach((petal, index) => {
@@ -444,14 +690,7 @@ export function createStudio(host, initial, callbacks) {
       frame = requestAnimationFrame(animate)
   }
   function setView() {
-    const poses = [
-      [8.8, 8.1, 14.5],
-      [0.4, 7.8, 16],
-      [14, 10, 7]
-    ]
-    camera.position.set(...poses[state.view % poses.length])
-    controls.target.set(0, 1.05, 0)
-    controls.update()
+    cameraPose()
   }
   function setLighting() {
     ambient.intensity = state.night ? 1.3 : 2.1
@@ -461,6 +700,11 @@ export function createStudio(host, initial, callbacks) {
     lampLight.intensity = state.night ? 13 : 2.5
     palette.screen.emissiveIntensity = state.night ? 1 : 0.45
     renderer.toneMappingExposure = state.night ? 1.05 : 1.05
+    scene.fog.color.set(state.night ? '#344652' : '#e3e5db')
+    cloudMaterial.color.set(state.night ? '#65737f' : '#fff5e7')
+    stars.visible = state.night && state.ambience !== false
+    moonMaterial.emissiveIntensity = state.night ? 1.5 : 0.4
+    moon.scale.setScalar(state.night ? 0.72 : 1)
     particles.visible = state.ambience !== false
     drifting.forEach(petal => {
       petal.material = state.night ? glowMaterial : petalMaterial
@@ -471,8 +715,11 @@ export function createStudio(host, initial, callbacks) {
     const width = host.clientWidth
     const height = host.clientHeight
     if (!width || !height) return
+    const wasCompact = compact
     compact = width < 600
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.25 : 1.75))
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio || 1, compact ? 1.25 : 1.75)
+    )
     const shadowSize = compact ? 512 : 1024
     if (sun.shadow.mapSize.width !== shadowSize) {
       sun.shadow.mapSize.set(shadowSize, shadowSize)
@@ -482,12 +729,10 @@ export function createStudio(host, initial, callbacks) {
     }
     renderer.setSize(width, height)
     const aspect = width / height
-    const span = Math.max(5.2, 6.1 / aspect)
-    camera.left = -span * aspect
-    camera.right = span * aspect
-    camera.top = span
-    camera.bottom = -span
+    camera.aspect = aspect
+    camera.fov = compact ? 48 : 36
     camera.updateProjectionMatrix()
+    if (wasCompact !== compact) cameraPose()
     render()
   }
   function pick(event) {
@@ -520,6 +765,8 @@ export function createStudio(host, initial, callbacks) {
     }
   }
   function pointerDown(event) {
+    flight = null
+    userOrbit = true
     down = { x: event.clientX, y: event.clientY, id: event.pointerId }
     moved = false
   }
@@ -547,7 +794,18 @@ export function createStudio(host, initial, callbacks) {
   }
   function contextLost(event) {
     event.preventDefault()
-    callbacks.onUnavailable()
+    contextUnavailable = true
+    cancelAnimationFrame(frame)
+    clearTimeout(contextTimer)
+    // Keep the canvas mounted so the browser can restore its context.
+    contextTimer = setTimeout(() => callbacks.onUnavailable(), 10000)
+  }
+  function contextRestored() {
+    clearTimeout(contextTimer)
+    contextUnavailable = false
+    resize()
+    schedule()
+    callbacks.onReady()
   }
   const canvas = renderer.domElement
   canvas.addEventListener('pointermove', pointerMove)
@@ -556,6 +814,7 @@ export function createStudio(host, initial, callbacks) {
   canvas.addEventListener('pointerleave', pointerLeave)
   canvas.addEventListener('pointercancel', pointerCancel)
   canvas.addEventListener('webglcontextlost', contextLost)
+  canvas.addEventListener('webglcontextrestored', contextRestored)
   controls.addEventListener('change', render)
   document.addEventListener('visibilitychange', schedule)
   reducedMotion.addEventListener('change', schedule)
@@ -566,18 +825,25 @@ export function createStudio(host, initial, callbacks) {
     schedule()
   })
   observer.observe(host)
-  setView()
   setLighting()
   resize()
+  cameraPose(true)
   schedule()
   callbacks.onReady()
   return {
     update(next) {
       const oldView = state.view
       const oldGreeting = state.greeting
+      const oldFocus = state.focus
+      const oldTour = state.tour
       state = { ...state, ...next }
       if (state.greeting !== oldGreeting) character.wave()
-      if (oldView !== state.view) setView()
+      if (
+        oldView !== state.view ||
+        oldFocus !== state.focus ||
+        oldTour !== state.tour
+      )
+        setView()
       setLighting()
       if (state.paused || reducedMotion.matches) character.update(time, true)
       schedule()
@@ -585,6 +851,7 @@ export function createStudio(host, initial, callbacks) {
     dispose() {
       disposed = true
       cancelAnimationFrame(frame)
+      clearTimeout(contextTimer)
       resizeObserver.disconnect()
       observer.disconnect()
       document.removeEventListener('visibilitychange', schedule)
@@ -595,6 +862,7 @@ export function createStudio(host, initial, callbacks) {
       canvas.removeEventListener('pointerleave', pointerLeave)
       canvas.removeEventListener('pointercancel', pointerCancel)
       canvas.removeEventListener('webglcontextlost', contextLost)
+      canvas.removeEventListener('webglcontextrestored', contextRestored)
       controls.removeEventListener('change', render)
       controls.dispose()
       geometries.forEach(value => value.dispose())
@@ -602,6 +870,7 @@ export function createStudio(host, initial, callbacks) {
       textures.forEach(value => value.dispose())
       sun.shadow.dispose()
       renderer.dispose()
+      renderer.forceContextLoss()
       canvas.remove()
       scene.clear()
     }

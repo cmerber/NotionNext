@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import Studio from './components/Studio'
 import CONFIG from './config'
 import { Style } from './style'
+import { ImmersiveStyle } from './immersiveStyle'
 
 const Comment = dynamic(() => import('@/components/Comment'), { ssr: false })
 const ShareBar = dynamic(() => import('@/components/ShareBar'), { ssr: false })
@@ -49,6 +50,7 @@ function LayoutBase({
   return (
     <div id='theme-orange'>
       <Style />
+      <ImmersiveStyle />
       <a className='orange-skip' href='#orange-main'>
         跳到主要内容
       </a>
@@ -168,7 +170,7 @@ function LayoutIndex(props) {
   return (
     <>
       <Studio posts={props.posts} />
-      <section className='orange-journal-section'>
+      <section id='orange-notes' className='orange-journal-section'>
         <div className='orange-section-heading'>
           <div>
             <p className='orange-eyebrow'>FIELD NOTES / 持续更新中</p>

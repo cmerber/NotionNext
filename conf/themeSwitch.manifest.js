@@ -13,7 +13,7 @@
 export const THEME_SWITCH_MANIFEST = {
   orange: {
     name: 'Orange 3D · 橙子工作室',
-    summary: '可旋转的微缩工作室，点击书架、电脑与档案柜，探索文章、工具与成长。',
+    summary: '全屏云海浮岛，电影感运镜、昼夜流转与立体人物，探索文章、工具与成长。',
     rootId: 'theme-orange',
     settings: [
       { key: 'ORANGE_SCENE_ENABLE', label: '交互 3D 场景', type: 'boolean', defaultValue: true },
