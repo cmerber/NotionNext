@@ -46,6 +46,9 @@ jest.mock('@/components/LazyImage', () => ({
   default: () => <span>封面</span>
 }))
 jest.mock('@/themes/orange/style', () => ({ Style: () => null }))
+jest.mock('@/themes/orange/immersiveStyle', () => ({
+  ImmersiveStyle: () => null
+}))
 
 const posts = Array.from({ length: 15 }, (_, id) => ({
   id: `post-${id}`,

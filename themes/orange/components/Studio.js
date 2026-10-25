@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import Image from 'next/image'
 import SmartLink from '@/components/SmartLink'
 import { useGlobal } from '@/lib/global'
 import { siteConfig } from '@/lib/config'
@@ -56,10 +55,12 @@ export const PLACES = [
 
 export default function Studio({ posts = [] }) {
   const { isDarkMode, toggleDarkMode } = useGlobal()
-  const [selected, setSelected] = useState('journal')
+  const [selected, setSelected] = useState('')
   const [view, setView] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [tour, setTour] = useState(true)
   const [flat, setFlat] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const [sceneStatus, setSceneStatus] = useState('loading')
   const [hover, setHover] = useState('')
   const [greeting, setGreeting] = useState(0)
@@ -75,199 +76,232 @@ export default function Studio({ posts = [] }) {
     return () => clearTimeout(timer)
   }, [greeting, greetingVisible])
   const fallback = useCallback(() => setSceneStatus('unavailable'), [])
-  const place = PLACES.find(item => item.id === selected) || PLACES[0]
+  const place = PLACES.find(item => item.id === selected)
   const sceneEnabled = siteConfig('ORANGE_SCENE_ENABLE', true, CONFIG)
   const ambienceEnabled = siteConfig('ORANGE_AMBIENCE_ENABLE', true, CONFIG)
   const showScene = sceneEnabled && !flat && sceneStatus !== 'unavailable'
   const title = String(siteConfig('ORANGE_TITLE', CONFIG.ORANGE_TITLE, CONFIG))
   const titleBreak = title.indexOf('，')
-
+  const explore = id => {
+    setSelected(id)
+    setTour(false)
+  }
+  const retry = () => {
+    setSceneStatus('loading')
+    setFlat(false)
+    setAttempt(value => value + 1)
+  }
   return (
-    <section className='orange-studio' aria-label='橙子星球交互工作室'>
+    <section
+      className='orange-studio orange-immersive'
+      aria-label='橙子星球交互工作室'
+      data-scene-status={sceneStatus}
+    >
+      <div className='orange-world-sky' aria-hidden='true' />
       <div className='orange-stage'>
-        <div className='orange-stage-label'>
-          <span className='orange-live-dot' /> QCODE / LITTLE STUDIO{' '}
-          <span>欢迎来坐坐</span>
-        </div>
         {showScene ? (
           <Scene
+            key={attempt}
             night={isDarkMode}
             view={view}
+            focus={selected}
+            tour={tour}
             paused={paused}
             ambience={ambience && ambienceEnabled}
             greeting={greeting}
             onGreet={greet}
-            onSelect={setSelected}
+            onSelect={explore}
             onHover={setHover}
             onReady={() => setSceneStatus('ready')}
             onUnavailable={fallback}
           />
         ) : (
           <div className='orange-flat-scene'>
-            <span className='orange-flat-orbit'>🍊</span>
+            <div className='orange-fallback-planet' aria-hidden='true'>
+              <span>🍊</span>
+            </div>
             <h2>一颗装满好奇心的小星球</h2>
             <p>
               {sceneStatus === 'unavailable'
-                ? '当前设备暂时无法显示 3D，下面的入口依然可以使用。'
-                : '从书架到工作台，选一个地方开始探索。'}
+                ? '星球暂时走丢了，试着重新连接。'
+                : '选一个地方，开始探索。'}
             </p>
-            <div className='orange-flat-places'>
-              {PLACES.map(item => (
-                <button
-                  type='button'
-                  key={item.id}
-                  onClick={() => setSelected(item.id)}
-                  aria-pressed={selected === item.id}
-                >
-                  <span>{item.icon}</span>
-                  {item.title}
-                </button>
-              ))}
-            </div>
+            {sceneEnabled && (
+              <button type='button' className='orange-button' onClick={retry}>
+                重新开启 3D
+              </button>
+            )}
           </div>
         )}
-        <div
-          className='orange-welcome-bubble'
-          role='status'
-          aria-live='polite'
-          hidden={!greetingVisible}
-        >
-          嗨，欢迎来到我的小小星球。
-          <br />
-          <span>今天也要记得，给自己一点温柔 🍊</span>
-        </div>
-        <div className='orange-scene-caption' aria-live='polite'>
-          {hover
-            ? `${PLACES.find(item => item.id === hover)?.title || ''} · 点击探索`
-            : showScene
-              ? '拖动看看小屋 · 点一下我，我会跟你打招呼'
-              : '点击入口，探索星球'}
-        </div>
-        <div className='orange-scene-controls' aria-label='场景控制'>
-          <button
-            type='button'
-            onClick={toggleDarkMode}
-            aria-label={isDarkMode ? '切换白天' : '切换夜晚'}
-          >
-            {isDarkMode ? '☾ 夜晚' : '☀ 白天'}
-          </button>
-          {showScene && (
+      </div>
+      <div className='orange-world-title'>
+        <p>
+          <span className='orange-live-dot' /> A LITTLE WORLD BY QCODE
+        </p>
+        <h1>
+          {titleBreak >= 0 ? (
             <>
-              <button type='button' onClick={() => setView(value => value + 1)}>
-                ↻ 切换视角
-              </button>
-              <button type='button' onClick={greet}>
-                👋 打个招呼
-              </button>
-              {ambienceEnabled && (
-                <button
-                  type='button'
-                  onClick={() => setAmbience(value => !value)}
-                  aria-pressed={ambience}
-                >
-                  {isDarkMode ? '✧ 萤光' : '❀ 花雨'}
-                </button>
-              )}
-              <button
-                type='button'
-                onClick={() => setPaused(value => !value)}
-                aria-pressed={paused}
-              >
-                {paused ? '▷ 运行动画' : 'Ⅱ 暂停动画'}
-              </button>
+              {title.slice(0, titleBreak + 1)}
+              <br />
+              <em>{title.slice(titleBreak + 1)}</em>
             </>
+          ) : (
+            title
           )}
-          {sceneEnabled && (
+        </h1>
+        <span className='orange-world-coordinate'>浮游于日常 · EST. 2026</span>
+      </div>
+      <div className='orange-world-index' aria-hidden='true'>
+        橙子星球
+        <br />
+        <span>THE FLOATING STUDIO</span>
+        <i>01 — ∞</i>
+      </div>
+      <div className='orange-world-tools' aria-label='场景控制'>
+        <button
+          type='button'
+          onClick={toggleDarkMode}
+          aria-label={isDarkMode ? '切换白天' : '切换夜晚'}
+          title='切换昼夜'
+        >
+          {isDarkMode ? '☾' : '☀'}
+        </button>
+        {showScene && (
+          <>
             <button
               type='button'
               onClick={() => {
-                setFlat(value => !value)
-                if (flat) setSceneStatus('loading')
+                setSelected('')
+                setTour(false)
+                setView(value => value + 1)
               }}
-              aria-pressed={flat}
+              aria-label='切换视角'
+              title='切换视角'
             >
-              {flat ? '◇ 3D 场景' : '▦ 简洁模式'}
+              ↻
             </button>
-          )}
-        </div>
-      </div>
-      <aside className='orange-studio-note'>
-        <div>
-          <div className='orange-host-intro'>
-            <Image
-              src='/orange/avatar-reference.webp'
-              alt='橙子星球小主人：棕色短发、黑色翻领上衣'
-              width={48}
-              height={48}
-              unoptimized
-            />
-            <span>
-              你好呀，我是成<small>欢迎走进我的小小世界</small>
-            </span>
-            <span className='orange-host-status'>在这里，慢慢生长</span>
-          </div>
-          <p className='orange-eyebrow'>A SMALL PLACE FOR BIG IDEAS</p>
-          <h1>
-            {titleBreak >= 0 ? (
-              <>
-                {title.slice(0, titleBreak + 1)}
-                <br />
-                {title.slice(titleBreak + 1)}
-              </>
-            ) : (
-              title
-            )}
-          </h1>
-          <p className='orange-intro'>
-            {siteConfig(
-              'ORANGE_DESCRIPTION',
-              CONFIG.ORANGE_DESCRIPTION,
-              CONFIG
-            )}
-          </p>
-        </div>
-        <div className='orange-place-note' aria-live='polite'>
-          <span className='orange-place-number'>{place.number} / EXPLORE</span>
-          <h2>
-            {place.title}
-            <span>{place.icon}</span>
-          </h2>
-          <p>{place.description}</p>
-          {selected === 'journal' && posts.length > 0 && (
-            <SmartLink
-              href={posts[0].href || `/article/${posts[0].slug || posts[0].id}`}
-              className='orange-latest-note'
+            <button
+              type='button'
+              onClick={() => {
+                setSelected('')
+                setTour(value => !value)
+              }}
+              aria-label='环游星球'
+              aria-pressed={tour}
+              title='环游星球'
             >
-              最近写下 · {posts[0].title}
+              ◎
+            </button>
+            <button
+              type='button'
+              onClick={greet}
+              aria-label='打个招呼'
+              title='打个招呼'
+            >
+              ✌
+            </button>
+            {ambienceEnabled && (
+              <button
+                type='button'
+                onClick={() => setAmbience(value => !value)}
+                aria-label={isDarkMode ? '萤光' : '花雨'}
+                aria-pressed={ambience}
+                title='切换氛围'
+              >
+                ✧
+              </button>
+            )}
+            <button
+              type='button'
+              onClick={() => setPaused(value => !value)}
+              aria-label={paused ? '运行动画' : '暂停动画'}
+              aria-pressed={paused}
+              title={paused ? '运行动画' : '暂停动画'}
+            >
+              {paused ? '▷' : 'Ⅱ'}
+            </button>
+          </>
+        )}
+        {sceneEnabled && (
+          <button
+            type='button'
+            onClick={() => {
+              if (flat || sceneStatus === 'unavailable') retry()
+              else setFlat(true)
+            }}
+            aria-label={
+              flat || sceneStatus === 'unavailable' ? '3D 场景' : '简洁模式'
+            }
+            title='切换场景模式'
+          >
+            {flat ? '◇' : '▦'}
+          </button>
+        )}
+      </div>
+      <div
+        className='orange-welcome-bubble'
+        role='status'
+        aria-live='polite'
+        hidden={!greetingVisible}
+      >
+        嗨，欢迎来到我的小小星球。
+        <br />
+        <span>今天也要给自己一点温柔 🍊</span>
+      </div>
+      {place && (
+        <aside className='orange-focus-card' aria-live='polite'>
+          <button
+            className='orange-focus-close'
+            type='button'
+            aria-label='返回全景'
+            onClick={() => {
+              setSelected('')
+              setTour(true)
+            }}
+          >
+            ×
+          </button>
+          <span className='orange-eyebrow'>{place.number} / DISCOVER</span>
+          <h2>
+            {place.title} <span>{place.icon}</span>
+          </h2>
+          <SmartLink className='orange-text-link' href={place.href}>
+            {place.action} ↗
+          </SmartLink>
+          {selected === 'journal' && posts[0] && (
+            <SmartLink
+              className='orange-focus-latest'
+              href={posts[0].href || `/article/${posts[0].slug || posts[0].id}`}
+            >
+              最新 · {posts[0].title}
             </SmartLink>
           )}
-          <SmartLink className='orange-text-link' href={place.href}>
-            {place.action} <span>↗</span>
-          </SmartLink>
+        </aside>
+      )}
+      <div className='orange-world-bottom'>
+        <div className='orange-scene-caption' aria-live='polite'>
+          {hover
+            ? `${PLACES.find(item => item.id === hover)?.title || ''} · 点击靠近`
+            : '拖动旋转 · 点选探索'}
         </div>
-        <p className='orange-handnote'>
-          保持好奇，慢慢生长。 <span>✳</span>
-        </p>
-      </aside>
-      <nav className='orange-place-nav' aria-label='工作室探索入口'>
-        {PLACES.map(item => (
-          <button
-            key={item.id}
-            type='button'
-            aria-pressed={selected === item.id}
-            onClick={() => setSelected(item.id)}
-          >
-            <span className='orange-nav-icon'>{item.icon}</span>
-            <span>
-              <small>
-                {item.number} / {item.subtitle}
-              </small>
-              <strong>{item.title}</strong>
-            </span>
-            <span className='orange-nav-arrow'>↗</span>
-          </button>
-        ))}
-      </nav>
+        <nav className='orange-place-nav' aria-label='工作室探索入口'>
+          {PLACES.map(item => (
+            <button
+              key={item.id}
+              type='button'
+              aria-pressed={selected === item.id}
+              onClick={() => explore(item.id)}
+            >
+              <span className='orange-nav-icon'>{item.icon}</span>
+              <span>{item.title}</span>
+              <small>{item.number}</small>
+            </button>
+          ))}
+        </nav>
+        <a className='orange-scroll-note' href='#orange-notes'>
+          <span>往下，读点什么</span> ↓
+        </a>
+      </div>
     </section>
   )
 }
