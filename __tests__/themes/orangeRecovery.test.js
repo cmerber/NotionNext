@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import Studio from '@/themes/orange/components/Studio'
 
 jest.mock('@/lib/config', () => ({ siteConfig: (key, fallback) => fallback }))
@@ -16,7 +16,7 @@ jest.mock('@/components/SmartLink', () => ({
 jest.mock(
   'next/dynamic',
   () => () =>
-    function MockScene({ onUnavailable, quality }) {
+    function MockScene({ onUnavailable, onReady, quality }) {
       return (
         <div>
           <span data-testid='render-quality'>{quality}</span>
@@ -26,6 +26,7 @@ jest.mock(
           <button onClick={() => onUnavailable('initialization')}>
             模拟不支持图形
           </button>
+          <button onClick={onReady}>模拟恢复完成</button>
         </div>
       )
     }
@@ -56,4 +57,19 @@ test('unsupported devices retain usable destinations without an automatic retry 
     '/archive'
   )
   expect(screen.queryByTestId('render-quality')).not.toBeInTheDocument()
+})
+
+test('a healthy session renews recovery for a later background discard', () => {
+  jest.useFakeTimers()
+  try {
+    render(<Studio />)
+    for (let i = 0; i < 2; i++)
+      fireEvent.click(screen.getByRole('button', { name: '模拟图形连接丢失' }))
+    fireEvent.click(screen.getByRole('button', { name: '模拟恢复完成' }))
+    act(() => jest.advanceTimersByTime(30000))
+    fireEvent.click(screen.getByRole('button', { name: '模拟图形连接丢失' }))
+    expect(screen.getByTestId('render-quality')).toHaveTextContent('safe')
+  } finally {
+    jest.useRealTimers()
+  }
 })

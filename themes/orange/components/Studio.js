@@ -77,6 +77,15 @@ export default function Studio({ posts = [] }) {
     const timer = setTimeout(() => setGreetingVisible(false), 4500)
     return () => clearTimeout(timer)
   }, [greeting, greetingVisible])
+  useEffect(() => {
+    if (sceneStatus !== 'ready') return
+    // Limit consecutive failures, allowing recovery again after a healthy
+    // session when a phone later discards a background tab.
+    const timer = setTimeout(() => {
+      recoveries.current = 0
+    }, 30000)
+    return () => clearTimeout(timer)
+  }, [sceneStatus, attempt])
   const fallback = useCallback(reason => {
     if (reason === 'context-lost' && recoveries.current < 2) {
       recoveries.current += 1
