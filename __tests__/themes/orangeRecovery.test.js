@@ -16,10 +16,19 @@ jest.mock('@/components/SmartLink', () => ({
 jest.mock(
   'next/dynamic',
   () => () =>
-    function MockScene({ onUnavailable, onReady, quality }) {
+    function MockScene({
+      onUnavailable,
+      onReady,
+      quality,
+      interaction,
+      focus
+    }) {
       return (
         <div>
           <span data-testid='render-quality'>{quality}</span>
+          <span data-testid='scene-selection'>
+            {focus}:{interaction}
+          </span>
           <button onClick={() => onUnavailable('context-lost')}>
             模拟图形连接丢失
           </button>
@@ -72,4 +81,21 @@ test('a healthy session renews recovery for a later background discard', () => {
   } finally {
     jest.useRealTimers()
   }
+})
+
+test('repeat selections retrigger feedback and keep their destination through recovery', () => {
+  render(<Studio />)
+  const journal = screen.getByRole('button', { name: /灵感书架/ })
+  fireEvent.click(journal)
+  expect(screen.getByTestId('scene-selection')).toHaveTextContent('journal:1')
+  fireEvent.click(journal)
+  expect(screen.getByTestId('scene-selection')).toHaveTextContent('journal:2')
+  fireEvent.click(screen.getByRole('button', { name: '模拟图形连接丢失' }))
+  expect(screen.getByTestId('scene-selection')).toHaveTextContent('journal:2')
+  fireEvent.click(screen.getByRole('button', { name: '打个招呼' }))
+  expect(screen.getByTestId('scene-selection')).toHaveTextContent('about:3')
+  expect(screen.getByRole('button', { name: /橙子会客厅/ })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  )
 })

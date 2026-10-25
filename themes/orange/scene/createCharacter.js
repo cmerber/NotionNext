@@ -3,15 +3,15 @@ import * as THREE from 'three'
 // A sculpted interpretation of the supplied portrait, rather than a flat image plane.
 // All geometry and materials are registered through the studio's resource helpers.
 export function createCharacter({ mesh, mat, group }) {
-  const root = group('about', 0.05, 0.12, 1.8)
+  const root = group('about', 0.15, 0.12, 2.03)
   root.name = 'orange-host'
   root.userData.character = true
-  root.rotation.y = 0.4
-  const skin = mat('#f2b78f', { roughness: 0.66 })
-  const skinLight = mat('#f9c49f', { roughness: 0.64 })
+  root.rotation.y = 0.3
+  const skin = mat('#f2b78f', { roughness: 0.52 })
+  const skinLight = mat('#f9c49f', { roughness: 0.55 })
   const earInner = mat('#e79e7b')
-  const hair = mat('#42302b', { roughness: 0.48 })
-  const hairLight = mat('#583d31', { roughness: 0.53 })
+  const hair = mat('#39261f', { roughness: 0.34 })
+  const hairLight = mat('#644435', { roughness: 0.4 })
   const shirt = mat('#292a2d', { roughness: 0.88 })
   const collar = mat('#343237', { roughness: 0.9 })
   const trousers = mat('#52615b')
@@ -58,8 +58,20 @@ export function createCharacter({ mesh, mat, group }) {
   head.name = 'head'
   head.position.y = 1.85
   root.add(head)
-  ellipsoid([0.51, 0.6, 0.43], skin, [0, 0, 0], head)
-  ellipsoid([0.42, 0.31, 0.33], skinLight, [0, -0.26, 0.16], head)
+  const face = ellipsoid([0.51, 0.6, 0.43], skin, [0, 0, 0], head)
+  // Shape the cheeks and jaw as one surface, avoiding intersecting face pieces.
+  const vertices = face.geometry.attributes.position
+  for (let i = 0; i < vertices.count; i++) {
+    const x = vertices.getX(i),
+      y = vertices.getY(i),
+      z = vertices.getZ(i)
+    if (y < 0) {
+      vertices.setX(i, x * (1 + y * 0.13))
+      if (z > 0) vertices.setZ(i, z + Math.sin(-y * Math.PI) * 0.3 * z)
+    }
+  }
+  vertices.needsUpdate = true
+  face.geometry.computeVertexNormals()
   for (const side of [-1, 1]) {
     ellipsoid([0.11, 0.17, 0.085], skin, [side * 0.5, -0.04, 0], head)
     ellipsoid([0.056, 0.1, 0.025], earInner, [side * 0.535, -0.04, 0.07], head)
@@ -67,6 +79,7 @@ export function createCharacter({ mesh, mat, group }) {
   }
   ellipsoid([0.075, 0.09, 0.095], skinLight, [0, -0.09, 0.444], head)
   const eyes = []
+  const pupils = []
   for (const side of [-1, 1]) {
     const eye = new THREE.Group()
     eye.name = side < 0 ? 'eye-left' : 'eye-right'
@@ -74,8 +87,12 @@ export function createCharacter({ mesh, mat, group }) {
     eye.rotation.y = side * 0.16
     head.add(eye)
     ellipsoid([0.16, 0.122, 0.07], eyeWhite, [0, 0, 0], eye)
-    ellipsoid([0.089, 0.108, 0.038], iris, [0.008 * side, -0.002, 0.058], eye)
-    ellipsoid([0.048, 0.072, 0.02], pupil, [0.008 * side, 0, 0.089], eye)
+    const gaze = new THREE.Group()
+    gaze.name = side < 0 ? 'gaze-left' : 'gaze-right'
+    eye.add(gaze)
+    ellipsoid([0.089, 0.108, 0.038], iris, [0.008 * side, -0.002, 0.058], gaze)
+    ellipsoid([0.048, 0.072, 0.02], pupil, [0.008 * side, 0, 0.089], gaze)
+    pupils.push(gaze)
     ellipsoid([0.026, 0.027, 0.01], glint, [-0.025, 0.045, 0.106], eye)
     ellipsoid([0.011, 0.012, 0.008], glint, [0.037, -0.039, 0.099], eye)
     tube(
@@ -220,6 +237,20 @@ export function createCharacter({ mesh, mat, group }) {
       head
     )
   }
+  // Fine secondary locks catch the rim light without obscuring the face.
+  for (let i = 0; i < 8; i++) {
+    const offset = i * 0.021
+    tube(
+      [
+        [0.18 + offset, 0.59 - offset * 0.15, 0.16],
+        [0.32 + offset, 0.48, 0.34],
+        [0.34 + offset * 0.6, 0.23, 0.405]
+      ],
+      0.003,
+      i % 3 ? hair : hairLight,
+      head
+    )
+  }
   // Black polo collar, placket and two small buttons from the reference portrait.
   for (const side of [-1, 1]) {
     const shape = new THREE.Shape()
@@ -246,6 +277,27 @@ export function createCharacter({ mesh, mat, group }) {
   ellipsoid([0.034, 0.17, 0.025], collar, [0, 1.08, 0.236])
   for (const y of [1.17, 1.035])
     ellipsoid([0.027, 0.027, 0.015], hair, [0, y, 0.262])
+  const seam = mat('#464446', { roughness: 0.95 })
+  for (const side of [-1, 1]) {
+    tube(
+      [
+        [side * 0.25, 1.21, 0.11],
+        [side * 0.32, 1.07, 0.16],
+        [side * 0.31, 0.89, 0.17]
+      ],
+      0.005,
+      seam
+    )
+    for (let i = 0; i < 3; i++)
+      tube(
+        [
+          [side * 0.15 - 0.055, 0.19 + i * 0.025, 0.23],
+          [side * 0.15 + 0.055, 0.19 + i * 0.025, 0.23]
+        ],
+        0.007,
+        sole
+      )
+  }
   const arms = []
   for (const side of [-1, 1]) {
     const arm = new THREE.Group()
@@ -254,27 +306,77 @@ export function createCharacter({ mesh, mat, group }) {
     root.add(arm)
     ellipsoid([0.14, 0.21, 0.15], shirt, [side * 0.055, -0.11, 0], arm)
     ellipsoid([0.09, 0.2, 0.09], skin, [side * 0.095, -0.32, 0.015], arm)
-    ellipsoid([0.095, 0.12, 0.07], skinLight, [side * 0.11, -0.47, 0.03], arm)
+    ellipsoid([0.073, 0.085, 0.055], skinLight, [side * 0.11, -0.46, 0.03], arm)
+    for (let finger = 0; finger < 4; finger++)
+      ellipsoid(
+        [0.018, 0.047 - Math.abs(finger - 1.5) * 0.007, 0.022],
+        skinLight,
+        [side * 0.11 + (finger - 1.5) * 0.032, -0.525, 0.035],
+        arm
+      )
+    const thumb = ellipsoid(
+      [0.03, 0.053, 0.03],
+      skinLight,
+      [side * 0.18, -0.45, 0.04],
+      arm
+    )
+    thumb.rotation.z = -side * 0.5
     arm.rotation.z = side * 0.07
     arms.push(arm)
   }
   let waveUntil = 0
+  let waveStart = -10
   let lastTime = 0
+  let reactionStart = -10
+  let lookX = 0
+  let lookY = 0
+  let facing = 0.3
+  const clamp = (n, min, max) => Math.min(max, Math.max(min, n))
   return {
     root,
     wave() {
+      waveStart = lastTime
       waveUntil = lastTime + 3.3
+      reactionStart = lastTime
+    },
+    lookAt(x, y, angle = 0.3) {
+      lookX = clamp(x, -1, 1)
+      lookY = clamp(y, -1, 1)
+      facing = clamp(angle, -0.65, 1.1)
+    },
+    react() {
+      reactionStart = lastTime
     },
     update(time, quiet) {
       lastTime = time
-      root.position.y = 0.12 + (quiet ? 0 : Math.sin(time * 1.5) * 0.015)
+      const age = time - reactionStart
+      const bounce =
+        !quiet && age >= 0 && age < 1.1
+          ? Math.sin((age / 1.1) * Math.PI) * 0.12
+          : 0
+      root.position.y =
+        0.12 + (quiet ? 0 : Math.sin(time * 1.5) * 0.016 + bounce)
+      root.rotation.y += (facing - root.rotation.y) * (quiet ? 1 : 0.055)
+      head.rotation.y = quiet
+        ? 0
+        : THREE.MathUtils.lerp(head.rotation.y, lookX * 0.2, 0.09)
+      head.rotation.x = quiet
+        ? 0
+        : THREE.MathUtils.lerp(head.rotation.x, -lookY * 0.09, 0.09)
+      pupils.forEach(gaze => {
+        gaze.position.x = quiet ? 0 : lookX * 0.023
+        gaze.position.y = quiet ? 0 : lookY * 0.012
+      })
       head.rotation.z = quiet ? 0 : Math.sin(time * 0.55) * 0.025
       const blinking = !quiet && time % 5.7 > 5.48
       eyes.forEach(eye => {
         eye.scale.y = blinking ? 0.12 : 1
       })
-      arms[1].rotation.z =
-        !quiet && time < waveUntil ? 2.35 + Math.sin(time * 9) * 0.22 : 0.07
+      const waveBlend = quiet
+        ? 0
+        : clamp((time - waveStart) / 0.35, 0, 1) *
+          clamp((waveUntil - time) / 0.45, 0, 1)
+      arms[1].rotation.z = 0.07 + waveBlend * (2.28 + Math.sin(time * 9) * 0.22)
       arms[0].rotation.z = -0.07 + (quiet ? 0 : Math.sin(time * 1.4) * 0.035)
     }
   }

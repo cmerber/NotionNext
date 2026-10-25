@@ -69,3 +69,25 @@ test('greeting waves and reduced motion restores a still, open-eyed pose', () =>
     character.dispose()
   }
 })
+
+test('gaze is bounded and a greeting returns to rest without accumulating motion', () => {
+  const character = makeCharacter()
+  try {
+    character.lookAt(100, -100, 100)
+    character.update(1, false)
+    character.wave()
+    character.update(1.5, false)
+    assert.ok(character.root.position.y > 0.16)
+    for (let i = 0; i < 500; i++) character.update(2 + i / 30, false)
+    assert.ok(character.root.rotation.y <= 1.1)
+    assert.ok(
+      Math.abs(character.root.getObjectByName('gaze-left').position.x) <= 0.023
+    )
+    character.update(20, true)
+    assert.equal(character.root.position.y, 0.12)
+    assert.equal(character.root.getObjectByName('gaze-left').position.x, 0)
+    assert.equal(character.root.getObjectByName('arm-right').rotation.z, 0.07)
+  } finally {
+    character.dispose()
+  }
+})
