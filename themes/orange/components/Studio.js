@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import SmartLink from '@/components/SmartLink'
 import { useGlobal } from '@/lib/global'
@@ -61,6 +61,8 @@ export default function Studio({ posts = [] }) {
   const [tour, setTour] = useState(true)
   const [flat, setFlat] = useState(false)
   const [attempt, setAttempt] = useState(0)
+  const [quality, setQuality] = useState('auto')
+  const recoveries = useRef(0)
   const [sceneStatus, setSceneStatus] = useState('loading')
   const [hover, setHover] = useState('')
   const [greeting, setGreeting] = useState(0)
@@ -75,7 +77,14 @@ export default function Studio({ posts = [] }) {
     const timer = setTimeout(() => setGreetingVisible(false), 4500)
     return () => clearTimeout(timer)
   }, [greeting, greetingVisible])
-  const fallback = useCallback(() => setSceneStatus('unavailable'), [])
+  const fallback = useCallback(reason => {
+    if (reason === 'context-lost' && recoveries.current < 2) {
+      recoveries.current += 1
+      setQuality('safe')
+      setSceneStatus('recovering')
+      setAttempt(value => value + 1)
+    } else setSceneStatus('unavailable')
+  }, [])
   const place = PLACES.find(item => item.id === selected)
   const sceneEnabled = siteConfig('ORANGE_SCENE_ENABLE', true, CONFIG)
   const ambienceEnabled = siteConfig('ORANGE_AMBIENCE_ENABLE', true, CONFIG)
@@ -87,6 +96,8 @@ export default function Studio({ posts = [] }) {
     setTour(false)
   }
   const retry = () => {
+    recoveries.current = 0
+    setQuality('safe')
     setSceneStatus('loading')
     setFlat(false)
     setAttempt(value => value + 1)
@@ -102,6 +113,7 @@ export default function Studio({ posts = [] }) {
         {showScene ? (
           <Scene
             key={attempt}
+            quality={quality}
             night={isDarkMode}
             view={view}
             focus={selected}
@@ -113,6 +125,7 @@ export default function Studio({ posts = [] }) {
             onSelect={explore}
             onHover={setHover}
             onReady={() => setSceneStatus('ready')}
+            onRecovering={() => setSceneStatus('recovering')}
             onUnavailable={fallback}
           />
         ) : (
@@ -134,6 +147,11 @@ export default function Studio({ posts = [] }) {
           </div>
         )}
       </div>
+      {sceneStatus === 'recovering' && showScene && (
+        <div className='orange-reconnecting' role='status'>
+          正在重新连接星球…
+        </div>
+      )}
       <div className='orange-world-title'>
         <p>
           <span className='orange-live-dot' /> A LITTLE WORLD BY QCODE

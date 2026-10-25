@@ -59,6 +59,19 @@ export function ImmersiveStyle() {
           linear-gradient(165deg, #f4f0e6 5%, #d9e3de 48%, #f2dfcf 100%);
         transition: background 1.5s;
       }
+      #theme-orange .orange-reconnecting {
+        position: absolute;
+        z-index: 4;
+        left: 50%;
+        top: 52%;
+        transform: translateX(-50%);
+        padding: 12px 20px;
+        border-radius: 24px;
+        background: #f9f6eccc;
+        backdrop-filter: blur(15px);
+        font-size: 12px;
+        color: #53654f;
+      }
       .dark #theme-orange .orange-world-sky {
         background:
           radial-gradient(ellipse at 75% 25%, #62607566, transparent 40%),

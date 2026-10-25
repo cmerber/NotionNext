@@ -8,9 +8,10 @@ export function createStudio(host, initial, callbacks) {
   let renderer
   try {
     renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: initial.quality !== 'safe',
       alpha: true,
-      powerPreference: 'high-performance'
+      powerPreference:
+        initial.quality === 'safe' ? 'low-power' : 'high-performance'
     })
   } catch (error) {
     // Retry without multisampling for devices with a smaller GPU budget.
@@ -25,7 +26,7 @@ export function createStudio(host, initial, callbacks) {
         '[Orange 3D] Renderer initialization failed',
         fallbackError.message
       )
-      callbacks.onUnavailable()
+      callbacks.onUnavailable('initialization')
       return { update() {}, dispose() {} }
     }
   }
@@ -623,7 +624,11 @@ export function createStudio(host, initial, callbacks) {
       return
     // Small screens need fewer pixels and frames, while taps and camera changes
     // still render immediately. Keep vertical swipes and browser pinch zoom free.
-    if (compact && previous && timestamp - previous < 1000 / 30) {
+    if (
+      (compact || state.quality === 'safe') &&
+      previous &&
+      timestamp - previous < 1000 / 30
+    ) {
       frame = requestAnimationFrame(animate)
       return
     }
@@ -718,9 +723,12 @@ export function createStudio(host, initial, callbacks) {
     const wasCompact = compact
     compact = width < 600
     renderer.setPixelRatio(
-      Math.min(window.devicePixelRatio || 1, compact ? 1.25 : 1.75)
+      Math.min(
+        window.devicePixelRatio || 1,
+        state.quality === 'safe' ? 1 : compact ? 1.25 : 1.75
+      )
     )
-    const shadowSize = compact ? 512 : 1024
+    const shadowSize = compact || state.quality === 'safe' ? 512 : 1024
     if (sun.shadow.mapSize.width !== shadowSize) {
       sun.shadow.mapSize.set(shadowSize, shadowSize)
       sun.shadow.map?.dispose()
@@ -795,10 +803,18 @@ export function createStudio(host, initial, callbacks) {
   function contextLost(event) {
     event.preventDefault()
     contextUnavailable = true
+    callbacks.onRecovering?.()
     cancelAnimationFrame(frame)
     clearTimeout(contextTimer)
     // Keep the canvas mounted so the browser can restore its context.
-    contextTimer = setTimeout(() => callbacks.onUnavailable(), 10000)
+    contextTimer = setTimeout(recoverContext, 2500)
+  }
+  function recoverContext() {
+    if (disposed) return
+    // Background tabs may have been suspended by the browser. Rebuild only when
+    // visible, so a suspended page cannot consume GPU contexts in a retry loop.
+    if (document.hidden) contextTimer = setTimeout(recoverContext, 2500)
+    else callbacks.onUnavailable('context-lost')
   }
   function contextRestored() {
     clearTimeout(contextTimer)
@@ -870,7 +886,9 @@ export function createStudio(host, initial, callbacks) {
       textures.forEach(value => value.dispose())
       sun.shadow.dispose()
       renderer.dispose()
-      renderer.forceContextLoss()
+      const gl = renderer.getContext()
+      if (!gl.isContextLost() && gl.getExtension('WEBGL_lose_context'))
+        renderer.forceContextLoss()
       canvas.remove()
       scene.clear()
     }
