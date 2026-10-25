@@ -8,10 +8,12 @@ export default function StudioCanvas({
   paused,
   ambience,
   greeting,
+  quality,
   onGreet,
   onSelect,
   onHover,
   onReady,
+  onRecovering,
   onUnavailable
 }) {
   const host = useRef(null)
@@ -20,10 +22,18 @@ export default function StudioCanvas({
     onSelect,
     onHover,
     onReady,
+    onRecovering,
     onUnavailable,
     onGreet
   })
-  callbacks.current = { onSelect, onHover, onReady, onUnavailable, onGreet }
+  callbacks.current = {
+    onSelect,
+    onHover,
+    onReady,
+    onRecovering,
+    onUnavailable,
+    onGreet
+  }
   const options = useRef({
     night,
     view,
@@ -31,9 +41,19 @@ export default function StudioCanvas({
     tour,
     paused,
     ambience,
-    greeting
+    greeting,
+    quality
   })
-  options.current = { night, view, focus, tour, paused, ambience, greeting }
+  options.current = {
+    night,
+    view,
+    focus,
+    tour,
+    paused,
+    ambience,
+    greeting,
+    quality
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -46,14 +66,15 @@ export default function StudioCanvas({
           onSelect: value => callbacks.current.onSelect(value),
           onHover: value => callbacks.current.onHover(value),
           onReady: () => callbacks.current.onReady(),
-          onUnavailable: () => callbacks.current.onUnavailable(),
+          onRecovering: () => callbacks.current.onRecovering?.(),
+          onUnavailable: reason => callbacks.current.onUnavailable(reason),
           onGreet: () => callbacks.current.onGreet?.()
         })
         api.current = instance
         dispose = () => instance.dispose()
       })
       .catch(() => {
-        if (!cancelled) callbacks.current.onUnavailable()
+        if (!cancelled) callbacks.current.onUnavailable('initialization')
       })
     return () => {
       cancelled = true
@@ -78,6 +99,7 @@ export default function StudioCanvas({
     <div
       ref={host}
       className='orange-canvas'
+      data-render-quality={quality || 'auto'}
       role='img'
       aria-label='可旋转的治愈系微缩工作室，有棕发黑色上衣的小主人、书架、电脑和档案柜。点击人物会挥手，也可以使用下方按钮选择入口。'
     />
