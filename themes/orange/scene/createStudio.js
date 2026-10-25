@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { createCharacter } from './createCharacter'
+import { sampleCameraFlight, reactionEnvelope } from './cameraMotion'
 
 // Original procedural geometry: no remote models, textures, or model service.
 export function createStudio(host, initial, callbacks) {
@@ -33,6 +34,7 @@ export function createStudio(host, initial, callbacks) {
   let state = { ...initial }
   let disposed = false
   let frame = 0
+  let animating = false
   let visible = true
   let hovered = ''
   let down = null
@@ -45,6 +47,8 @@ export function createStudio(host, initial, callbacks) {
   let flight = null
   let tourTime = 0
   let userOrbit = false
+  let reactionStart = -10
+  let reactionPlace = ''
   const materials = new Set()
   const geometries = new Set()
   const textures = new Set()
@@ -101,6 +105,39 @@ export function createStudio(host, initial, callbacks) {
     glass: mat('#acccbc', { transparent: true, opacity: 0.65 }),
     soil: mat('#534336')
   }
+  // Tiny deterministic canvas maps give close views a tactile surface.
+  const surfaceMap = (fabric = false) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 128
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.fillStyle = '#b6b6b6'
+    ctx.fillRect(0, 0, 128, 128)
+    for (let i = 0; i < 128; i += fabric ? 3 : 2) {
+      ctx.strokeStyle = i % 3 ? '#a8a8a8' : '#c4c4c4'
+      ctx.lineWidth = fabric ? 1 : 0.7
+      ctx.beginPath()
+      ctx.moveTo(0, i)
+      for (let x = 0; x <= 128; x += 8)
+        ctx.lineTo(x, i + (fabric ? 0 : Math.sin(x * 0.04 + i) * 1.8))
+      ctx.stroke()
+      if (fabric) {
+        ctx.beginPath()
+        ctx.moveTo(i, 0)
+        ctx.lineTo(i, 128)
+        ctx.stroke()
+      }
+    }
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+    texture.repeat.set(fabric ? 7 : 2, fabric ? 7 : 2)
+    textures.add(texture)
+    return texture
+  }
+  palette.wood.bumpMap = surfaceMap()
+  palette.wood.bumpScale = 0.025
+  palette.green.bumpMap = surfaceMap(true)
+  palette.green.bumpScale = 0.018
   const mesh = (geometry, material, position, parent = scene) => {
     geometries.add(geometry)
     const item = new THREE.Mesh(geometry, material)
@@ -180,6 +217,12 @@ export function createStudio(host, initial, callbacks) {
   const lampLight = new THREE.PointLight('#ffb963', 4, 7, 2)
   lampLight.position.set(2.6, 3, -1.7)
   scene.add(lampLight)
+  const rim = new THREE.DirectionalLight('#ffe2b5', 2.4)
+  rim.position.set(-4, 5, -2)
+  scene.add(rim)
+  const portraitLight = new THREE.PointLight('#ffe3c6', 6, 9, 2)
+  portraitLight.position.set(0, 4.5, 5)
+  scene.add(portraitLight)
 
   // Floating foundation and cutaway walls.
   box(8.6, 0.4, 6.8, palette.green, 0, -0.38, 0)
@@ -201,6 +244,27 @@ export function createStudio(host, initial, callbacks) {
   box(0.06, 1.25, 0.08, palette.white, 2.35, 2.22, -2.84)
   box(1.95, 0.06, 0.08, palette.white, 2.35, 2.22, -2.84)
   box(2.3, 0.1, 0.38, palette.wood, 2.35, 1.5, -2.8)
+
+  const wireCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-3.95, 3.5, -2.8),
+    new THREE.Vector3(0, 3.05, -2.8),
+    new THREE.Vector3(3.95, 3.5, -2.8)
+  ])
+  mesh(
+    new THREE.TubeGeometry(wireCurve, 32, 0.012, 5, false),
+    palette.darkWood,
+    [0, 0, 0]
+  )
+  const bulbMaterial = mat('#fff1c6', {
+    emissive: '#ffd393',
+    emissiveIntensity: 1.5
+  })
+  for (let i = 0; i < 13; i++) {
+    const at = wireCurve.getPoint(i / 12)
+    cylinder(0.018, 0.018, 0.1, palette.brass, at.x, at.y - 0.04, at.z)
+    const bulb = sphere(0.056, bulbMaterial, at.x, at.y - 0.12, at.z)
+    bulb.castShadow = false
+  }
 
   const shelf = group('journal', -2.4, 0, -2.48)
   const animatedBooks = []
@@ -231,16 +295,7 @@ export function createStudio(host, initial, callbacks) {
       )
       b.rotation.z = book === 5 ? -0.13 : 0
       animatedBooks.push({ mesh: b, index: book + row * 7 })
-      box(
-        0.12,
-        0.025,
-        0.01,
-        palette.brass,
-        -0.78 + book * 0.25,
-        0.5 + row * 0.76,
-        0.351,
-        shelf
-      )
+      box(0.12, 0.025, 0.01, palette.brass, 0, -h / 2 + 0.08, 0.221, b)
     }
   }
   label('01 / JOURNAL', 1.45, 0.31, 0, 2.55, 0.39, shelf)
@@ -266,8 +321,42 @@ export function createStudio(host, initial, callbacks) {
   box(0.12, 0.28, 0.1, palette.charcoal, -0.25, 1.44, -0.25, desk)
   box(0.5, 0.05, 0.35, palette.charcoal, -0.25, 1.31, -0.15, desk)
   box(0.88, 0.045, 0.29, palette.cream, -0.3, 1.31, 0.35, desk)
-  for (let i = 0; i < 8; i++)
-    box(0.055, 0.015, 0.2, palette.sage, -0.65 + i * 0.1, 1.34, 0.35, desk)
+  for (let row = 0; row < 3; row++)
+    for (let i = 0; i < 10; i++)
+      box(
+        0.057,
+        0.016,
+        0.052,
+        row === 2 && i === 4 ? palette.orange : palette.sage,
+        -0.66 + i * 0.08,
+        1.344,
+        0.27 + row * 0.075,
+        desk
+      )
+  const mouse = sphere(0.1, palette.cream, 0.48, 1.34, 0.35, desk)
+  mouse.scale.set(0.65, 0.32, 1)
+  box(0.012, 0.012, 0.055, palette.brass, 0.48, 1.371, 0.32, desk)
+  const screenLines = []
+  for (let i = 0; i < 3; i++) {
+    const line = box(
+      0.35 + i * 0.16,
+      0.015,
+      0.006,
+      palette.sage,
+      -0.48 + i * 0.08,
+      1.79 - i * 0.055,
+      -0.15,
+      desk
+    )
+    screenLines.push(line)
+  }
+  const cupHandle = mesh(
+    new THREE.TorusGeometry(0.082, 0.024, 6, 20),
+    palette.orange,
+    [1.08, 1.44, 0.19],
+    desk
+  )
+  cupHandle.rotation.y = Math.PI / 2
   cylinder(0.14, 0.11, 0.28, palette.orange, 0.93, 1.42, 0.19, desk)
   cylinder(0.12, 0.12, 0.012, palette.soil, 0.93, 1.566, 0.19, desk)
   label('02 / MAKE THINGS', 1.5, 0.3, 0, 1.12, 0.69, desk)
@@ -280,9 +369,16 @@ export function createStudio(host, initial, callbacks) {
 
   const cabinet = group('profile', 3.05, 0, 0.85)
   box(1.25, 1.6, 0.87, palette.green, 0, 0.95, 0, cabinet)
+  const drawers = []
   for (let row = 0; row < 3; row++) {
-    box(1.1, 0.43, 0.06, palette.sage, 0, 0.45 + row * 0.47, 0.47, cabinet)
-    box(0.25, 0.04, 0.07, palette.brass, 0, 0.49 + row * 0.47, 0.53, cabinet)
+    const drawer = new THREE.Group()
+    drawer.position.set(0, 0.45 + row * 0.47, 0.47)
+    cabinet.add(drawer)
+    box(1.1, 0.43, 0.06, palette.sage, 0, 0, 0, drawer)
+    box(1, 0.045, 0.62, palette.wood, 0, -0.18, -0.29, drawer)
+    box(0.25, 0.04, 0.07, palette.brass, 0, 0.04, 0.06, drawer)
+    box(0.33, 0.13, 0.009, palette.cream, 0, -0.075, 0.034, drawer)
+    drawers.push(drawer)
   }
   label('03 / QUESTS', 1.05, 0.28, 0, 1.64, 0.48, cabinet)
   cylinder(0.26, 0.32, 0.12, palette.darkWood, 0, 1.8, 0, cabinet)
@@ -314,7 +410,14 @@ export function createStudio(host, initial, callbacks) {
   box(0.46, 0.025, 0.36, palette.orange, -1.48, 0.85, 1.1)
 
   const character = createCharacter({ mesh, mat, group })
-  character.root.scale.setScalar(1.08)
+  character.root.scale.setScalar(1.42)
+  const welcomeRing = mesh(
+    new THREE.TorusGeometry(0.83, 0.014, 6, 64),
+    palette.brass,
+    [0.15, 0.14, 2.03]
+  )
+  welcomeRing.rotation.x = -Math.PI / 2
+  welcomeRing.castShadow = false
 
   // Orange tree, wall clock, and task lamp.
   const tree = group('about', 3.2, 0, -2.1)
@@ -335,6 +438,19 @@ export function createStudio(host, initial, callbacks) {
     [0.18, 2.25, 0.03]
   ])
     sphere(0.11, palette.orange, x, y, z, tree)
+  for (let i = 0; i < 18; i++) {
+    const a = i * 2.4
+    const foliage = sphere(
+      0.11,
+      i % 3 ? palette.sage : palette.green,
+      Math.cos(a) * 0.4,
+      1.7 + (i % 5) * 0.11,
+      Math.sin(a) * 0.4,
+      tree
+    )
+    foliage.scale.set(1.4, 0.22, 0.6)
+    foliage.rotation.set(i * 0.3, a, 0.4)
+  }
   cylinder(0.22, 0.22, 0.05, palette.brass, 2.36, 1.34, -1.97)
   cylinder(0.035, 0.035, 0.8, palette.brass, 2.36, 1.74, -1.97)
   cylinder(0.15, 0.38, 0.33, palette.orange, 2.36, 2.19, -1.97)
@@ -447,7 +563,10 @@ export function createStudio(host, initial, callbacks) {
     metalness: 0.55,
     roughness: 0.3,
     emissive: '#a08045',
-    emissiveIntensity: 0.15
+    emissiveIntensity: 0.15,
+    transparent: true,
+    opacity: 1,
+    depthWrite: false
   })
   const orbit = mesh(
     new THREE.TorusGeometry(6.65, 0.012, 5, 180),
@@ -544,8 +663,51 @@ export function createStudio(host, initial, callbacks) {
     journal: [-2.4, 0.18, -1.8],
     tools: [1.2, 0.18, -0.5],
     profile: [3.05, 0.18, 0.85],
-    about: [0.05, 0.18, 1.8]
+    about: [0.15, 0.18, 2.03]
   }
+  // Reused feedback geometry: an expanding ring and a short, warm spark orbit.
+  const feedback = new THREE.Group()
+  scene.add(feedback)
+  const rippleMaterial = mat('#ffe1a0', {
+    emissive: '#ffc267',
+    emissiveIntensity: 1.8,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false
+  })
+  const ripple = mesh(
+    new THREE.TorusGeometry(0.68, 0.025, 6, 64),
+    rippleMaterial,
+    [0, 0.2, 0],
+    feedback
+  )
+  ripple.rotation.x = -Math.PI / 2
+  ripple.castShadow = false
+  const sparkMaterial = mat('#fff0c6', {
+    emissive: '#ffd58c',
+    emissiveIntensity: 2,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false
+  })
+  const sparkGeometry = new THREE.OctahedronGeometry(0.065)
+  const sparks = Array.from({ length: 14 }, () => {
+    const spark = mesh(sparkGeometry, sparkMaterial, [0, 0, 0], feedback)
+    spark.castShadow = false
+    return spark
+  })
+  function react(place) {
+    reactionPlace = place
+    reactionStart = time
+    character.react()
+    if (place === 'about') character.wave()
+  }
+  const cameraOffset = new THREE.Vector3()
+  const pathStart = [0, 0, 0]
+  const pathEnd = [0, 0, 0]
+  const pathPoint = [0, 0, 0]
+  let lensStart = 36
+  let lensTarget = 36
   const destination = new THREE.Vector3()
   const targetDestination = new THREE.Vector3()
   const flightStart = new THREE.Vector3()
@@ -553,27 +715,36 @@ export function createStudio(host, initial, callbacks) {
 
   function cameraPose(intro = false) {
     const poses = [
-      { position: [11.5, 9, 16.5], target: [0, 0.6, 0] },
-      { position: [0.8, 7.8, 19.5], target: [0, 0.7, 0] },
-      { position: [17, 8.8, 5.8], target: [0, 0.9, 0] }
+      { position: [9.8, 7.4, 14.6], target: [-0.6, 1, 0.3] },
+      { position: [0.8, 5.6, 16.5], target: [0, 1.15, 0.4] },
+      { position: [14.5, 6.8, 7.5], target: [0, 1.1, 0.3] }
     ]
     const focusPoses = {
-      journal: { position: [1.1, 3.3, 5.8], target: [-2.2, 1.5, -2] },
-      tools: { position: [5.7, 4.1, 4.3], target: [1.25, 1.6, -1.2] },
-      profile: { position: [7.8, 3.6, 6], target: [3.05, 1.2, 0.85] },
-      about: { position: [3.6, 2.8, 8.5], target: [0, 1.4, 1.5] }
+      journal: { position: [-0.2, 3.4, 3.7], target: [-2.3, 1.55, -2.05] },
+      tools: { position: [4.5, 3.8, 3.1], target: [1.25, 1.65, -1.3] },
+      profile: { position: [6.7, 3.2, 5.3], target: [3.05, 1.3, 0.85] },
+      about: { position: [3.1, 3.7, 11.3], target: [0.15, 1.95, 2.03] }
     }
     const pose = focusPoses[state.focus] || poses[state.view % poses.length]
     destination.set(...pose.position)
     targetDestination.set(...pose.target)
     if (!state.focus && compact) destination.multiplyScalar(1.4)
-    if (compact) targetDestination.y += 0.8
+    if (compact && !state.focus) targetDestination.y += 0.8
+    if (compact && state.focus) {
+      cameraOffset.copy(destination).sub(targetDestination).multiplyScalar(1.14)
+      destination.copy(targetDestination).add(cameraOffset)
+      targetDestination.y += 0.25
+    }
+    lensStart = camera.fov
+    lensTarget = compact ? (state.focus ? 43 : 48) : state.focus ? 32 : 36
     if (intro) {
       camera.position.copy(destination).multiplyScalar(1.35)
       controls.target.copy(targetDestination)
       controls.update()
     }
     flightStart.copy(camera.position)
+    flightStart.toArray(pathStart)
+    destination.toArray(pathEnd)
     targetStart.copy(controls.target)
     userOrbit = false
     tourTime = 0
@@ -581,16 +752,28 @@ export function createStudio(host, initial, callbacks) {
       camera.position.copy(destination)
       controls.target.copy(targetDestination)
       controls.update()
+      camera.fov = lensTarget
+      camera.updateProjectionMatrix()
       flight = null
-    } else flight = { elapsed: 0, duration: intro ? 3.2 : 1.8 }
+    } else flight = { elapsed: 0, duration: intro ? 3.4 : 2.1 }
   }
 
   function moveCamera(delta) {
     if (flight) {
       flight.elapsed += delta
       const p = Math.min(1, flight.elapsed / flight.duration)
-      const ease = p * p * (3 - 2 * p)
-      camera.position.lerpVectors(flightStart, destination, ease)
+      const distance = flightStart.distanceTo(destination)
+      const ease = sampleCameraFlight(
+        pathStart,
+        pathEnd,
+        p,
+        Math.min(1.15, distance * 0.08),
+        Math.min(1.35, distance * 0.09),
+        pathPoint
+      )
+      camera.position.fromArray(pathPoint)
+      camera.fov = lensStart + (lensTarget - lensStart) * ease
+      camera.updateProjectionMatrix()
       controls.target.lerpVectors(targetStart, targetDestination, ease)
       if (p === 1) flight = null
     } else if (state.tour && !state.focus && !userOrbit) {
@@ -605,6 +788,10 @@ export function createStudio(host, initial, callbacks) {
   }
 
   function render() {
+    host.dataset.focus = state.focus || 'world'
+    host.dataset.interaction = state.interaction || 0
+    host.dataset.cameraMotion = flight ? 'flying' : 'settled'
+    host.dataset.reaction = feedback.visible ? reactionPlace : ''
     host.dataset.camera = camera.position
       .toArray()
       .map(value => value.toFixed(2))
@@ -635,8 +822,50 @@ export function createStudio(host, initial, callbacks) {
     const delta = Math.min((timestamp - (previous || timestamp)) / 1000, 0.05)
     previous = timestamp
     time += delta
+    animating = true
     moveCamera(delta)
+    orbitMaterial.opacity +=
+      ((state.focus ? 0.08 : 1) - orbitMaterial.opacity) * 0.06
+    character.lookAt(
+      pointer.x,
+      pointer.y,
+      Math.atan2(camera.position.x - 0.15, camera.position.z - 2.03)
+    )
     character.update(time, false)
+    const energy = reactionEnvelope(time - reactionStart)
+    const reactionLocation = beaconLocations[reactionPlace]
+    feedback.visible = energy > 0 && Boolean(reactionLocation)
+    if (feedback.visible) {
+      feedback.position.set(...reactionLocation)
+      const age = time - reactionStart
+      ripple.scale.setScalar(1 + age * 1.7)
+      rippleMaterial.opacity = energy * 0.8
+      sparkMaterial.opacity = energy
+      sparks.forEach((spark, index) => {
+        const angle = (index / sparks.length) * Math.PI * 2 + age * 1.2
+        const radius = 0.65 + age * 0.55
+        spark.position.set(
+          Math.cos(angle) * radius,
+          0.5 + Math.sin(index * 1.7) * 0.25 + age * 0.7,
+          Math.sin(angle) * radius
+        )
+        spark.rotation.y = age * 2 + index
+        spark.scale.setScalar(0.5 + energy)
+      })
+    }
+    drawers.forEach((drawer, index) => {
+      const offset = state.focus === 'profile' ? (index === 1 ? 0.42 : 0.12) : 0
+      const kick = reactionPlace === 'profile' ? energy * 0.12 : 0
+      drawer.position.z += (0.47 + offset + kick - drawer.position.z) * 0.08
+    })
+    screenLines.forEach((line, index) => {
+      line.scale.x =
+        1 + (state.focus === 'tools' ? Math.sin(time * 2 + index) * 0.22 : 0)
+    })
+    portraitLight.intensity =
+      (state.night ? 9 : 6) + (reactionPlace === 'about' ? energy * 4 : 0)
+    palette.screen.emissiveIntensity =
+      (state.night ? 1 : 0.45) + (reactionPlace === 'tools' ? energy * 1.3 : 0)
     orbit.rotation.z = -0.2 + Math.sin(time * 0.1) * 0.08
     satellite.position.set(
       Math.cos(time * 0.22) * 6.65,
@@ -659,7 +888,9 @@ export function createStudio(host, initial, callbacks) {
     animatedBooks.forEach(book => {
       const offset =
         activePlace === 'journal'
-          ? 0.07 + Math.sin(time * 1.3 + book.index) * 0.035
+          ? 0.16 +
+            Math.sin(time * 2.4 + book.index * 0.7) * 0.09 +
+            (reactionPlace === 'journal' ? energy * (book.index % 3) * 0.09 : 0)
           : 0
       book.mesh.position.z += (0.13 + offset - book.mesh.position.z) * 0.09
     })
@@ -677,6 +908,7 @@ export function createStudio(host, initial, callbacks) {
       puff.position.y = 1.65 + ((time * 0.12 + index * 0.14) % 0.45)
       puff.position.x = 2.16 + Math.sin(time + index) * 0.035
     })
+    animating = false
     render()
     frame = requestAnimationFrame(animate)
   }
@@ -703,6 +935,10 @@ export function createStudio(host, initial, callbacks) {
     sun.intensity = state.night ? 1.3 : 2.8
     sun.color.set(state.night ? '#b8c8ed' : '#ffead4')
     lampLight.intensity = state.night ? 13 : 2.5
+    rim.color.set(state.night ? '#b3c8ff' : '#ffe2b5')
+    rim.intensity = state.night ? 3.2 : 2.4
+    portraitLight.intensity = state.night ? 9 : 6
+    bulbMaterial.emissiveIntensity = state.night ? 3 : 1.5
     palette.screen.emissiveIntensity = state.night ? 1 : 0.45
     renderer.toneMappingExposure = state.night ? 1.05 : 1.05
     scene.fog.color.set(state.night ? '#344652' : '#e3e5db')
@@ -738,7 +974,7 @@ export function createStudio(host, initial, callbacks) {
     renderer.setSize(width, height)
     const aspect = width / height
     camera.aspect = aspect
-    camera.fov = compact ? 48 : 36
+    camera.fov = compact ? (state.focus ? 43 : 48) : state.focus ? 32 : 36
     camera.updateProjectionMatrix()
     if (wasCompact !== compact) cameraPose()
     render()
@@ -831,7 +1067,12 @@ export function createStudio(host, initial, callbacks) {
   canvas.addEventListener('pointercancel', pointerCancel)
   canvas.addEventListener('webglcontextlost', contextLost)
   canvas.addEventListener('webglcontextrestored', contextRestored)
-  controls.addEventListener('change', render)
+  // OrbitControls emits change during dolly updates too. Render those once at
+  // the end of the animation frame, while paused/manual controls stay immediate.
+  function controlsChanged() {
+    if (!animating) render()
+  }
+  controls.addEventListener('change', controlsChanged)
   document.addEventListener('visibilitychange', schedule)
   reducedMotion.addEventListener('change', schedule)
   const resizeObserver = new ResizeObserver(resize)
@@ -851,17 +1092,33 @@ export function createStudio(host, initial, callbacks) {
       const oldView = state.view
       const oldGreeting = state.greeting
       const oldFocus = state.focus
+      const oldInteraction = state.interaction
       const oldTour = state.tour
       state = { ...state, ...next }
       if (state.greeting !== oldGreeting) character.wave()
       if (
+        state.focus &&
+        (oldFocus !== state.focus || oldInteraction !== state.interaction)
+      )
+        react(state.focus)
+      if (
         oldView !== state.view ||
         oldFocus !== state.focus ||
+        oldInteraction !== state.interaction ||
         oldTour !== state.tour
       )
         setView()
       setLighting()
-      if (state.paused || reducedMotion.matches) character.update(time, true)
+      if (state.paused || reducedMotion.matches) {
+        orbitMaterial.opacity = state.focus ? 0.08 : 1
+        character.update(time, true)
+        feedback.visible = false
+        reactionStart = -10
+        drawers.forEach((drawer, index) => {
+          drawer.position.z =
+            0.47 + (state.focus === 'profile' && index === 1 ? 0.42 : 0)
+        })
+      }
       schedule()
     },
     dispose() {
@@ -879,7 +1136,7 @@ export function createStudio(host, initial, callbacks) {
       canvas.removeEventListener('pointercancel', pointerCancel)
       canvas.removeEventListener('webglcontextlost', contextLost)
       canvas.removeEventListener('webglcontextrestored', contextRestored)
-      controls.removeEventListener('change', render)
+      controls.removeEventListener('change', controlsChanged)
       controls.dispose()
       geometries.forEach(value => value.dispose())
       materials.forEach(value => value.dispose())

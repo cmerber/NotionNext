@@ -50,7 +50,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
-    "test:orange-model": "node --test scripts/tests/orange-character.test.mjs",
+    "test:orange-model": "node --test scripts/tests/orange-character.test.mjs scripts/tests/orange-camera.test.mjs",
     "health-check": "node scripts/health-check.js",
     "validate": "yarn health-check",
     "final-validation": "node scripts/final-validation.js",

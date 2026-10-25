@@ -4,6 +4,7 @@ export default function StudioCanvas({
   night,
   view,
   focus,
+  interaction,
   tour,
   paused,
   ambience,
@@ -38,6 +39,7 @@ export default function StudioCanvas({
     night,
     view,
     focus,
+    interaction,
     tour,
     paused,
     ambience,
@@ -48,6 +50,7 @@ export default function StudioCanvas({
     night,
     view,
     focus,
+    interaction,
     tour,
     paused,
     ambience,
@@ -88,12 +91,13 @@ export default function StudioCanvas({
       night,
       view,
       focus,
+      interaction,
       tour,
       paused,
       ambience,
       greeting
     })
-  }, [night, view, focus, tour, paused, ambience, greeting])
+  }, [night, view, focus, interaction, tour, paused, ambience, greeting])
 
   return (
     <div

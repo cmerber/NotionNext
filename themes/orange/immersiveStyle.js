@@ -103,6 +103,13 @@ export function ImmersiveStyle() {
         top: 17%;
         left: 6%;
         pointer-events: none;
+        transition:
+          opacity 0.8s,
+          transform 0.8s;
+      }
+      #theme-orange .orange-immersive[data-focused='true'] .orange-world-title {
+        opacity: 0.15;
+        transform: translateY(-12px);
       }
       #theme-orange .orange-world-title p {
         font-size: 9px;
@@ -309,7 +316,9 @@ export function ImmersiveStyle() {
         background: #fbf7eeaa;
         backdrop-filter: blur(20px);
         padding: 24px;
-        box-shadow: 0 12px 40px #3446350a;
+        box-shadow:
+          0 16px 50px #34463515,
+          inset 0 1px 0 #fffc;
         animation: orange-card-in 0.5s both;
       }
       #theme-orange .orange-focus-card h2 {
@@ -410,6 +419,16 @@ export function ImmersiveStyle() {
         to {
           opacity: 1;
           translate: 0 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #theme-orange .orange-world-title,
+        #theme-orange .orange-world-tools button,
+        #theme-orange .orange-immersive .orange-place-nav button {
+          transition: none;
+        }
+        #theme-orange .orange-focus-card {
+          animation: none;
         }
       }
       @media (max-width: 760px) {
@@ -514,8 +533,9 @@ export function ImmersiveStyle() {
           display: none;
         }
         #theme-orange .orange-immersive .orange-welcome-bubble {
-          top: 36%;
+          top: 27%;
           font-size: 12px;
+          max-width: calc(100% - 100px);
         }
         body:has(.orange-immersive) #draggableBox {
           top: 23px !important;

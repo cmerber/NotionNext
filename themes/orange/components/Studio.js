@@ -56,6 +56,7 @@ export const PLACES = [
 export default function Studio({ posts = [] }) {
   const { isDarkMode, toggleDarkMode } = useGlobal()
   const [selected, setSelected] = useState('')
+  const [interaction, setInteraction] = useState(0)
   const [view, setView] = useState(0)
   const [paused, setPaused] = useState(false)
   const [tour, setTour] = useState(true)
@@ -102,6 +103,7 @@ export default function Studio({ posts = [] }) {
   const titleBreak = title.indexOf('，')
   const explore = id => {
     setSelected(id)
+    setInteraction(value => value + 1)
     setTour(false)
   }
   const retry = () => {
@@ -116,6 +118,7 @@ export default function Studio({ posts = [] }) {
       className='orange-studio orange-immersive'
       aria-label='橙子星球交互工作室'
       data-scene-status={sceneStatus}
+      data-focused={Boolean(selected)}
     >
       <div className='orange-world-sky' aria-hidden='true' />
       <div className='orange-stage'>
@@ -126,6 +129,7 @@ export default function Studio({ posts = [] }) {
             night={isDarkMode}
             view={view}
             focus={selected}
+            interaction={interaction}
             tour={tour}
             paused={paused}
             ambience={ambience && ambienceEnabled}
@@ -221,7 +225,10 @@ export default function Studio({ posts = [] }) {
             </button>
             <button
               type='button'
-              onClick={greet}
+              onClick={() => {
+                explore('about')
+                greet()
+              }}
               aria-label='打个招呼'
               title='打个招呼'
             >
@@ -276,7 +283,11 @@ export default function Studio({ posts = [] }) {
         <span>今天也要给自己一点温柔 🍊</span>
       </div>
       {place && (
-        <aside className='orange-focus-card' aria-live='polite'>
+        <aside
+          key={interaction}
+          className='orange-focus-card'
+          aria-live='polite'
+        >
           <button
             className='orange-focus-close'
             type='button'

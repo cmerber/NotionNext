@@ -17,6 +17,7 @@ test('camera and lighting changes reuse the renderer, and leaving the scene rele
     night: false,
     view: 0,
     focus: '',
+    interaction: 0,
     tour: true,
     paused: false,
     ambience: true,
@@ -29,6 +30,13 @@ test('camera and lighting changes reuse the renderer, and leaving the scene rele
   expect(createStudio).toHaveBeenCalledTimes(1)
   expect(instance.update).toHaveBeenLastCalledWith(
     expect.objectContaining({ night: true, focus: 'journal', tour: false })
+  )
+  rerender(
+    <StudioCanvas {...props} focus='journal' interaction={2} tour={false} />
+  )
+  expect(createStudio).toHaveBeenCalledTimes(1)
+  expect(instance.update).toHaveBeenLastCalledWith(
+    expect.objectContaining({ focus: 'journal', interaction: 2 })
   )
   unmount()
   expect(instance.dispose).toHaveBeenCalledTimes(1)
