@@ -186,6 +186,11 @@ export function ImmersiveStyle() {
       .dark #theme-orange .orange-world-tools button {
         background: #1b2b3244;
       }
+      .dark #theme-orange .orange-world-tools button:hover,
+      .dark #theme-orange .orange-world-tools button[aria-pressed='true'] {
+        color: #ffe5b0;
+        background: #ffffff26;
+      }
       #theme-orange .orange-world-bottom {
         position: absolute;
         bottom: 28px;
