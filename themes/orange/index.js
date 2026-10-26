@@ -251,7 +251,6 @@ function LayoutIndex(props) {
   return (
     <>
       <Studio posts={props.posts} />
-      <IslandStory />
       <section id='orange-notes' className='orange-journal-section'>
         <div className='orange-section-heading'>
           <div>
