@@ -54,7 +54,7 @@ export default function Studio({ posts = [] }) {
   const [interaction, setInteraction] = useState(0)
   const [view, setView] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [tour, setTour] = useState(true)
+  const [tour, setTour] = useState(false)
   const [flat, setFlat] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [quality, setQuality] = useState('auto')
@@ -66,6 +66,48 @@ export default function Studio({ posts = [] }) {
   const [greeting, setGreeting] = useState(0)
   const [greetingVisible, setGreetingVisible] = useState(false)
   const [ambience, setAmbience] = useState(true)
+  const [discoveries, setDiscoveries] = useState([])
+  const [harvested, setHarvested] = useState(false)
+  const [giftOpen, setGiftOpen] = useState(false)
+  const [giftPost, setGiftPost] = useState(null)
+  const [passportLoaded, setPassportLoaded] = useState(false)
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(
+        sessionStorage.getItem('orange-island-passport') || '{}'
+      )
+      if (Array.isArray(saved.places))
+        setDiscoveries([
+          ...new Set(
+            saved.places.filter(id => PLACES.some(place => place.id === id))
+          )
+        ])
+      setHarvested(saved.harvested === true)
+    } catch {
+      /* A private browsing session can disable storage. */
+    }
+    setPassportLoaded(true)
+  }, [])
+  useEffect(() => {
+    if (!passportLoaded) return
+    try {
+      sessionStorage.setItem(
+        'orange-island-passport',
+        JSON.stringify({ places: discoveries, harvested })
+      )
+    } catch {
+      /* Discovery still works without storage. */
+    }
+  }, [passportLoaded, discoveries, harvested])
+  const harvest = () => {
+    setSelected('')
+    setTour(false)
+    setHarvested(true)
+    setGiftOpen(true)
+    const readable = posts.filter(post => !post.password)
+    setGiftPost(readable[Math.floor(Math.random() * readable.length)] || null)
+    setGreeting(value => value + 1)
+  }
   const greet = useCallback(() => {
     setGreeting(value => value + 1)
     setGreetingVisible(true)
@@ -103,6 +145,8 @@ export default function Studio({ posts = [] }) {
   const title = String(siteConfig('ORANGE_TITLE', CONFIG.ORANGE_TITLE, CONFIG))
   const titleBreak = title.indexOf('，')
   const explore = id => {
+    setGiftOpen(false)
+    setDiscoveries(found => (found.includes(id) ? found : [...found, id]))
     setSelected(id)
     setInteraction(value => value + 1)
     setTour(false)
@@ -124,6 +168,7 @@ export default function Studio({ posts = [] }) {
       data-scene-renderer={rendererMode}
       data-scene-failure={failureReason}
       data-focused={Boolean(selected)}
+      data-harvested={harvested}
     >
       <div className='orange-world-sky' aria-hidden='true' />
       <div className='orange-stage'>
@@ -140,6 +185,9 @@ export default function Studio({ posts = [] }) {
             paused={paused}
             ambience={ambience && ambienceEnabled}
             greeting={greeting}
+            harvested={harvested}
+            onAction={harvest}
+            onPerformance={() => setQuality('safe')}
             onGreet={greet}
             onInteract={() => setTour(false)}
             onSelect={explore}
@@ -172,6 +220,17 @@ export default function Studio({ posts = [] }) {
           轻量互动场景 · 尝试完整 3D ↗
         </button>
       )}
+      {rendererMode !== 'compat' && showScene && (
+        <button
+          type='button'
+          className='orange-performance-toggle'
+          onClick={() =>
+            setQuality(value => (value === 'safe' ? 'detail' : 'safe'))
+          }
+        >
+          {quality === 'safe' ? '流畅优先 · 切换精细 ↗' : '切换流畅模式 ↗'}
+        </button>
+      )}
       {sceneStatus === 'recovering' && showScene && (
         <div className='orange-reconnecting' role='status'>
           正在重新连接星球…
@@ -200,6 +259,56 @@ export default function Studio({ posts = [] }) {
         <span>THE FLOATING STUDIO</span>
         <i>01 — ∞</i>
       </div>
+      {!selected && (
+        <div className='orange-island-pass'>
+          <p>ISLAND PASSPORT / {discoveries.length} OF 4</p>
+          <div
+            className='orange-pass-stamps'
+            aria-label={`已发现 ${discoveries.length} 个角落`}
+          >
+            {PLACES.map(item => (
+              <span
+                key={item.id}
+                data-found={discoveries.includes(item.id)}
+                title={item.title}
+              >
+                {item.icon}
+              </span>
+            ))}
+          </div>
+          <button
+            type='button'
+            className='orange-pass-action'
+            onClick={harvest}
+          >
+            {harvested ? '再收一份小惊喜 ↗' : '摘一颗橙子，收一份惊喜 ↗'}
+          </button>
+          {giftOpen && (
+            <aside className='orange-souvenir' aria-live='polite'>
+              <span>🍊 A LITTLE GIFT FOR YOU</span>
+              <p>
+                {discoveries.length === 4
+                  ? '你点亮了整座小岛。'
+                  : '今天的好运，已收好。'}
+              </p>
+              {giftPost ? (
+                <SmartLink
+                  href={
+                    giftPost.href || `/article/${giftPost.slug || giftPost.id}`
+                  }
+                >
+                  送你一段灵感：{giftPost.title} ↗
+                </SmartLink>
+              ) : (
+                <SmartLink href='/archive'>带着好奇心，去书架翻翻 ↗</SmartLink>
+              )}
+              <button type='button' onClick={() => setGiftOpen(false)}>
+                收好，继续逛
+              </button>
+            </aside>
+          )}
+        </div>
+      )}
       <div className='orange-world-tools' aria-label='场景控制'>
         <button
           type='button'
@@ -306,7 +415,7 @@ export default function Studio({ posts = [] }) {
             aria-label='返回全景'
             onClick={() => {
               setSelected('')
-              setTour(true)
+              setTour(false)
             }}
           >
             ×
@@ -315,6 +424,7 @@ export default function Studio({ posts = [] }) {
           <h2>
             {place.title} <span>{place.icon}</span>
           </h2>
+          <p>{place.description}</p>
           <SmartLink className='orange-text-link' href={place.href}>
             {place.action} ↗
           </SmartLink>
@@ -332,7 +442,7 @@ export default function Studio({ posts = [] }) {
         <div className='orange-scene-caption' aria-live='polite'>
           {hover
             ? `${PLACES.find(item => item.id === hover)?.title || ''} · 点击靠近`
-            : '拖动旋转 · 点选探索'}
+            : '拖动小岛 · 点点书架、信箱和小主人'}
         </div>
         <nav className='orange-place-nav' aria-label='工作室探索入口'>
           {PLACES.map(item => (

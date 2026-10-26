@@ -12,8 +12,11 @@ export default function StudioCanvas({
   paused,
   ambience,
   greeting,
+  harvested,
   quality,
   onInteract,
+  onAction,
+  onPerformance,
   onGreet,
   onSelect,
   onHover,
@@ -25,6 +28,8 @@ export default function StudioCanvas({
   const [presented, setPresented] = useState(false)
   const api = useRef(null)
   const callbacks = useRef({
+    onPerformance,
+    onAction,
     onInteract,
     onSelect,
     onHover,
@@ -34,6 +39,8 @@ export default function StudioCanvas({
     onGreet
   })
   callbacks.current = {
+    onPerformance,
+    onAction,
     onInteract,
     onSelect,
     onHover,
@@ -51,6 +58,7 @@ export default function StudioCanvas({
     paused,
     ambience,
     greeting,
+    harvested,
     quality
   })
   options.current = {
@@ -62,6 +70,7 @@ export default function StudioCanvas({
     paused,
     ambience,
     greeting,
+    harvested,
     quality
   }
 
@@ -96,6 +105,8 @@ export default function StudioCanvas({
         if (cancelled || !host.current) return
         try {
           instance = createStudio(host.current, options.current, {
+            onPerformance: () => callbacks.current.onPerformance?.(),
+            onAction: action => callbacks.current.onAction?.(action),
             onInteract: () => callbacks.current.onInteract?.(),
             onSelect: value => callbacks.current.onSelect?.(value),
             onHover: value => callbacks.current.onHover?.(value),
@@ -133,9 +144,22 @@ export default function StudioCanvas({
       tour,
       paused,
       ambience,
-      greeting
+      greeting,
+      harvested,
+      quality
     })
-  }, [night, view, focus, interaction, tour, paused, ambience, greeting])
+  }, [
+    night,
+    view,
+    focus,
+    interaction,
+    tour,
+    paused,
+    ambience,
+    greeting,
+    harvested,
+    quality
+  ])
 
   return (
     <>
@@ -151,6 +175,7 @@ export default function StudioCanvas({
           onSelect={onSelect}
           onInteract={onInteract}
           onGreet={onGreet}
+          onAction={onAction}
         />
       )}
       {rendererMode !== 'compat' && (

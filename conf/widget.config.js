@@ -3,6 +3,7 @@
  */
 module.exports = {
   THEME_SWITCH: process.env.NEXT_PUBLIC_THEME_SWITCH ?? true, // 默认开放主题体验面板；Notion Config 可设置 THEME_SWITCH=false 关闭，不改变默认 THEME
+  THEME_SWITCH_FLOATING: false, // 隐藏悬浮主题工具栏；Orange 页脚仍提供外观入口
   // AI 聊天机器人相关配置已迁移至 conf/ai.config.js
 
   // 悬浮挂件

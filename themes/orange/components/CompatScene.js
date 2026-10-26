@@ -39,6 +39,7 @@ export default function CompatScene({
   ambience,
   onSelect,
   onGreet,
+  onAction,
   onInteract
 }) {
   const root = useRef(null)
@@ -143,6 +144,14 @@ export default function CompatScene({
       }}
     >
       <div className='compat-moon' aria-hidden='true' />
+      <button
+        className='compat-gift'
+        type='button'
+        aria-label='打开小岛信箱'
+        onClick={() => onAction?.('orange')}
+      >
+        📮
+      </button>
       <div className='compat-cloud compat-cloud-one' aria-hidden='true' />
       <div className='compat-cloud compat-cloud-two' aria-hidden='true' />
       <div className='compat-camera'>

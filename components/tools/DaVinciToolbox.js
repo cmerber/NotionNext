@@ -716,7 +716,7 @@ export default function DaVinciToolbox() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-6xl px-4 pb-16 pt-8 md:px-6 md:pt-12'>
+    <div className='qcode-toolbox-page mx-auto w-full max-w-6xl px-4 pb-16 pt-8 md:px-6 md:pt-12'>
       <header className='relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-violet-600 to-orange-400 px-6 py-10 text-white shadow-[0_24px_70px_rgba(79,70,229,0.28)] md:px-10 md:py-14'>
         <div className='absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.7)_1px,transparent_1px)] [background-size:32px_32px]' />
         <div className='absolute -right-12 -top-16 h-56 w-56 rounded-full bg-white/15 blur-2xl' />
