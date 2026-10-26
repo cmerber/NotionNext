@@ -23,6 +23,7 @@ export const Draggable = ({ children, stick, handleClassName }) => {
     })
   }, [])
   const drag = usePointerDrag({
+    captureOnDown: true,
     canStart: event =>
       !event.target.closest(
         'button, a, input, select, textarea, [contenteditable="true"]'

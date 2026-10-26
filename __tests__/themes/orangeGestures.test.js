@@ -127,6 +127,16 @@ function toolbar() {
     </Draggable>
   )
   const element = screen.getByTestId('toolbar')
+  const root = element.parentElement
+  let held = false
+  const capture = jest.fn(() => {
+    held = true
+  })
+  root.setPointerCapture = capture
+  root.hasPointerCapture = () => held
+  root.releasePointerCapture = () => {
+    held = false
+  }
   element.getBoundingClientRect = () => ({
     left: parseFloat(element.style.left),
     top: parseFloat(element.style.top),
@@ -136,15 +146,19 @@ function toolbar() {
   return {
     element,
     handle: screen.getByText('移动'),
-    root: element.parentElement,
+    root,
+    capture,
     click
   }
 }
 
 test('floating controls use viewport coordinates, stay within resized screens and preserve page scrolling', () => {
-  const { element, handle, root, click } = toolbar()
+  const { element, handle, root, click, capture } = toolbar()
   const overflow = document.documentElement.style.overflow
   fireEvent.pointerDown(handle, point(34, 512))
+  expect(capture).toHaveBeenCalledWith(1)
+  // A fast vertical move can leave the narrow handle before its first move.
+  fireEvent.pointerLeave(root, point(34, 490))
   fireEvent.pointerMove(root, point(550, 1000))
   fireEvent.pointerUp(root, point(550, 1000))
   expect(element).toHaveAttribute('data-positioned', 'true')
