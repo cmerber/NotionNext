@@ -49,6 +49,15 @@ export default function usePointerDrag(options) {
         touch: event.pointerType === 'touch',
         active: false
       }
+      // Small drag handles can be crossed before the first move event. Capture
+      // those immediately; full scenes still leave ordinary object taps intact.
+      if (callbacks.current.captureOnDown) {
+        try {
+          root.current?.setPointerCapture?.(event.pointerId)
+        } catch {
+          /* Pointer was already cancelled. */
+        }
+      }
     },
     onPointerMove(event) {
       const current = gesture.current
@@ -91,7 +100,13 @@ export default function usePointerDrag(options) {
       if (event.pointerId === gesture.current?.id) finish(true)
     },
     onPointerLeave() {
-      if (!gesture.current?.active) gesture.current = null
+      const current = gesture.current
+      if (
+        current &&
+        !current.active &&
+        !root.current?.hasPointerCapture?.(current.id)
+      )
+        gesture.current = null
     },
     onClickCapture(event) {
       if (suppressClick.current && event.detail !== 0) {
