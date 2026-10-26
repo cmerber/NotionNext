@@ -10,6 +10,7 @@ import { Style } from './style'
 import { ImmersiveStyle } from './immersiveStyle'
 import ReadingRoom from './components/ReadingRoom'
 import { ExperienceStyle } from './experienceStyle'
+import IslandStory from './components/IslandStory'
 
 const postHref = post => post.href || `/article/${post.slug || post.id}`
 
@@ -250,6 +251,7 @@ function LayoutIndex(props) {
   return (
     <>
       <Studio posts={props.posts} />
+      <IslandStory />
       <section id='orange-notes' className='orange-journal-section'>
         <div className='orange-section-heading'>
           <div>
@@ -443,6 +445,8 @@ const LayoutTagIndex = props => (
 
 function LayoutSlug(props) {
   if (!props.post) return <Layout404 />
+  if (!props.lock && props.post.slug?.replace(/^\/+|\/+$/g, '') === 'about')
+    return <IslandStory full />
   return <ReadingRoom {...props} />
 }
 
