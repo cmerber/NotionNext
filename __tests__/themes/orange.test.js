@@ -57,6 +57,9 @@ jest.mock('@/themes/orange/immersiveStyle', () => ({
 jest.mock('@/themes/orange/experienceStyle', () => ({
   ExperienceStyle: () => null
 }))
+jest.mock('@/themes/orange/islandStoryStyle', () => ({
+  IslandStoryStyle: () => null
+}))
 
 const posts = Array.from({ length: 15 }, (_, id) => ({
   id: `post-${id}`,
@@ -69,6 +72,19 @@ beforeEach(() => {
   sessionStorage.clear()
   jest.clearAllMocks()
   siteConfig.mockImplementation((key, fallback) => fallback)
+})
+
+test('the about destination shows the island introduction instead of the original template article', () => {
+  render(<LayoutSlug post={{ id: 'about', slug: 'about', title: '关于' }} />)
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+    '关于我，也关于这座小岛'
+  )
+  expect(screen.getByText(/图片压缩、格式转换、子网计算/)).toBeInTheDocument()
+  expect(screen.queryByText('文章正文')).not.toBeInTheDocument()
+  expect(screen.getByRole('link', { name: /实用工具/ })).toHaveAttribute(
+    'href',
+    '/tools'
+  )
 })
 
 test('all scene destinations remain accessible without a WebGL canvas', () => {
