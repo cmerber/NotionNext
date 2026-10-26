@@ -13,33 +13,34 @@ jest.mock('@/components/SmartLink', () => ({
     </a>
   )
 }))
-jest.mock(
-  'next/dynamic',
-  () => () =>
-    function MockScene({
-      onUnavailable,
-      onReady,
-      quality,
-      interaction,
-      focus
-    }) {
-      return (
-        <div>
-          <span data-testid='render-quality'>{quality}</span>
-          <span data-testid='scene-selection'>
-            {focus}:{interaction}
-          </span>
-          <button onClick={() => onUnavailable('context-lost')}>
-            模拟图形连接丢失
-          </button>
-          <button onClick={() => onUnavailable('initialization')}>
-            模拟不支持图形
-          </button>
-          <button onClick={onReady}>模拟恢复完成</button>
-        </div>
-      )
-    }
-)
+jest.mock('@/themes/orange/components/StudioCanvas', () => ({
+  __esModule: true,
+  default: function MockScene({
+    onUnavailable,
+    onReady,
+    quality,
+    rendererMode,
+    interaction,
+    focus
+  }) {
+    return (
+      <div>
+        <span data-testid='render-quality'>{quality}</span>
+        <span data-testid='render-mode'>{rendererMode}</span>
+        <span data-testid='scene-selection'>
+          {focus}:{interaction}
+        </span>
+        <button onClick={() => onUnavailable('context-lost')}>
+          模拟图形连接丢失
+        </button>
+        <button onClick={() => onUnavailable('initialization')}>
+          模拟不支持图形
+        </button>
+        <button onClick={onReady}>模拟恢复完成</button>
+      </div>
+    )
+  }
+}))
 
 test('lost contexts automatically rebuild with a smaller GPU budget, with bounded retries', () => {
   render(<Studio />)
@@ -52,12 +53,13 @@ test('lost contexts automatically rebuild with a smaller GPU budget, with bounde
     ).not.toBeInTheDocument()
   }
   fireEvent.click(screen.getByRole('button', { name: '模拟图形连接丢失' }))
-  expect(screen.queryByTestId('render-quality')).not.toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: '重新开启 3D' }))
+  expect(screen.getByTestId('render-mode')).toHaveTextContent('compat')
+  fireEvent.click(screen.getByRole('button', { name: /尝试完整 3D/ }))
+  expect(screen.getByTestId('render-mode')).toHaveTextContent('auto')
   expect(screen.getByTestId('render-quality')).toHaveTextContent('safe')
 })
 
-test('unsupported devices retain usable destinations without an automatic retry loop', () => {
+test('unsupported devices automatically retain an interactive scene without a retry loop', () => {
   render(<Studio />)
   fireEvent.click(screen.getByRole('button', { name: '模拟不支持图形' }))
   fireEvent.click(screen.getByRole('button', { name: /灵感书架/ }))
@@ -65,7 +67,7 @@ test('unsupported devices retain usable destinations without an automatic retry 
     'href',
     '/archive'
   )
-  expect(screen.queryByTestId('render-quality')).not.toBeInTheDocument()
+  expect(screen.getByTestId('render-mode')).toHaveTextContent('compat')
 })
 
 test('a healthy session renews recovery for a later background discard', () => {

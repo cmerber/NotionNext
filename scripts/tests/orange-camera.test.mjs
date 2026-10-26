@@ -33,3 +33,26 @@ test('repeated interaction effects have bounded energy and expire completely', (
   assert.equal(reactionEnvelope(2.4), 0)
   assert.equal(reactionEnvelope(100), 0)
 })
+
+test('large and high-DPI displays stay within drawing-buffer pixel and dimension budgets', async () => {
+  const { getRenderBudget } =
+    await import('../../themes/orange/scene/renderBudget.js')
+  for (const [width, height, dpr] of [
+    [3840, 2067, 2],
+    [7680, 4320, 2],
+    [390, 844, 3],
+    [1440, 960, 1]
+  ]) {
+    for (const quality of ['auto', 'safe']) {
+      const budget = getRenderBudget(width, height, dpr, quality)
+      const pixels = width * height * budget.ratio ** 2
+      assert.ok(Number.isFinite(budget.ratio) && budget.ratio > 0)
+      assert.ok(pixels <= (quality === 'safe' ? 900000 : 2200000) + 1)
+      assert.ok(
+        Math.max(width, height) * budget.ratio <=
+          (quality === 'safe' ? 1600 : 2400) + 1
+      )
+      if (quality === 'safe') assert.equal(budget.shadows, false)
+    }
+  }
+})

@@ -548,6 +548,433 @@ export function ImmersiveStyle() {
           font-size: 16px;
         }
       }
+
+      #theme-orange .orange-compat {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        perspective: 1100px;
+        touch-action: pan-y pinch-zoom;
+        --zoom: 1.15;
+        --fx: 0px;
+        --fy: 0px;
+      }
+      #theme-orange .compat-camera {
+        pointer-events: none;
+        position: absolute;
+        width: 600px;
+        height: 420px;
+        left: 50%;
+        top: 54%;
+        transform: translate(-50%, -28%) scale(var(--zoom));
+        transition: transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        transform-style: preserve-3d;
+      }
+      #theme-orange .compat-world {
+        pointer-events: none;
+        width: 600px;
+        height: 420px;
+        position: relative;
+        transform-style: preserve-3d;
+        transform: rotateX(58deg) rotateZ(var(--yaw))
+          translate(var(--fx), var(--fy));
+        transition: transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      #theme-orange .orange-compat[data-focus='about'] {
+        --zoom: 1.65;
+        --fy: -65px;
+      }
+      #theme-orange .orange-compat[data-focus='journal'] {
+        --zoom: 1.65;
+        --fx: 105px;
+        --fy: 75px;
+      }
+      #theme-orange .orange-compat[data-focus='tools'] {
+        --zoom: 1.6;
+        --fx: -90px;
+        --fy: 65px;
+      }
+      #theme-orange .orange-compat[data-focus='profile'] {
+        --zoom: 1.6;
+        --fx: -145px;
+        --fy: -15px;
+      }
+      #theme-orange .orange-compat-block {
+        position: absolute;
+        display: block;
+        transform-style: preserve-3d;
+        pointer-events: none;
+      }
+      #theme-orange .orange-compat-block > i {
+        position: absolute;
+        display: block;
+        background: var(--block);
+        backface-visibility: hidden;
+      }
+      #theme-orange .compat-top {
+        inset: 0;
+        transform: translateZ(var(--h));
+        box-shadow: inset 0 0 0 1px #fff2;
+        color: #516d5b;
+        font: 12px monospace;
+      }
+      #theme-orange .compat-front {
+        left: 0;
+        top: 100%;
+        width: 100%;
+        height: var(--h);
+        transform-origin: top;
+        transform: translateZ(var(--h)) rotateX(-90deg);
+        filter: brightness(0.86);
+      }
+      #theme-orange .compat-side {
+        left: 100%;
+        top: 0;
+        width: var(--d);
+        height: var(--h);
+        transform-origin: top left;
+        transform: rotateZ(90deg) rotateX(90deg);
+        filter: brightness(0.73);
+      }
+      #theme-orange .compat-side-left {
+        left: 0;
+        top: 0;
+        width: var(--d);
+        height: var(--h);
+        transform-origin: top left;
+        transform: translateZ(var(--h)) rotateZ(90deg) rotateX(-90deg);
+        filter: brightness(0.77);
+      }
+      #theme-orange .compat-item {
+        pointer-events: auto;
+        position: absolute;
+        display: block;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        transform: translateZ(34px);
+        transform-style: preserve-3d;
+        cursor: pointer;
+      }
+      #theme-orange .compat-item:focus-visible {
+        outline: 3px solid #d89c57;
+        outline-offset: 8px;
+      }
+      #theme-orange .compat-item .orange-compat-block > i {
+        pointer-events: auto;
+      }
+      #theme-orange .compat-shelf {
+        left: 62px;
+        top: 47px;
+        width: 130px;
+        height: 48px;
+      }
+      #theme-orange .compat-desk {
+        left: 300px;
+        top: 55px;
+        width: 200px;
+        height: 90px;
+      }
+      #theme-orange .compat-cabinet {
+        left: 443px;
+        top: 248px;
+        width: 90px;
+        height: 65px;
+      }
+      #theme-orange .compat-sofa {
+        left: 53px;
+        top: 250px;
+        width: 125px;
+        height: 72px;
+      }
+      #theme-orange .compat-row {
+        display: contents;
+      }
+      #theme-orange .compat-screen {
+        position: absolute;
+        left: 13px;
+        top: 15px;
+        width: 115px;
+        height: 70px;
+        border: 7px solid #344c42;
+        border-radius: 5px;
+        background: #527d66;
+        color: #eef1d1;
+        font: 11px monospace;
+        transform-origin: top;
+        transform: translateZ(208px) rotateX(-90deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 8px;
+        box-shadow: inset 0 0 20px #c3dfb722;
+      }
+      #theme-orange .compat-screen span {
+        opacity: 0.4;
+        font-size: 8px;
+      }
+      #theme-orange .compat-drawer {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        transition: transform 1s;
+      }
+      #theme-orange .orange-compat[data-focus='profile'] .compat-drawer-1 {
+        transform: translateY(22px);
+      }
+      #theme-orange
+        .orange-compat[data-focus='journal']
+        .compat-shelf
+        .compat-row
+        .orange-compat-block:not(:first-child) {
+        animation: compat-book 2s ease-in-out infinite alternate;
+      }
+      #theme-orange .orange-compat[data-focus='tools'] .compat-screen {
+        background: #72a78a;
+        box-shadow: 0 0 40px #efce8a88;
+      }
+      #theme-orange .compat-orange {
+        position: absolute;
+        width: 34px;
+        height: 34px;
+        left: 30px;
+        top: 20px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 30% 28%,
+          #ffe3a0,
+          #ed9c3e 65%,
+          #b46c3c
+        );
+        transform: translateZ(140px);
+      }
+      #theme-orange .compat-host {
+        pointer-events: auto;
+        position: absolute;
+        left: 250px;
+        top: 260px;
+        width: 125px;
+        height: 125px;
+        border: 0;
+        padding: 0;
+        background: none;
+        cursor: pointer;
+        transform-style: preserve-3d;
+        transform: translateZ(135px) rotateZ(calc(-1 * var(--yaw)))
+          rotateX(-58deg);
+      }
+      #theme-orange .compat-portrait {
+        position: relative;
+        display: block;
+        width: 125px;
+        height: 125px;
+        border-radius: 45% 45% 38% 38%;
+        background: #fffaf1;
+        border: 4px solid #f2d9a7;
+        box-shadow:
+          0 12px 25px #3c4c4633,
+          0 0 35px #fff2d433;
+        overflow: hidden;
+      }
+      #theme-orange .compat-portrait img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        user-select: none;
+        pointer-events: none;
+      }
+      #theme-orange .compat-wave {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        color: #d79d47;
+        opacity: 0;
+      }
+      #theme-orange .compat-greeting {
+        animation: compat-greet 1.2s ease-in-out;
+      }
+      #theme-orange .compat-greeting .compat-wave {
+        animation: compat-spark 2s both;
+      }
+      #theme-orange .compat-response {
+        position: absolute;
+        left: 215px;
+        top: 218px;
+        width: 190px;
+        height: 190px;
+        border: 2px solid #f4d498;
+        border-radius: 50%;
+        transform: translateZ(36px);
+        pointer-events: none;
+        opacity: 0.5;
+      }
+      #theme-orange .compat-response-active {
+        animation: compat-response 1.5s both;
+      }
+      #theme-orange .compat-moon {
+        position: absolute;
+        right: 15%;
+        top: 19%;
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 30% 28%,
+          #fff4ce,
+          #e7d7b3 65%,
+          #c1c7b1
+        );
+        box-shadow: 0 0 90px #fff0bf99;
+      }
+      #theme-orange .compat-cloud {
+        position: absolute;
+        width: 200px;
+        height: 65px;
+        border-radius: 80%;
+        background: #fff9;
+        box-shadow:
+          40px -20px 0 #fff7,
+          -40px 12px 0 #fff7;
+        animation: compat-cloud 8s ease-in-out infinite alternate;
+      }
+      #theme-orange .compat-cloud-one {
+        left: 8%;
+        top: 72%;
+      }
+      #theme-orange .compat-cloud-two {
+        right: 7%;
+        top: 66%;
+        animation-delay: -3s;
+      }
+      #theme-orange .orange-compat[data-tour='true'] .compat-world {
+        animation: compat-tour 18s ease-in-out infinite alternate;
+      }
+      #theme-orange .orange-compat[data-still='true'] *,
+      #theme-orange .orange-compat[data-ambience='false'] .compat-cloud {
+        animation-play-state: paused !important;
+      }
+      #theme-orange .orange-compat-notice {
+        position: absolute;
+        top: 102px;
+        right: 6%;
+        z-index: 3;
+        padding: 10px 14px;
+        min-height: 44px;
+        border-radius: 22px;
+        border: 1px solid #ffffff66;
+        background: #f8f2e3bb;
+        color: #63715f;
+        font-size: 11px;
+        backdrop-filter: blur(12px);
+      }
+      .dark #theme-orange .compat-moon {
+        background: #efdfbe;
+        box-shadow: 0 0 90px #e8dabd33;
+      }
+      .dark #theme-orange .compat-cloud {
+        background: #8b9b9f66;
+        box-shadow:
+          40px -20px 0 #8b9b9f44,
+          -40px 12px 0 #8b9b9f44;
+      }
+      .dark #theme-orange .compat-top {
+        filter: brightness(0.8);
+      }
+      .dark #theme-orange .orange-compat-notice {
+        background: #24363cbb;
+        color: #f1dbad;
+      }
+      @keyframes compat-tour {
+        from {
+          transform: rotateX(58deg) rotateZ(calc(var(--yaw) - 4deg));
+        }
+        to {
+          transform: rotateX(58deg) rotateZ(calc(var(--yaw) + 4deg));
+        }
+      }
+      @keyframes compat-cloud {
+        to {
+          translate: 12px -14px;
+        }
+      }
+      @keyframes compat-greet {
+        40% {
+          translate: 0 -14px;
+          rotate: -5deg;
+        }
+        70% {
+          rotate: 4deg;
+        }
+      }
+      @keyframes compat-spark {
+        20%,
+        80% {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+      @keyframes compat-response {
+        from {
+          opacity: 0.9;
+          scale: 0.7;
+        }
+        to {
+          opacity: 0;
+          scale: 1.5;
+        }
+      }
+      @keyframes compat-book {
+        to {
+          translate: 0 8px;
+        }
+      }
+      @media (max-width: 760px) {
+        #theme-orange .orange-compat {
+          --zoom: 0.58;
+        }
+        #theme-orange .compat-camera {
+          top: 52%;
+        }
+        #theme-orange .orange-compat[data-focus] {
+          --zoom: 0.84;
+        }
+        #theme-orange .orange-compat[data-focus='world'] {
+          --zoom: 0.58;
+        }
+        #theme-orange .compat-moon {
+          width: 85px;
+          height: 85px;
+          right: 16%;
+          top: 27%;
+        }
+        #theme-orange .compat-cloud {
+          width: 100px;
+          height: 42px;
+        }
+        #theme-orange .orange-compat-notice {
+          top: 82px;
+          right: 7%;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 350px) {
+        #theme-orange .orange-compat[data-focus] {
+          --zoom: 0.72;
+        }
+        #theme-orange .orange-compat[data-focus='world'] {
+          --zoom: 0.48;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #theme-orange .orange-compat * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
     `}</style>
   )
 }

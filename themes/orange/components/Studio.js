@@ -1,14 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import dynamic from 'next/dynamic'
+import Scene from './StudioCanvas'
 import SmartLink from '@/components/SmartLink'
 import { useGlobal } from '@/lib/global'
 import { siteConfig } from '@/lib/config'
 import CONFIG from '../config'
-
-const Scene = dynamic(() => import('./StudioCanvas'), {
-  ssr: false,
-  loading: () => <div className='orange-scene-message'>正在打开工作室…</div>
-})
 
 export const PLACES = [
   {
@@ -63,6 +58,8 @@ export default function Studio({ posts = [] }) {
   const [flat, setFlat] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [quality, setQuality] = useState('auto')
+  const [rendererMode, setRendererMode] = useState('auto')
+  const [failureReason, setFailureReason] = useState('')
   const recoveries = useRef(0)
   const [sceneStatus, setSceneStatus] = useState('loading')
   const [hover, setHover] = useState('')
@@ -88,12 +85,16 @@ export default function Studio({ posts = [] }) {
     return () => clearTimeout(timer)
   }, [sceneStatus, attempt])
   const fallback = useCallback(reason => {
+    setFailureReason(reason)
     if (reason === 'context-lost' && recoveries.current < 2) {
       recoveries.current += 1
       setQuality('safe')
       setSceneStatus('recovering')
       setAttempt(value => value + 1)
-    } else setSceneStatus('unavailable')
+    } else {
+      setRendererMode('compat')
+      setSceneStatus('ready')
+    }
   }, [])
   const place = PLACES.find(item => item.id === selected)
   const sceneEnabled = siteConfig('ORANGE_SCENE_ENABLE', true, CONFIG)
@@ -109,6 +110,8 @@ export default function Studio({ posts = [] }) {
   const retry = () => {
     recoveries.current = 0
     setQuality('safe')
+    setRendererMode('auto')
+    setFailureReason('')
     setSceneStatus('loading')
     setFlat(false)
     setAttempt(value => value + 1)
@@ -118,13 +121,16 @@ export default function Studio({ posts = [] }) {
       className='orange-studio orange-immersive'
       aria-label='橙子星球交互工作室'
       data-scene-status={sceneStatus}
+      data-scene-renderer={rendererMode}
+      data-scene-failure={failureReason}
       data-focused={Boolean(selected)}
     >
       <div className='orange-world-sky' aria-hidden='true' />
       <div className='orange-stage'>
         {showScene ? (
           <Scene
-            key={attempt}
+            key={`${attempt}:${rendererMode}`}
+            rendererMode={rendererMode}
             quality={quality}
             night={isDarkMode}
             view={view}
@@ -160,6 +166,11 @@ export default function Studio({ posts = [] }) {
           </div>
         )}
       </div>
+      {rendererMode === 'compat' && showScene && (
+        <button type='button' className='orange-compat-notice' onClick={retry}>
+          轻量互动场景 · 尝试完整 3D ↗
+        </button>
+      )}
       {sceneStatus === 'recovering' && showScene && (
         <div className='orange-reconnecting' role='status'>
           正在重新连接星球…
