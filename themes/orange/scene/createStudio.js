@@ -3,16 +3,40 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { createCharacter } from './createCharacter'
 import { sampleCameraFlight, reactionEnvelope } from './cameraMotion'
+import { getRenderBudget } from './renderBudget'
 
 // Original procedural geometry: no remote models, textures, or model service.
 export function createStudio(host, initial, callbacks) {
+  const cleanups = []
+  const scope = {
+    defer: cleanup => cleanups.push(cleanup),
+    release() {
+      while (cleanups.length) {
+        try {
+          cleanups.pop()()
+        } catch (error) {
+          /* Continue releasing other resources. */
+        }
+      }
+    }
+  }
+  try {
+    return buildStudio(host, initial, callbacks, scope)
+  } catch (error) {
+    scope.release()
+    console.warn('[Orange 3D] Scene setup failed', error.message)
+    callbacks.onUnavailable('scene-init')
+    return { update() {}, dispose() {} }
+  }
+}
+
+function buildStudio(host, initial, callbacks, scope) {
   let renderer
   try {
     renderer = new THREE.WebGLRenderer({
-      antialias: initial.quality !== 'safe',
+      antialias: false,
       alpha: true,
-      powerPreference:
-        initial.quality === 'safe' ? 'low-power' : 'high-performance'
+      powerPreference: initial.quality === 'safe' ? 'low-power' : 'default'
     })
   } catch (error) {
     // Retry without multisampling for devices with a smaller GPU budget.
@@ -27,10 +51,14 @@ export function createStudio(host, initial, callbacks) {
         '[Orange 3D] Renderer initialization failed',
         fallbackError.message
       )
-      callbacks.onUnavailable('initialization')
+      callbacks.onUnavailable('renderer-init')
       return { update() {}, dispose() {} }
     }
   }
+  scope.defer(() => {
+    renderer.dispose()
+    renderer.domElement.remove()
+  })
   let state = { ...initial }
   let disposed = false
   let frame = 0
@@ -49,16 +77,33 @@ export function createStudio(host, initial, callbacks) {
   let userOrbit = false
   let reactionStart = -10
   let reactionPlace = ''
+  scope.defer(() => {
+    disposed = true
+    cancelAnimationFrame(frame)
+    clearTimeout(contextTimer)
+  })
+  renderer.debug.onShaderError = () => {
+    if (contextUnavailable || disposed) return
+    contextUnavailable = true
+    cancelAnimationFrame(frame)
+    console.warn('[Orange 3D] Shader compilation failed; using the local scene')
+    callbacks.onUnavailable('shader-failed')
+  }
   const materials = new Set()
   const geometries = new Set()
   const textures = new Set()
+  scope.defer(() => {
+    geometries.forEach(value => value.dispose())
+    materials.forEach(value => value.dispose())
+    textures.forEach(value => value.dispose())
+  })
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 140)
   scene.fog = new THREE.FogExp2('#e3e5db', 0.015)
   const raycaster = new THREE.Raycaster()
   const pointer = new THREE.Vector2()
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75))
+  renderer.setPixelRatio(1)
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFShadowMap
   renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -66,6 +111,7 @@ export function createStudio(host, initial, callbacks) {
   renderer.toneMappingExposure = 1.05
   host.appendChild(renderer.domElement)
   const controls = new OrbitControls(camera, renderer.domElement)
+  scope.defer(() => controls.dispose())
   controls.enableDamping = true
   controls.dampingFactor = 0.065
   controls.enablePan = false
@@ -209,6 +255,7 @@ export function createStudio(host, initial, callbacks) {
   const sun = new THREE.DirectionalLight('#ffead4', 2.8)
   sun.position.set(3, 10, 7)
   sun.castShadow = true
+  scope.defer(() => sun.shadow.dispose())
   sun.shadow.mapSize.set(1024, 1024)
   Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8 })
   sun.shadow.normalBias = 0.04
@@ -796,7 +843,17 @@ export function createStudio(host, initial, callbacks) {
       .toArray()
       .map(value => value.toFixed(2))
       .join(',')
-    if (!disposed && !contextUnavailable) renderer.render(scene, camera)
+    if (disposed || contextUnavailable) return false
+    try {
+      renderer.render(scene, camera)
+      return !contextUnavailable && !renderer.getContext().isContextLost()
+    } catch (error) {
+      contextUnavailable = true
+      cancelAnimationFrame(frame)
+      console.warn('[Orange 3D] Frame rendering failed', error.message)
+      callbacks.onUnavailable('render-failed')
+      return false
+    }
   }
   function animate(timestamp) {
     frame = 0
@@ -916,15 +973,17 @@ export function createStudio(host, initial, callbacks) {
     if (frame) cancelAnimationFrame(frame)
     frame = 0
     previous = 0
-    render()
+    const presented = render()
     if (
       !disposed &&
+      !contextUnavailable &&
       visible &&
       !document.hidden &&
       !state.paused &&
       !reducedMotion.matches
     )
       frame = requestAnimationFrame(animate)
+    return presented
   }
   function setView() {
     cameraPose()
@@ -958,13 +1017,16 @@ export function createStudio(host, initial, callbacks) {
     if (!width || !height) return
     const wasCompact = compact
     compact = width < 600
-    renderer.setPixelRatio(
-      Math.min(
-        window.devicePixelRatio || 1,
-        state.quality === 'safe' ? 1 : compact ? 1.25 : 1.75
-      )
+    const budget = getRenderBudget(
+      width,
+      height,
+      window.devicePixelRatio,
+      state.quality
     )
-    const shadowSize = compact || state.quality === 'safe' ? 512 : 1024
+    renderer.setPixelRatio(budget.ratio)
+    renderer.shadowMap.enabled = budget.shadows
+    const shadowSize = budget.shadowSize
+    host.dataset.pixelRatio = budget.ratio.toFixed(3)
     if (sun.shadow.mapSize.width !== shadowSize) {
       sun.shadow.mapSize.set(shadowSize, shadowSize)
       sun.shadow.map?.dispose()
@@ -1075,20 +1137,35 @@ export function createStudio(host, initial, callbacks) {
   controls.addEventListener('change', controlsChanged)
   document.addEventListener('visibilitychange', schedule)
   reducedMotion.addEventListener('change', schedule)
+  scope.defer(() => {
+    document.removeEventListener('visibilitychange', schedule)
+    reducedMotion.removeEventListener('change', schedule)
+    canvas.removeEventListener('pointermove', pointerMove)
+    canvas.removeEventListener('pointerdown', pointerDown)
+    canvas.removeEventListener('pointerup', pointerUp)
+    canvas.removeEventListener('pointerleave', pointerLeave)
+    canvas.removeEventListener('pointercancel', pointerCancel)
+    canvas.removeEventListener('webglcontextlost', contextLost)
+    canvas.removeEventListener('webglcontextrestored', contextRestored)
+    controls.removeEventListener('change', controlsChanged)
+    scene.clear()
+  })
   const resizeObserver = new ResizeObserver(resize)
+  scope.defer(() => resizeObserver.disconnect())
   resizeObserver.observe(host)
   const observer = new IntersectionObserver(entries => {
     visible = entries[0].isIntersecting
     schedule()
   })
+  scope.defer(() => observer.disconnect())
   observer.observe(host)
   setLighting()
   resize()
   cameraPose(true)
-  schedule()
-  callbacks.onReady()
+  if (schedule()) callbacks.onReady()
   return {
     update(next) {
+      if (disposed) return
       const oldView = state.view
       const oldGreeting = state.greeting
       const oldFocus = state.focus
@@ -1123,31 +1200,7 @@ export function createStudio(host, initial, callbacks) {
     },
     dispose() {
       disposed = true
-      cancelAnimationFrame(frame)
-      clearTimeout(contextTimer)
-      resizeObserver.disconnect()
-      observer.disconnect()
-      document.removeEventListener('visibilitychange', schedule)
-      reducedMotion.removeEventListener('change', schedule)
-      canvas.removeEventListener('pointermove', pointerMove)
-      canvas.removeEventListener('pointerdown', pointerDown)
-      canvas.removeEventListener('pointerup', pointerUp)
-      canvas.removeEventListener('pointerleave', pointerLeave)
-      canvas.removeEventListener('pointercancel', pointerCancel)
-      canvas.removeEventListener('webglcontextlost', contextLost)
-      canvas.removeEventListener('webglcontextrestored', contextRestored)
-      controls.removeEventListener('change', controlsChanged)
-      controls.dispose()
-      geometries.forEach(value => value.dispose())
-      materials.forEach(value => value.dispose())
-      textures.forEach(value => value.dispose())
-      sun.shadow.dispose()
-      renderer.dispose()
-      const gl = renderer.getContext()
-      if (!gl.isContextLost() && gl.getExtension('WEBGL_lose_context'))
-        renderer.forceContextLoss()
-      canvas.remove()
-      scene.clear()
+      scope.release()
     }
   }
 }

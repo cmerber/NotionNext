@@ -1,6 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import CompatScene from './CompatScene'
+import { loadStudio } from '../scene/loadStudio'
 
 export default function StudioCanvas({
+  rendererMode = 'auto',
   night,
   view,
   focus,
@@ -18,6 +21,7 @@ export default function StudioCanvas({
   onUnavailable
 }) {
   const host = useRef(null)
+  const [presented, setPresented] = useState(false)
   const api = useRef(null)
   const callbacks = useRef({
     onSelect,
@@ -60,31 +64,61 @@ export default function StudioCanvas({
 
   useEffect(() => {
     let cancelled = false
-    let dispose
-    // The renderer stays in its own async chunk; article pages never initialize it.
-    import('../scene/createStudio')
+    let instance
+    let ready = false
+    if (rendererMode === 'compat') {
+      callbacks.current.onReady?.()
+      return
+    }
+    // A visible local scene is already present. Bound this async work so a
+    // missing chunk or a stalled first GPU frame cannot leave an empty stage.
+    const timer = setTimeout(() => {
+      if (!cancelled && !ready) {
+        cancelled = true
+        instance?.dispose()
+        instance = null
+        api.current = null
+        callbacks.current.onUnavailable('startup-timeout')
+      }
+    }, 10000)
+    const fail = (reason, error) => {
+      if (cancelled) return
+      cancelled = true
+      clearTimeout(timer)
+      if (error) console.warn(`[Orange 3D] ${reason}`, error.message)
+      callbacks.current.onUnavailable(reason)
+    }
+    loadStudio()
       .then(({ createStudio }) => {
         if (cancelled || !host.current) return
-        const instance = createStudio(host.current, options.current, {
-          onSelect: value => callbacks.current.onSelect(value),
-          onHover: value => callbacks.current.onHover(value),
-          onReady: () => callbacks.current.onReady(),
-          onRecovering: () => callbacks.current.onRecovering?.(),
-          onUnavailable: reason => callbacks.current.onUnavailable(reason),
-          onGreet: () => callbacks.current.onGreet?.()
-        })
-        api.current = instance
-        dispose = () => instance.dispose()
+        try {
+          instance = createStudio(host.current, options.current, {
+            onSelect: value => callbacks.current.onSelect?.(value),
+            onHover: value => callbacks.current.onHover?.(value),
+            onReady: () => {
+              if (cancelled) return
+              ready = true
+              clearTimeout(timer)
+              setPresented(true)
+              callbacks.current.onReady?.()
+            },
+            onRecovering: () => callbacks.current.onRecovering?.(),
+            onUnavailable: reason => fail(reason),
+            onGreet: () => callbacks.current.onGreet?.()
+          })
+          api.current = instance
+        } catch (error) {
+          fail('scene-init', error)
+        }
       })
-      .catch(() => {
-        if (!cancelled) callbacks.current.onUnavailable('initialization')
-      })
+      .catch(error => fail('module-load', error))
     return () => {
       cancelled = true
+      clearTimeout(timer)
       api.current = null
-      dispose?.()
+      instance?.dispose()
     }
-  }, [])
+  }, [rendererMode])
 
   useEffect(() => {
     api.current?.update({
@@ -100,12 +134,31 @@ export default function StudioCanvas({
   }, [night, view, focus, interaction, tour, paused, ambience, greeting])
 
   return (
-    <div
-      ref={host}
-      className='orange-canvas'
-      data-render-quality={quality || 'auto'}
-      role='img'
-      aria-label='可旋转的治愈系微缩工作室，有棕发黑色上衣的小主人、书架、电脑和档案柜。点击人物会挥手，也可以使用下方按钮选择入口。'
-    />
+    <>
+      {(rendererMode === 'compat' || !presented) && (
+        <CompatScene
+          focus={focus}
+          view={view}
+          tour={tour}
+          paused={paused}
+          greeting={greeting}
+          interaction={interaction}
+          ambience={ambience}
+          onSelect={onSelect}
+          onGreet={onGreet}
+        />
+      )}
+      {rendererMode !== 'compat' && (
+        <div
+          ref={host}
+          className='orange-canvas'
+          style={{ visibility: presented ? 'visible' : 'hidden' }}
+          data-render-quality={quality || 'auto'}
+          data-renderer='webgl'
+          role='img'
+          aria-label='可旋转的治愈系微缩工作室，有棕发黑色上衣的小主人、书架、电脑和档案柜。点击人物会挥手，也可以使用下方按钮选择入口。'
+        />
+      )}
+    </>
   )
 }

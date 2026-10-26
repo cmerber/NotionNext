@@ -11,6 +11,11 @@ import {
 } from '@/themes/orange'
 import { siteConfig } from '@/lib/config'
 
+jest.mock('@/themes/orange/components/StudioCanvas', () => ({
+  __esModule: true,
+  default: () => null
+}))
+
 const mockPush = jest.fn()
 const mockToggle = jest.fn()
 const mockRouter = {
