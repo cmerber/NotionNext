@@ -28,7 +28,7 @@
 
 ## 人物与治愈互动
 
-首页下半部和 `/about` 共用 `themes/orange/components/IslandStory.js` 的个人与站点介绍，包含现有文章方向、工具用途和成长档案入口。Orange 的关于页展示这套介绍，保留原 Notion 条目，不再显示原模板中的单页使用教程。其他文章继续使用 Notion 正文。
+个人与小岛介绍放在 `/about`，由 `themes/orange/components/IslandStory.js` 展示，可从导航“关于小岛”和场景“橙子会客厅”进入。首页为 3D 场景与文章列表，不重复展示介绍。保留原 Notion 条目，不再显示原模板中的单页使用教程。其他文章继续使用 Notion 正文。
 
 人物根据站长提供的 PNG 头像重建为程序化立体角色：棕色短发、大眼睛、黑色翻领上衣。PNG 用作外观参考；人物网格由 `createCharacter.js` 构造，能够旋转、呼吸、眨眼和挥手，不依赖图片生成或外部建模服务。
 

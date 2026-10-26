@@ -458,8 +458,8 @@ export default function Studio({ posts = [] }) {
             </button>
           ))}
         </nav>
-        <a className='orange-scroll-note' href='#orange-story'>
-          <span>往下，认识这座小岛</span> ↓
+        <a className='orange-scroll-note' href='#orange-notes'>
+          <span>往下，读点什么</span> ↓
         </a>
       </div>
     </section>
