@@ -13,6 +13,7 @@ export default function StudioCanvas({
   ambience,
   greeting,
   quality,
+  onInteract,
   onGreet,
   onSelect,
   onHover,
@@ -24,6 +25,7 @@ export default function StudioCanvas({
   const [presented, setPresented] = useState(false)
   const api = useRef(null)
   const callbacks = useRef({
+    onInteract,
     onSelect,
     onHover,
     onReady,
@@ -32,6 +34,7 @@ export default function StudioCanvas({
     onGreet
   })
   callbacks.current = {
+    onInteract,
     onSelect,
     onHover,
     onReady,
@@ -93,6 +96,7 @@ export default function StudioCanvas({
         if (cancelled || !host.current) return
         try {
           instance = createStudio(host.current, options.current, {
+            onInteract: () => callbacks.current.onInteract?.(),
             onSelect: value => callbacks.current.onSelect?.(value),
             onHover: value => callbacks.current.onHover?.(value),
             onReady: () => {
@@ -145,6 +149,7 @@ export default function StudioCanvas({
           interaction={interaction}
           ambience={ambience}
           onSelect={onSelect}
+          onInteract={onInteract}
           onGreet={onGreet}
         />
       )}

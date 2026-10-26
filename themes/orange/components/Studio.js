@@ -141,6 +141,7 @@ export default function Studio({ posts = [] }) {
             ambience={ambience && ambienceEnabled}
             greeting={greeting}
             onGreet={greet}
+            onInteract={() => setTour(false)}
             onSelect={explore}
             onHover={setHover}
             onReady={() => setSceneStatus('ready')}

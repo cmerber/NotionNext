@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import usePointerDrag from '@/hooks/usePointerDrag'
 
 const COLORS = ['#bbccb0', '#e6a466', '#efe2c7', '#7e9b84', '#d3b58a']
 
@@ -21,6 +22,7 @@ function Block({ x = 0, y = 0, z = 0, w, d, h, color, children }) {
       <i className='compat-front' />
       <i className='compat-side' />
       <i className='compat-side-left' />
+      <i className='compat-back' />
     </span>
   )
 }
@@ -36,51 +38,115 @@ export default function CompatScene({
   interaction,
   ambience,
   onSelect,
-  onGreet
+  onGreet,
+  onInteract
 }) {
-  const [dragAngle, setDragAngle] = useState(0)
-  const drag = useRef(null)
-  const moved = useRef(false)
-  const yaw = [-26, -4, 24][view % 3] + dragAngle
-  const select = id => {
-    if (!moved.current) onSelect?.(id)
+  const root = useRef(null)
+  const world = useRef(null)
+  const angles = useRef({ yaw: -26, tilt: 58 })
+  const start = useRef(null)
+  const writeAngles = useCallback((yaw, tilt) => {
+    angles.current = { yaw, tilt: Math.max(40, Math.min(72, tilt)) }
+    root.current?.style.setProperty('--yaw', `${yaw}deg`)
+    root.current?.style.setProperty('--tilt', `${angles.current.tilt}deg`)
+  }, [])
+  const freezeTour = () => {
+    const transform = world.current && getComputedStyle(world.current).transform
+    if (
+      transform &&
+      transform !== 'none' &&
+      typeof DOMMatrixReadOnly !== 'undefined'
+    ) {
+      const matrix = new DOMMatrixReadOnly(transform)
+      writeAngles(
+        (Math.atan2(-matrix.m21, matrix.m11) * 180) / Math.PI,
+        (Math.atan2(-matrix.m32, matrix.m33) * 180) / Math.PI
+      )
+    }
+    root.current.dataset.manual = 'true'
+    onInteract?.()
   }
+  const drag = usePointerDrag({
+    elementRef: root,
+    horizontalTouch: true,
+    onStart() {
+      freezeTour()
+      start.current = { ...angles.current }
+    },
+    onMove({ dx, dy }) {
+      if (start.current)
+        writeAngles(
+          start.current.yaw + dx * 0.3,
+          start.current.tilt - dy * 0.13
+        )
+    },
+    onEnd() {
+      start.current = null
+    }
+  })
+  useEffect(() => {
+    writeAngles([-26, -4, 24][view % 3], 58)
+  }, [view, writeAngles])
+  useEffect(() => {
+    if (tour && root.current) root.current.dataset.manual = 'false'
+  }, [tour])
+  useEffect(() => {
+    const resize = () => {
+      const width = root.current?.clientWidth,
+        height = root.current?.clientHeight
+      if (!width || !height) return
+      const fit =
+        width < 760 ? width / 780 : Math.min(width / 1100, height / 800)
+      root.current.style.setProperty(
+        '--fit',
+        String(Math.max(0.36, Math.min(3.3, fit)))
+      )
+    }
+    resize()
+    const observer =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(resize)
+    if (root.current) observer?.observe(root.current)
+    window.addEventListener('resize', resize)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', resize)
+    }
+  }, [])
+  const select = id => onSelect?.(id)
   return (
     <div
+      {...drag}
       className='orange-compat'
+      role='group'
+      aria-label='互动场景，可拖动或使用方向键旋转'
+      tabIndex={0}
       data-focus={focus || 'world'}
       data-still={Boolean(paused)}
       data-tour={Boolean(tour)}
       data-ambience={Boolean(ambience)}
-      onPointerDown={event => {
-        drag.current = { x: event.clientX, angle: dragAngle }
-        moved.current = false
-      }}
-      onPointerMove={event => {
-        if (!drag.current) return
-        const delta = event.clientX - drag.current.x
-        if (Math.abs(delta) > 8) {
-          moved.current = true
-          setDragAngle(
-            Math.max(-30, Math.min(30, drag.current.angle + delta * 0.12))
-          )
+      onKeyDown={event => {
+        if (event.target !== event.currentTarget) return
+        const steps = {
+          ArrowLeft: [-10, 0],
+          ArrowRight: [10, 0],
+          ArrowUp: [0, -4],
+          ArrowDown: [0, 4]
         }
-      }}
-      onPointerUp={() => {
-        drag.current = null
-      }}
-      onPointerCancel={() => {
-        drag.current = null
-      }}
-      onPointerLeave={() => {
-        drag.current = null
+        const delta = steps[event.key]
+        if (!delta) return
+        event.preventDefault()
+        freezeTour()
+        writeAngles(
+          angles.current.yaw + delta[0],
+          angles.current.tilt + delta[1]
+        )
       }}
     >
       <div className='compat-moon' aria-hidden='true' />
       <div className='compat-cloud compat-cloud-one' aria-hidden='true' />
       <div className='compat-cloud compat-cloud-two' aria-hidden='true' />
       <div className='compat-camera'>
-        <div className='compat-world' style={{ '--yaw': `${yaw}deg` }}>
+        <div className='compat-world' ref={world}>
           <Block w={600} d={420} h={25} color='#c8d2b8' />
           <Block x={5} y={5} z={25} w={590} d={410} h={8} color='#f2e4cb' />
           {Array.from({ length: 10 }, (_, i) => (
@@ -199,10 +265,8 @@ export default function CompatScene({
             className='compat-host'
             aria-label='轻量场景：向小主人打招呼'
             onClick={() => {
-              if (!moved.current) {
-                onGreet?.()
-                onSelect?.('about')
-              }
+              onGreet?.()
+              onSelect?.('about')
             }}
           >
             <span
