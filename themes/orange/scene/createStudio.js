@@ -4,6 +4,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { createCharacter } from './createCharacter'
 import { sampleCameraFlight, reactionEnvelope } from './cameraMotion'
 import { getRenderBudget } from './renderBudget'
+import { batchScene } from './batchScene'
 
 // Original procedural geometry: no remote models, textures, or model service.
 export function createStudio(host, initial, callbacks) {
@@ -75,6 +76,10 @@ function buildStudio(host, initial, callbacks, scope) {
   let flight = null
   let tourTime = 0
   let userOrbit = false
+  let lastTelemetry = 0
+  let renderCost = 0
+  let slowFrames = 0
+  const upAxis = new THREE.Vector3(0, 1, 0)
   let reactionStart = -10
   let reactionPlace = ''
   scope.defer(() => {
@@ -106,6 +111,7 @@ function buildStudio(host, initial, callbacks, scope) {
   renderer.setPixelRatio(1)
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFShadowMap
+  renderer.shadowMap.autoUpdate = false
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.05
@@ -278,6 +284,12 @@ function buildStudio(host, initial, callbacks, scope) {
   for (let x = -3.8; x < 4; x += 0.55)
     box(0.018, 0.012, 6.3, palette.wood, x, 0.107, 0)
   box(8.2, 0.55, 0.18, palette.wall, 0, 0.4, -3.12)
+  const plaster = mat('#b9c8ae')
+  box(3.9, 2.45, 0.13, plaster, -2.08, 1.5, -3.16)
+  box(4.15, 1.05, 0.13, plaster, 2.04, 0.8, -3.16)
+  box(0.13, 2.3, 2.9, palette.green, -4.05, 1.4, -1.7)
+  for (let y = 0.5; y < 2.65; y += 0.44)
+    box(3.85, 0.012, 0.015, palette.sage, -2.08, y, -3.08)
   box(0.18, 0.55, 6.3, palette.wall, -4.02, 0.4, 0)
   for (const x of [-4.02, 4.02])
     box(0.12, 3.4, 0.12, palette.wood, x, 1.8, -3.12)
@@ -628,6 +640,38 @@ function buildStudio(host, initial, callbacks, scope) {
   )
   innerOrbit.rotation.set(1.6, -0.2, 0.3)
   const satellite = sphere(0.28, palette.orange, 0, 0, 0)
+  satellite.userData.action = 'orange'
+  // A physical mailbox opens and presents a paper keepsake when a visitor
+  // collects an orange or clicks the mailbox. Its card links to a real post.
+  const mailbox = group('', 3.15, 0.12, 2.45)
+  mailbox.userData.action = 'orange'
+  cylinder(0.06, 0.1, 0.65, palette.darkWood, 0, 0.33, 0, mailbox)
+  box(0.7, 0.12, 0.55, palette.darkWood, 0, 0.67, 0, mailbox)
+  box(0.61, 0.54, 0.45, palette.orange, 0, 0.98, 0, mailbox)
+  const mailRoof = cylinder(
+    0.31,
+    0.31,
+    0.61,
+    palette.orange,
+    0,
+    1.25,
+    0,
+    mailbox
+  )
+  mailRoof.rotation.z = Math.PI / 2
+  const mailLid = new THREE.Group()
+  mailLid.position.set(0, 0.72, 0.245)
+  mailbox.add(mailLid)
+  box(0.54, 0.47, 0.035, palette.peach, 0, 0.235, 0, mailLid)
+  box(0.35, 0.045, 0.04, palette.charcoal, 0, 0.35, 0.028, mailLid)
+  label('POST', 0.34, 0.1, 0, 0.15, 0.025, mailLid, '#eeac7c', '#6a4230')
+  const letter = new THREE.Group()
+  letter.position.z = 0.3
+  mailbox.add(letter)
+  box(0.46, 0.56, 0.02, palette.white, 0, 0.28, 0, letter)
+  box(0.13, 0.08, 0.025, palette.green, 0, 0.27, 0.02, letter)
+  label('HELLO', 0.32, 0.1, 0, 0.44, 0.018, letter)
+  letter.visible = false
   const moonMaterial = mat('#ffebc2', {
     emissive: '#ffc77d',
     emissiveIntensity: 0.6,
@@ -743,6 +787,52 @@ function buildStudio(host, initial, callbacks, scope) {
     spark.castShadow = false
     return spark
   })
+  const registerBatch = geometry => geometries.add(geometry)
+  const batched = batchScene(
+    scene,
+    [
+      character.root,
+      tree,
+      leaf,
+      particles,
+      orbit,
+      satellite,
+      stars,
+      beacon,
+      feedback,
+      moon,
+      mailLid,
+      letter,
+      ...clouds,
+      ...steam,
+      ...drawers,
+      ...screenLines,
+      ...animatedBooks.map(book => book.mesh)
+    ],
+    registerBatch
+  )
+  const head = character.root.getObjectByName('head')
+  const leftArm = character.root.getObjectByName('arm-left')
+  const rightArm = character.root.getObjectByName('arm-right')
+  batchScene(character.root, [head, leftArm, rightArm], registerBatch)
+  batchScene(
+    head,
+    [head.getObjectByName('eye-left'), head.getObjectByName('eye-right')],
+    registerBatch
+  )
+  for (const part of [leftArm, rightArm, tree])
+    batchScene(part, [], registerBatch)
+  for (const cloud of clouds) batchScene(cloud, [], registerBatch, true)
+  const usedGeometries = new Set()
+  scene.traverse(item => {
+    if (item.geometry) usedGeometries.add(item.geometry)
+  })
+  for (const geometry of geometries)
+    if (!usedGeometries.has(geometry)) {
+      geometry.dispose()
+      geometries.delete(geometry)
+    }
+  host.dataset.furnitureMeshes = `${batched.before}→${batched.after}`
   function react(place) {
     reactionPlace = place
     reactionStart = time
@@ -826,26 +916,41 @@ function buildStudio(host, initial, callbacks, scope) {
     } else if (state.tour && !state.focus && !userOrbit) {
       tourTime += delta
       const angle = Math.sin(tourTime * 0.12) * 0.38
-      camera.position
-        .copy(destination)
-        .applyAxisAngle(new THREE.Vector3(0, 1, 0), angle)
+      camera.position.copy(destination).applyAxisAngle(upAxis, angle)
       camera.position.y += Math.sin(tourTime * 0.3) * 0.32
     }
     controls.update()
   }
 
   function render() {
-    host.dataset.focus = state.focus || 'world'
-    host.dataset.interaction = state.interaction || 0
-    host.dataset.cameraMotion = flight ? 'flying' : 'settled'
-    host.dataset.reaction = feedback.visible ? reactionPlace : ''
-    host.dataset.camera = camera.position
-      .toArray()
-      .map(value => value.toFixed(2))
-      .join(',')
+    const telemetry = {
+      focus: state.focus || 'world',
+      interaction: String(state.interaction || 0),
+      cameraMotion: flight ? 'flying' : 'settled',
+      reaction: feedback.visible ? reactionPlace : ''
+    }
+    for (const key of Object.keys(telemetry))
+      if (host.dataset[key] !== telemetry[key])
+        host.dataset[key] = telemetry[key]
+    const now = performance.now()
+    if (now - lastTelemetry > 400) {
+      lastTelemetry = now
+      host.dataset.camera = camera.position
+        .toArray()
+        .map(value => value.toFixed(2))
+        .join(',')
+      host.dataset.drawCalls = renderer.info.render.calls
+      host.dataset.triangles = renderer.info.render.triangles
+      host.dataset.frameCost = renderCost.toFixed(1)
+    }
     if (disposed || contextUnavailable) return false
     try {
       renderer.render(scene, camera)
+      renderCost = renderCost * 0.9 + (performance.now() - now) * 0.1
+      if (state.quality === 'auto' && renderCost > 22) {
+        slowFrames += 1
+        if (slowFrames === 45) callbacks.onPerformance?.()
+      } else slowFrames = 0
       return !contextUnavailable && !renderer.getContext().isContextLost()
     } catch (error) {
       contextUnavailable = true
@@ -869,9 +974,14 @@ function buildStudio(host, initial, callbacks, scope) {
     // Small screens need fewer pixels and frames, while taps and camera changes
     // still render immediately. Keep vertical swipes and browser pinch zoom free.
     if (
-      (compact || state.quality === 'safe') &&
       previous &&
-      timestamp - previous < 1000 / 30
+      timestamp - previous <
+        1000 /
+          (compact || state.quality === 'safe'
+            ? 30
+            : state.quality === 'detail'
+              ? 60
+              : 40)
     ) {
       frame = requestAnimationFrame(animate)
       return
@@ -929,6 +1039,13 @@ function buildStudio(host, initial, callbacks, scope) {
       -0.3 + Math.sin(time * 0.22) * 1.8,
       Math.sin(time * 0.22) * 5.7
     )
+    satellite.scale.setScalar(state.harvested ? 0.68 : 1.3)
+    mailLid.rotation.x +=
+      ((state.harvested ? 1.4 : 0) - mailLid.rotation.x) * 0.12
+    letter.visible = Boolean(state.harvested)
+    letter.position.y +=
+      ((state.harvested ? 1.55 : 0.75) - letter.position.y) * 0.08
+    letter.rotation.y = Math.sin(time * 0.7) * 0.12
     clouds.forEach((cloud, index) => {
       cloud.position.y =
         -1.9 + (index % 4) * 0.55 + Math.sin(time * 0.18 + index) * 0.18
@@ -989,6 +1106,7 @@ function buildStudio(host, initial, callbacks, scope) {
     cameraPose()
   }
   function setLighting() {
+    renderer.shadowMap.needsUpdate = true
     ambient.intensity = state.night ? 1.3 : 2.1
     ambient.color.set(state.night ? '#b4bfde' : '#fff3e4')
     sun.intensity = state.night ? 1.3 : 2.8
@@ -1034,6 +1152,7 @@ function buildStudio(host, initial, callbacks, scope) {
       sun.shadow.needsUpdate = true
     }
     renderer.setSize(width, height)
+    renderer.shadowMap.needsUpdate = true
     const aspect = width / height
     camera.aspect = aspect
     camera.fov = compact ? (state.focus ? 43 : 48) : state.focus ? 32 : 36
@@ -1051,6 +1170,7 @@ function buildStudio(host, initial, callbacks, scope) {
     for (const hit of raycaster.intersectObjects(scene.children, true)) {
       let item = hit.object
       while (item) {
+        if (item.userData.action) return `action:${item.userData.action}`
         if (item.userData.character) return 'character'
         if (item.userData.place) return item.userData.place
         item = item.parent
@@ -1074,7 +1194,9 @@ function buildStudio(host, initial, callbacks, scope) {
     if (next !== hovered) {
       hovered = next
       host.style.cursor = next ? 'pointer' : 'grab'
-      callbacks.onHover(next === 'character' ? 'about' : next)
+      callbacks.onHover(
+        next === 'character' ? 'about' : next.startsWith('action:') ? '' : next
+      )
     }
   }
   function pointerDown(event) {
@@ -1098,7 +1220,8 @@ function buildStudio(host, initial, callbacks, scope) {
       Math.hypot(event.clientX - down.x, event.clientY - down.y) < 6
     ) {
       const place = pick(event)
-      if (place === 'character') {
+      if (place.startsWith('action:')) callbacks.onAction?.(place.slice(7))
+      else if (place === 'character') {
         callbacks.onGreet?.()
         callbacks.onSelect('about')
       } else if (place) callbacks.onSelect(place)
@@ -1188,7 +1311,11 @@ function buildStudio(host, initial, callbacks, scope) {
       const oldFocus = state.focus
       const oldInteraction = state.interaction
       const oldTour = state.tour
+      const oldHarvested = state.harvested
+      const oldQuality = state.quality
       state = { ...state, ...next }
+      if (oldQuality !== state.quality) resize()
+      if (oldHarvested !== state.harvested && state.harvested) react('about')
       if (state.greeting !== oldGreeting) character.wave()
       if (
         state.focus &&
@@ -1204,6 +1331,9 @@ function buildStudio(host, initial, callbacks, scope) {
         setView()
       setLighting()
       if (state.paused || reducedMotion.matches) {
+        mailLid.rotation.x = state.harvested ? 1.4 : 0
+        letter.visible = Boolean(state.harvested)
+        letter.position.y = 1.55
         orbitMaterial.opacity = state.focus ? 0.08 : 1
         character.update(time, true)
         feedback.visible = false

@@ -1,18 +1,15 @@
 import SmartLink from '@/components/SmartLink'
 import LazyImage from '@/components/LazyImage'
-import NotionPage from '@/components/NotionPage'
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { useRouter } from 'next/router'
-import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import Studio from './components/Studio'
 import CONFIG from './config'
 import { Style } from './style'
 import { ImmersiveStyle } from './immersiveStyle'
-
-const Comment = dynamic(() => import('@/components/Comment'), { ssr: false })
-const ShareBar = dynamic(() => import('@/components/ShareBar'), { ssr: false })
+import ReadingRoom from './components/ReadingRoom'
+import { ExperienceStyle } from './experienceStyle'
 
 const postHref = post => post.href || `/article/${post.slug || post.id}`
 
@@ -46,11 +43,14 @@ function LayoutBase({
   customNav = []
 }) {
   const { isDarkMode, toggleDarkMode, onLoading } = useGlobal()
+  const router = useRouter()
+  const path = (router.asPath || '/').split('?')[0]
   const extraLinks = siteConfig('CUSTOM_MENU') ? customMenu : customNav
   return (
     <div id='theme-orange'>
       <Style />
       <ImmersiveStyle />
+      <ExperienceStyle />
       <a className='orange-skip' href='#orange-main'>
         跳到主要内容
       </a>
@@ -63,16 +63,43 @@ function LayoutBase({
           </span>
         </SmartLink>
         <nav aria-label='主导航'>
-          <SmartLink href='/archive'>文字与灵感</SmartLink>
-          <SmartLink href='/tools'>实用工具</SmartLink>
-          <SmartLink href='/profile'>冒险档案</SmartLink>
+          <SmartLink
+            href='/archive'
+            aria-current={
+              path.includes('/article/') || path.startsWith('/archive')
+                ? 'page'
+                : undefined
+            }
+          >
+            文字与灵感
+          </SmartLink>
+          <SmartLink
+            href='/tools'
+            aria-current={path.startsWith('/tools') ? 'page' : undefined}
+          >
+            实用工具
+          </SmartLink>
+          <SmartLink
+            href='/profile'
+            aria-current={path.startsWith('/profile') ? 'page' : undefined}
+          >
+            冒险档案
+          </SmartLink>
+          <SmartLink
+            href='/about'
+            aria-current={path.startsWith('/about') ? 'page' : undefined}
+          >
+            关于小岛
+          </SmartLink>
           {(extraLinks || [])
             .filter(
               link =>
                 link.show !== false &&
                 link.href &&
                 (link.subMenus?.length ||
-                  !['/', '/archive', '/tools', '/profile'].includes(link.href))
+                  !['/', '/archive', '/tools', '/profile', '/about'].includes(
+                    link.href
+                  ))
             )
             .map((link, index) => (
               <MenuLink key={link.id || `${link.href}-${index}`} link={link} />
@@ -101,6 +128,17 @@ function LayoutBase({
       <footer className='orange-footer'>
         <SmartLink href='/'>🍊 {siteInfo?.title || '橙子星球'}</SmartLink>
         <span>把每一次探索，都留在这里。</span>
+        {siteConfig('THEME_SWITCH', true) && (
+          <button
+            type='button'
+            className='orange-footer-appearance'
+            onClick={() =>
+              window.dispatchEvent(new Event('notionnext:open-theme-panel'))
+            }
+          >
+            外观与主题 ↗
+          </button>
+        )}
         <span>
           Powered by{' '}
           <a
@@ -118,10 +156,37 @@ function LayoutBase({
 }
 
 function PostCards({ posts = [] }) {
+  const tilt = event => {
+    if (
+      event.pointerType === 'touch' ||
+      !window.matchMedia('(hover: hover)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+      return
+    const card = event.currentTarget
+    const rect = card.getBoundingClientRect()
+    card.style.setProperty(
+      '--card-x',
+      `${(0.5 - (event.clientY - rect.top) / rect.height) * 4}deg`
+    )
+    card.style.setProperty(
+      '--card-y',
+      `${((event.clientX - rect.left) / rect.width - 0.5) * 4}deg`
+    )
+  }
   return (
     <div className='orange-post-grid'>
-      {posts.map(post => (
-        <article className='orange-post-card' key={post.id || post.slug}>
+      {posts.map((post, index) => (
+        <article
+          className='orange-post-card'
+          data-cover-tone={index % 3}
+          key={post.id || post.slug}
+          onPointerMove={tilt}
+          onPointerLeave={event => {
+            event.currentTarget.style.setProperty('--card-x', '0deg')
+            event.currentTarget.style.setProperty('--card-y', '0deg')
+          }}
+        >
           <SmartLink
             href={postHref(post)}
             className='orange-post-cover'
@@ -136,7 +201,10 @@ function PostCards({ posts = [] }) {
               />
             ) : (
               <span className='orange-cover-placeholder'>
-                ✳<small>NOTES FROM MY PLANET</small>
+                <span className='orange-cover-orbit' />
+                <strong>{String(index + 1).padStart(2, '0')}</strong>
+                <i>✳</i>
+                <small>FIELD NOTES / 小岛来信</small>
               </span>
             )}
           </SmartLink>
@@ -156,6 +224,18 @@ function PostCards({ posts = [] }) {
               <SmartLink href={postHref(post)}>{post.title}</SmartLink>
             </h3>
             {post.summary && <p>{post.summary}</p>}
+            {!!post.tagItems?.length && (
+              <div className='orange-card-tags'>
+                {post.tagItems.slice(0, 3).map(tag => (
+                  <SmartLink
+                    key={tag.name || tag}
+                    href={`/tag/${encodeURIComponent(tag.name || tag)}`}
+                  >
+                    # {tag.name || tag}
+                  </SmartLink>
+                ))}
+              </div>
+            )}
             <SmartLink href={postHref(post)} className='orange-read-link'>
               继续阅读 <span>↗</span>
             </SmartLink>
@@ -361,57 +441,9 @@ const LayoutTagIndex = props => (
   <CollectionIndex options={props.tagOptions} title='灵感标签' path='tag' />
 )
 
-function LayoutSlug({ post, lock, validPassword }) {
-  const [password, setPassword] = useState('')
-  const [passwordError, setPasswordError] = useState(false)
-  if (lock)
-    return (
-      <section className='orange-reading'>
-        <h1>这篇笔记需要密码</h1>
-        <form
-          className='orange-search'
-          onSubmit={event => {
-            event.preventDefault()
-            setPasswordError(!validPassword?.(password))
-          }}
-        >
-          <label htmlFor='orange-password'>文章密码</label>
-          <div>
-            <input
-              id='orange-password'
-              type='password'
-              value={password}
-              onChange={event => setPassword(event.target.value)}
-              required
-            />
-            <button className='orange-button' type='submit'>
-              打开笔记
-            </button>
-          </div>
-          {passwordError && <p role='alert'>密码不正确，再试一次吧。</p>}
-        </form>
-      </section>
-    )
-  if (!post) return <Layout404 />
-  return (
-    <div className='orange-reading'>
-      <SmartLink href='/archive' className='orange-text-link'>
-        ← 回到书架
-      </SmartLink>
-      <header className='orange-article-heading'>
-        <p className='orange-eyebrow'>
-          {[].concat(post.category || []).join(' / ') || 'NOTES FROM MY PLANET'}
-        </p>
-        <h1>{post.title}</h1>
-        <p>{post.date?.start_date || post.date?.start || ''}</p>
-      </header>
-      <article id='article-wrapper'>
-        <NotionPage post={post} />
-      </article>
-      <ShareBar post={post} />
-      <Comment frontMatter={post} />
-    </div>
-  )
+function LayoutSlug(props) {
+  if (!props.post) return <Layout404 />
+  return <ReadingRoom {...props} />
 }
 
 function Layout404() {

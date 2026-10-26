@@ -54,6 +54,9 @@ jest.mock('@/themes/orange/style', () => ({ Style: () => null }))
 jest.mock('@/themes/orange/immersiveStyle', () => ({
   ImmersiveStyle: () => null
 }))
+jest.mock('@/themes/orange/experienceStyle', () => ({
+  ExperienceStyle: () => null
+}))
 
 const posts = Array.from({ length: 15 }, (_, id) => ({
   id: `post-${id}`,
@@ -63,6 +66,7 @@ const posts = Array.from({ length: 15 }, (_, id) => ({
   summary: '测试摘要'
 }))
 beforeEach(() => {
+  sessionStorage.clear()
   jest.clearAllMocks()
   siteConfig.mockImplementation((key, fallback) => fallback)
 })
@@ -110,6 +114,34 @@ test('Notion settings can disable decorative particles', () => {
   )
   render(<Studio />)
   expect(screen.queryByRole('button', { name: /花雨/ })).not.toBeInTheDocument()
+})
+
+test('discoveries collect once and a souvenir opens a real readable article', () => {
+  const { unmount } = render(
+    <Studio
+      posts={[
+        { id: 'open', title: '公开笔记', slug: 'open' },
+        { id: 'private', title: '私密笔记', password: 'secret' }
+      ]}
+    />
+  )
+  const shelf = screen.getByRole('button', { name: /灵感书架/ })
+  fireEvent.click(shelf)
+  fireEvent.click(shelf)
+  fireEvent.click(screen.getByRole('button', { name: '返回全景' }))
+  expect(screen.getByLabelText('已发现 1 个角落')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /摘一颗橙子/ }))
+  expect(screen.getByRole('link', { name: /送你一段灵感/ })).toHaveAttribute(
+    'href',
+    '/article/open'
+  )
+  expect(screen.queryByText('私密笔记')).not.toBeInTheDocument()
+  unmount()
+  render(<Studio posts={posts} />)
+  expect(screen.getByLabelText('已发现 1 个角落')).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: /再收一份小惊喜/ })
+  ).toBeInTheDocument()
 })
 
 test('paginated collections use the current collection path', () => {

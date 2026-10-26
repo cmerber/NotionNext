@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700">
+  <rect width="1000" height="700" fill="#e0e7d8"/>
+  <circle cx="766" cy="180" r="68" fill="#e4bc7a"/>
+  <ellipse cx="510" cy="430" rx="390" ry="140" fill="none" stroke="#91a58b" stroke-width="2" transform="rotate(-22 510 430)"/>
+  <ellipse cx="520" cy="574" rx="200" ry="32" fill="#91a58b" opacity=".26"/>
+  <g transform="translate(345 120) rotate(-12 160 225)">
+    <rect x="-18" y="22" width="310" height="405" rx="10" fill="#a2b19a"/>
+    <rect x="-9" y="12" width="310" height="405" rx="10" fill="#fff8e9"/>
+    <rect width="310" height="405" rx="10" fill="#52705b"/>
+    <rect width="23" height="405" fill="#385846"/>
+    <text x="58" y="88" fill="#f7e8c8" font-family="Georgia,serif" font-size="35" letter-spacing="5">FIELD</text>
+    <text x="58" y="138" fill="#f7e8c8" font-family="Georgia,serif" font-size="35" letter-spacing="5">NOTES</text>
+    <g transform="translate(166 248)" stroke="#e4bc7a" stroke-width="16"><path d="M-48 0H48M0-48V48M-34-34L34 34M-34 34L34-34"/></g>
+    <text x="59" y="360" fill="#ced7bf" font-family="sans-serif" font-size="10" letter-spacing="3">A LITTLE WORLD BY QCODE</text>
+  </g>
+  <text x="500" y="660" fill="#5d715b" font-family="sans-serif" font-size="12" letter-spacing="5" text-anchor="middle">COLLECT A LITTLE WONDER</text>
+</svg>

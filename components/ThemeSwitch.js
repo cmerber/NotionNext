@@ -576,6 +576,12 @@ const ThemeSwitch = () => {
   const [consoleVisible, setConsoleVisible] = useState(false)
 
   useEffect(() => {
+    const open = () => setSideBarVisible(true)
+    window.addEventListener('notionnext:open-theme-panel', open)
+    return () => window.removeEventListener('notionnext:open-theme-panel', open)
+  }, [])
+
+  useEffect(() => {
     if (!consoleMounted) return
     const frame = window.requestAnimationFrame(() => {
       setConsoleVisible(true)
@@ -606,7 +612,7 @@ const ThemeSwitch = () => {
   return (
     <>
       {/* 悬浮的主题切换按钮 */}
-      <Draggable stick={true} handleClassName='theme-drag-handle'>
+      {siteConfig('THEME_SWITCH_FLOATING', false) && <Draggable stick={true} handleClassName='theme-drag-handle'>
         <div
           id='draggableBox'
           style={{ left: '0px', top: '80vh' }}
@@ -690,7 +696,7 @@ const ThemeSwitch = () => {
             </button>
           </div>
         </div>
-      </Draggable>
+      </Draggable>}
 
       {consoleMounted && (
         <ThemeConsole
@@ -702,7 +708,7 @@ const ThemeSwitch = () => {
         />
       )}
 
-      <SideBarDrawer
+      {sideBarVisible && <SideBarDrawer
         className='flex max-h-screen w-[min(100vw-0.5rem,28rem)] flex-col overflow-hidden border-r border-gray-200/90 bg-white p-0 shadow-2xl dark:border-gray-800 dark:bg-gray-950 md:w-[min(100vw-2rem,48rem)] lg:w-[min(100vw-3rem,56rem)]'
         isOpen={sideBarVisible}
         showOnPC={true}
@@ -811,7 +817,7 @@ const ThemeSwitch = () => {
             </div>
           </div>
         </div>
-      </SideBarDrawer>
+      </SideBarDrawer>}
     </>
   )
 }

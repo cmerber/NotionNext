@@ -6,7 +6,7 @@ export function getRenderBudget(
   quality = 'auto'
 ) {
   const compact = width < 600
-  const pixelLimit = quality === 'safe' ? 900000 : compact ? 1000000 : 2200000
+  const pixelLimit = quality === 'safe' ? 650000 : compact ? 750000 : 1600000
   const dimensionLimit = quality === 'safe' ? 1600 : 2400
   const area = Math.max(1, width) * Math.max(1, height)
   const ratio = Math.min(
@@ -17,7 +17,7 @@ export function getRenderBudget(
   )
   return {
     ratio,
-    shadows: quality !== 'safe',
+    shadows: quality !== 'safe' && !compact,
     shadowSize: compact ? 512 : 1024
   }
 }
