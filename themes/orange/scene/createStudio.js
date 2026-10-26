@@ -1061,8 +1061,15 @@ function buildStudio(host, initial, callbacks, scope) {
     return ''
   }
   function pointerMove(event) {
-    if (down && Math.hypot(event.clientX - down.x, event.clientY - down.y) > 6)
+    if (down && down.id !== event.pointerId) return
+    if (
+      down &&
+      !moved &&
+      Math.hypot(event.clientX - down.x, event.clientY - down.y) > 6
+    ) {
       moved = true
+      callbacks.onInteract?.()
+    }
     const next = pick(event)
     if (next !== hovered) {
       hovered = next
@@ -1071,12 +1078,19 @@ function buildStudio(host, initial, callbacks, scope) {
     }
   }
   function pointerDown(event) {
+    if (
+      down ||
+      event.isPrimary === false ||
+      (event.pointerType === 'mouse' && event.button !== 0)
+    )
+      return
     flight = null
     userOrbit = true
     down = { x: event.clientX, y: event.clientY, id: event.pointerId }
     moved = false
   }
   function pointerUp(event) {
+    if (down && down.id !== event.pointerId) return
     if (
       down &&
       down.id === event.pointerId &&
@@ -1095,7 +1109,8 @@ function buildStudio(host, initial, callbacks, scope) {
     hovered = ''
     callbacks.onHover('')
   }
-  function pointerCancel() {
+  function pointerCancel(event) {
+    if (event?.pointerId != null && down && event.pointerId !== down.id) return
     down = null
   }
   function contextLost(event) {
@@ -1135,9 +1150,11 @@ function buildStudio(host, initial, callbacks, scope) {
     if (!animating) render()
   }
   controls.addEventListener('change', controlsChanged)
+  window.addEventListener('blur', pointerCancel)
   document.addEventListener('visibilitychange', schedule)
   reducedMotion.addEventListener('change', schedule)
   scope.defer(() => {
+    window.removeEventListener('blur', pointerCancel)
     document.removeEventListener('visibilitychange', schedule)
     reducedMotion.removeEventListener('change', schedule)
     canvas.removeEventListener('pointermove', pointerMove)
@@ -1182,7 +1199,7 @@ function buildStudio(host, initial, callbacks, scope) {
         oldView !== state.view ||
         oldFocus !== state.focus ||
         oldInteraction !== state.interaction ||
-        oldTour !== state.tour
+        (oldTour !== state.tour && state.tour)
       )
         setView()
       setLighting()

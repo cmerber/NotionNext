@@ -3,12 +3,22 @@ export function ImmersiveStyle() {
     <style jsx global>{`
       #theme-orange:has(.orange-immersive) {
         position: relative;
+        padding: 0;
+      }
+      #theme-orange:has(.orange-immersive) #orange-main {
+        max-width: none;
+        width: 100%;
+        margin: 0;
+      }
+      #theme-orange:has(.orange-immersive) .orange-footer {
+        padding-left: 5%;
+        padding-right: 5%;
       }
       #theme-orange:has(.orange-immersive) .orange-header {
         position: absolute;
         top: 0;
-        left: 5%;
-        right: 5%;
+        left: clamp(20px, 4vw, 100px);
+        right: clamp(20px, 4vw, 100px);
         z-index: 10;
         max-width: none;
         min-height: 100px;
@@ -27,8 +37,8 @@ export function ImmersiveStyle() {
         letter-spacing: 0.25em;
       }
       #theme-orange:has(.orange-immersive) .orange-header nav {
-        font-size: 13px;
-        gap: 26px;
+        font-size: clamp(13px, 1vw, 17px);
+        gap: clamp(20px, 2vw, 38px);
       }
       #theme-orange:has(.orange-immersive) .orange-header .orange-round-button {
         width: 40px;
@@ -39,8 +49,10 @@ export function ImmersiveStyle() {
         isolation: isolate;
         display: block;
         max-width: none;
-        height: max(780px, 100svh);
-        margin: 0 -5.556%;
+        width: 100%;
+        height: 100svh;
+        min-height: 600px;
+        margin: 0;
         padding: 0;
         background: #e9e8de;
         overflow: hidden;
@@ -54,9 +66,9 @@ export function ImmersiveStyle() {
         inset: 0;
         z-index: -1;
         background:
-          radial-gradient(ellipse at 73% 26%, #ffedca 0, transparent 43%),
-          radial-gradient(ellipse at 18% 65%, #d7e3da 0, transparent 50%),
-          linear-gradient(165deg, #f4f0e6 5%, #d9e3de 48%, #f2dfcf 100%);
+          radial-gradient(ellipse at 73% 26%, #f5dbac 0, transparent 43%),
+          radial-gradient(ellipse at 18% 65%, #bed2c7 0, transparent 50%),
+          linear-gradient(165deg, #e9e6d4 5%, #c9dbd2 48%, #e5c5ac 100%);
         transition: background 1.5s;
       }
       #theme-orange .orange-reconnecting {
@@ -108,7 +120,7 @@ export function ImmersiveStyle() {
           transform 0.8s;
       }
       #theme-orange .orange-immersive[data-focused='true'] .orange-world-title {
-        opacity: 0.15;
+        opacity: 0;
         transform: translateY(-12px);
       }
       #theme-orange .orange-world-title p {
@@ -121,7 +133,7 @@ export function ImmersiveStyle() {
       }
       #theme-orange .orange-world-title h1 {
         font-family: 'Songti SC', 'Noto Serif SC', 'SimSun', serif;
-        font-size: clamp(36px, 3.7vw, 66px);
+        font-size: clamp(36px, 3.7vw, 76px);
         line-height: 1.45;
         font-weight: 400;
         letter-spacing: -0.055em;
@@ -213,7 +225,8 @@ export function ImmersiveStyle() {
         order: 0;
       }
       @media (min-width: 761px) {
-        body:has(.orange-immersive) #draggableBox {
+        body:has(.orange-immersive)
+          #draggableBox:not([data-positioned='true']) {
           top: auto !important;
           bottom: 24px !important;
           left: 24px !important;
@@ -409,7 +422,10 @@ export function ImmersiveStyle() {
         letter-spacing: 0.15em;
       }
       #theme-orange #orange-notes {
-        padding-top: 70px;
+        width: 100%;
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 70px clamp(20px, 5vw, 75px) 0;
       }
       @keyframes orange-card-in {
         from {
@@ -459,7 +475,7 @@ export function ImmersiveStyle() {
           display: none;
         }
         #theme-orange .orange-immersive {
-          height: max(740px, 100svh);
+          height: 100svh;
         }
         #theme-orange .orange-world-title {
           left: 7%;
@@ -537,7 +553,8 @@ export function ImmersiveStyle() {
           font-size: 12px;
           max-width: calc(100% - 100px);
         }
-        body:has(.orange-immersive) #draggableBox {
+        body:has(.orange-immersive)
+          #draggableBox:not([data-positioned='true']) {
           top: 23px !important;
           right: 5% !important;
         }
@@ -553,9 +570,13 @@ export function ImmersiveStyle() {
         position: absolute;
         inset: 0;
         overflow: hidden;
-        perspective: 1100px;
+        perspective: clamp(1100px, 100vw, 3200px);
         touch-action: pan-y pinch-zoom;
-        --zoom: 1.15;
+        --fit: 1.3;
+        --zoom: var(--fit);
+        --yaw: -26deg;
+        --tilt: 58deg;
+        cursor: grab;
         --fx: 0px;
         --fy: 0px;
       }
@@ -576,26 +597,26 @@ export function ImmersiveStyle() {
         height: 420px;
         position: relative;
         transform-style: preserve-3d;
-        transform: rotateX(58deg) rotateZ(var(--yaw))
+        transform: rotateX(var(--tilt)) rotateZ(var(--yaw))
           translate(var(--fx), var(--fy));
         transition: transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1);
       }
       #theme-orange .orange-compat[data-focus='about'] {
-        --zoom: 1.65;
+        --zoom: calc(var(--fit) * 1.3);
         --fy: -65px;
       }
       #theme-orange .orange-compat[data-focus='journal'] {
-        --zoom: 1.65;
+        --zoom: calc(var(--fit) * 1.3);
         --fx: 105px;
         --fy: 75px;
       }
       #theme-orange .orange-compat[data-focus='tools'] {
-        --zoom: 1.6;
+        --zoom: calc(var(--fit) * 1.3);
         --fx: -90px;
         --fy: 65px;
       }
       #theme-orange .orange-compat[data-focus='profile'] {
-        --zoom: 1.6;
+        --zoom: calc(var(--fit) * 1.3);
         --fx: -145px;
         --fy: -15px;
       }
@@ -644,6 +665,21 @@ export function ImmersiveStyle() {
         transform-origin: top left;
         transform: translateZ(var(--h)) rotateZ(90deg) rotateX(-90deg);
         filter: brightness(0.77);
+      }
+      #theme-orange .compat-back {
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: var(--h);
+        transform-origin: top left;
+        transform: rotateX(90deg);
+        filter: brightness(0.7);
+      }
+      #theme-orange .orange-compat[data-dragging='true'] {
+        cursor: grabbing;
+      }
+      #theme-orange .orange-compat[data-dragging='true'] .compat-world {
+        transition: none;
       }
       #theme-orange .compat-item {
         pointer-events: auto;
@@ -763,7 +799,7 @@ export function ImmersiveStyle() {
         cursor: pointer;
         transform-style: preserve-3d;
         transform: translateZ(135px) rotateZ(calc(-1 * var(--yaw)))
-          rotateX(-58deg);
+          rotateX(calc(-1 * var(--tilt)));
       }
       #theme-orange .compat-portrait {
         position: relative;
@@ -848,7 +884,9 @@ export function ImmersiveStyle() {
         top: 66%;
         animation-delay: -3s;
       }
-      #theme-orange .orange-compat[data-tour='true'] .compat-world {
+      #theme-orange
+        .orange-compat[data-tour='true']:not([data-manual='true'])
+        .compat-world {
         animation: compat-tour 18s ease-in-out infinite alternate;
       }
       #theme-orange .orange-compat[data-still='true'] *,
@@ -888,10 +926,10 @@ export function ImmersiveStyle() {
       }
       @keyframes compat-tour {
         from {
-          transform: rotateX(58deg) rotateZ(calc(var(--yaw) - 4deg));
+          transform: rotateX(var(--tilt)) rotateZ(calc(var(--yaw) - 4deg));
         }
         to {
-          transform: rotateX(58deg) rotateZ(calc(var(--yaw) + 4deg));
+          transform: rotateX(var(--tilt)) rotateZ(calc(var(--yaw) + 4deg));
         }
       }
       @keyframes compat-cloud {
@@ -934,16 +972,16 @@ export function ImmersiveStyle() {
       }
       @media (max-width: 760px) {
         #theme-orange .orange-compat {
-          --zoom: 0.58;
+          --fit: 0.55;
         }
         #theme-orange .compat-camera {
           top: 52%;
         }
         #theme-orange .orange-compat[data-focus] {
-          --zoom: 0.84;
+          --zoom: calc(var(--fit) * 1.3);
         }
         #theme-orange .orange-compat[data-focus='world'] {
-          --zoom: 0.58;
+          --zoom: var(--fit);
         }
         #theme-orange .compat-moon {
           width: 85px;
@@ -963,10 +1001,10 @@ export function ImmersiveStyle() {
       }
       @media (max-width: 350px) {
         #theme-orange .orange-compat[data-focus] {
-          --zoom: 0.72;
+          --zoom: calc(var(--fit) * 1.3);
         }
         #theme-orange .orange-compat[data-focus='world'] {
-          --zoom: 0.48;
+          --zoom: var(--fit);
         }
       }
       @media (prefers-reduced-motion: reduce) {

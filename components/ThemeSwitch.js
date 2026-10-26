@@ -311,7 +311,7 @@ function ThemeConsole ({ meta, isOpen, onClose }) {
   }
 
   return (
-    <Draggable stick={true}>
+    <Draggable stick={true} handleClassName='theme-console-drag-handle'>
       <section
         style={{ right: '1rem', top: '10vh' }}
         role='dialog'
@@ -322,7 +322,7 @@ function ThemeConsole ({ meta, isOpen, onClose }) {
             ? 'translate-x-0 opacity-100'
             : 'translate-x-[calc(100%+2rem)] opacity-0'
         }`}>
-        <div className='flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800'>
+        <div className='theme-console-drag-handle touch-none flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800'>
           <div className='min-w-0'>
             <p className='text-sm font-semibold text-gray-900 dark:text-white'>
               主题控制台 · {meta.name}
@@ -606,7 +606,7 @@ const ThemeSwitch = () => {
   return (
     <>
       {/* 悬浮的主题切换按钮 */}
-      <Draggable stick={true}>
+      <Draggable stick={true} handleClassName='theme-drag-handle'>
         <div
           id='draggableBox'
           style={{ left: '0px', top: '80vh' }}
@@ -619,7 +619,10 @@ const ThemeSwitch = () => {
           <div className='flex min-w-0 items-center gap-0.5'>
             <span
               data-drag-handle
-              className={`flex h-9 w-7 shrink-0 cursor-grab items-center justify-center rounded-lg active:cursor-grabbing ${
+              role='button'
+              tabIndex={0}
+              aria-label='移动主题工具栏'
+              className={`theme-drag-handle touch-none flex h-9 w-7 shrink-0 cursor-grab items-center justify-center rounded-lg active:cursor-grabbing ${
                 isDarkMode
                   ? 'text-gray-500 hover:bg-gray-800 hover:text-gray-300'
                   : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'

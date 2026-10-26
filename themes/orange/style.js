@@ -805,12 +805,14 @@ export function Style() {
           padding: 0 16px calc(76px + env(safe-area-inset-bottom));
         }
         body:has(#theme-orange) #draggableBox {
-          position: absolute;
+          position: fixed;
+          border-radius: 50%;
+        }
+        body:has(#theme-orange) #draggableBox:not([data-positioned='true']) {
           left: auto !important;
           top: 24px !important;
           right: 16px;
           bottom: auto;
-          border-radius: 50%;
         }
         body:has(#theme-orange) #draggableBox [data-drag-handle],
         body:has(#theme-orange) #draggableBox #themeSelect ~ button,
