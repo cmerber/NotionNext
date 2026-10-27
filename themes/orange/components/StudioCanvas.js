@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import CompatScene from './CompatScene'
 import { loadStudio } from '../scene/loadStudio'
+import SceneArrival from './SceneArrival'
 
 export default function StudioCanvas({
   rendererMode = 'auto',
@@ -28,6 +29,7 @@ export default function StudioCanvas({
   const host = useRef(null)
   const [presented, setPresented] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [phase, setPhase] = useState('loading')
   const api = useRef(null)
   const callbacks = useRef({
     onPerformance,
@@ -82,26 +84,45 @@ export default function StudioCanvas({
     let cancelled = false
     let instance
     let ready = false
+    let paint = 0
+    let task = 0
     if (rendererMode === 'compat') {
       callbacks.current.onReady?.()
       return
     }
     // Show one quiet arrival screen while WebGL loads. Only mount the
     // compatibility world after a confirmed failure, never as a loading frame.
-    const timer = setTimeout(() => {
+    let timer
+    const timeout = () => {
       if (!cancelled && !ready) {
         cancelled = true
+        cancelAnimationFrame(paint)
+        clearTimeout(task)
         instance?.dispose()
         instance = null
         api.current = null
         setFailed(true)
         callbacks.current.onUnavailable('startup-timeout')
       }
-    }, 10000)
+    }
+    // A background tab cannot paint the deferred construction frame. Give it
+    // the normal startup window when it becomes visible instead of failing it.
+    const armTimeout = () => {
+      clearTimeout(timer)
+      if (!cancelled && !ready && !document.hidden)
+        timer = setTimeout(timeout, 10000)
+    }
+    armTimeout()
+    document.addEventListener('visibilitychange', armTimeout)
     const fail = (reason, error) => {
       if (cancelled) return
       cancelled = true
       clearTimeout(timer)
+      cancelAnimationFrame(paint)
+      clearTimeout(task)
+      instance?.dispose()
+      instance = null
+      api.current = null
       setFailed(true)
       if (error) console.warn(`[Orange 3D] ${reason}`, error.message)
       callbacks.current.onUnavailable(reason)
@@ -109,33 +130,51 @@ export default function StudioCanvas({
     loadStudio()
       .then(({ createStudio }) => {
         if (cancelled || !host.current) return
-        try {
-          instance = createStudio(host.current, options.current, {
-            onPerformance: () => callbacks.current.onPerformance?.(),
-            onAction: action => callbacks.current.onAction?.(action),
-            onInteract: () => callbacks.current.onInteract?.(),
-            onSelect: value => callbacks.current.onSelect?.(value),
-            onHover: value => callbacks.current.onHover?.(value),
-            onReady: () => {
-              if (cancelled) return
-              ready = true
-              clearTimeout(timer)
-              setPresented(true)
-              callbacks.current.onReady?.()
-            },
-            onRecovering: () => callbacks.current.onRecovering?.(),
-            onUnavailable: reason => fail(reason),
-            onGreet: () => callbacks.current.onGreet?.()
-          })
-          api.current = instance
-        } catch (error) {
-          fail('scene-init', error)
-        }
+        setPhase('building')
+        // Let the loader paint its real next stage before model construction
+        // occupies the main thread. This costs one frame, not a staged delay.
+        paint = requestAnimationFrame(() => {
+          task = setTimeout(() => {
+            if (cancelled || !host.current) return
+            try {
+              instance = createStudio(host.current, options.current, {
+                onPerformance: () => callbacks.current.onPerformance?.(),
+                onAction: action => callbacks.current.onAction?.(action),
+                onInteract: () => callbacks.current.onInteract?.(),
+                onSelect: value => callbacks.current.onSelect?.(value),
+                onHover: value => callbacks.current.onHover?.(value),
+                onReady: () => {
+                  if (cancelled) return
+                  ready = true
+                  clearTimeout(timer)
+                  const studio = host.current?.closest('.orange-studio')
+                  const cover = studio?.querySelector('.orange-scene-arrival')
+                  if (cover?.contains(document.activeElement))
+                    studio
+                      .querySelector('.orange-environment-picker select')
+                      ?.focus({ preventScroll: true })
+                  setPresented(true)
+                  callbacks.current.onReady?.()
+                },
+                onRecovering: () => callbacks.current.onRecovering?.(),
+                onUnavailable: reason => fail(reason),
+                onGreet: () => callbacks.current.onGreet?.()
+              })
+              if (cancelled) instance?.dispose()
+              else api.current = instance
+            } catch (error) {
+              fail('scene-init', error)
+            }
+          }, 0)
+        })
       })
       .catch(error => fail('module-load', error))
     return () => {
       cancelled = true
       clearTimeout(timer)
+      cancelAnimationFrame(paint)
+      clearTimeout(task)
+      document.removeEventListener('visibilitychange', armTimeout)
       api.current = null
       instance?.dispose()
     }
@@ -188,18 +227,7 @@ export default function StudioCanvas({
         />
       )}
       {rendererMode !== 'compat' && !failed && (
-        <div
-          className='orange-scene-arrival'
-          data-ready={presented}
-          role={presented ? undefined : 'status'}
-          aria-hidden={presented}
-        >
-          <div className='orange-arrival-orbit' aria-hidden='true'>
-            <span>🍊</span>
-          </div>
-          <p>小岛正在醒来…</p>
-          <small>很快，和你见面</small>
-        </div>
+        <SceneArrival ready={presented} phase={phase} />
       )}
       {rendererMode !== 'compat' && (
         <div
