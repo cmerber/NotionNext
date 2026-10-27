@@ -114,6 +114,45 @@ test('simplified mode can be entered and left', () => {
   expect(screen.queryByText('一颗装满好奇心的小星球')).not.toBeInTheDocument()
 })
 
+test('weather selection persists with discoveries and can be changed while paused', () => {
+  const { container, unmount } = render(<Studio />)
+  const weather = screen.getByRole('combobox', { name: '切换小岛场景' })
+  expect(weather).toHaveValue('sunny')
+  expect(screen.getAllByRole('option')).toHaveLength(4)
+  fireEvent.click(screen.getByRole('button', { name: '暂停动画' }))
+  fireEvent.change(weather, { target: { value: 'snow' } })
+  expect(container.querySelector('.orange-studio')).toHaveAttribute(
+    'data-environment',
+    'snow'
+  )
+  expect(screen.getByRole('button', { name: '运行动画' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '飘雪' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  )
+  expect(
+    JSON.parse(sessionStorage.getItem('orange-island-passport')).environment
+  ).toBe('snow')
+  unmount()
+  render(<Studio />)
+  expect(screen.getByRole('combobox')).toHaveValue('snow')
+})
+
+test('unknown saved weather falls back to sunny without discarding the passport', () => {
+  sessionStorage.setItem(
+    'orange-island-passport',
+    JSON.stringify({
+      environment: 'invalid',
+      places: ['tools'],
+      harvested: true
+    })
+  )
+  render(<Studio />)
+  expect(screen.getByRole('combobox')).toHaveValue('sunny')
+  expect(screen.getByLabelText('已发现 1 个角落')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /再收一份/ })).toBeInTheDocument()
+})
+
 test('the host greets visitors and decorative motion is optional', () => {
   render(<Studio />)
   fireEvent.click(screen.getByRole('button', { name: /打个招呼/ }))

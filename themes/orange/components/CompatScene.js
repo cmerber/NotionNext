@@ -27,8 +27,7 @@ function Block({ x = 0, y = 0, z = 0, w, d, h, color, children }) {
   )
 }
 
-// A small, local CSS perspective scene works even with WebGL disabled. It is
-// also the initial view while the richer renderer's separate chunk is loading.
+// A local CSS perspective scene stays interactive when WebGL is unavailable.
 export default function CompatScene({
   focus,
   view = 0,
@@ -37,6 +36,7 @@ export default function CompatScene({
   greeting,
   interaction,
   ambience,
+  environment = 'sunny',
   onSelect,
   onGreet,
   onAction,
@@ -125,6 +125,7 @@ export default function CompatScene({
       data-still={Boolean(paused)}
       data-tour={Boolean(tour)}
       data-ambience={Boolean(ambience)}
+      data-environment={environment}
       onKeyDown={event => {
         if (event.target !== event.currentTarget) return
         const steps = {
@@ -143,6 +144,20 @@ export default function CompatScene({
         )
       }}
     >
+      {(environment === 'rain' || environment === 'snow') && (
+        <div className='compat-weather' aria-hidden='true'>
+          {Array.from({ length: 20 }, (_, i) => (
+            <i
+              key={i}
+              style={{
+                left: `${(i * 37) % 100}%`,
+                animationDelay: `${-i * 0.31}s`,
+                animationDuration: `${environment === 'snow' ? 6 + (i % 4) : 0.9 + (i % 3) * 0.2}s`
+              }}
+            />
+          ))}
+        </div>
+      )}
       <div className='compat-moon' aria-hidden='true' />
       <button
         className='compat-gift'
@@ -156,7 +171,20 @@ export default function CompatScene({
       <div className='compat-cloud compat-cloud-two' aria-hidden='true' />
       <div className='compat-camera'>
         <div className='compat-world' ref={world}>
-          <Block w={600} d={420} h={25} color='#c8d2b8' />
+          <Block
+            w={600}
+            d={420}
+            h={25}
+            color={
+              environment === 'snow'
+                ? '#edf2ec'
+                : environment === 'desert'
+                  ? '#dcbb83'
+                  : environment === 'rain'
+                    ? '#8da99b'
+                    : '#c8d2b8'
+            }
+          />
           <Block x={5} y={5} z={25} w={590} d={410} h={8} color='#f2e4cb' />
           {Array.from({ length: 10 }, (_, i) => (
             <Block

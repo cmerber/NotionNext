@@ -4,6 +4,7 @@ import SmartLink from '@/components/SmartLink'
 import { useGlobal } from '@/lib/global'
 import { siteConfig } from '@/lib/config'
 import CONFIG from '../config'
+import { ENVIRONMENTS, normalizeEnvironment } from '../scene/environments'
 
 export const PLACES = [
   {
@@ -66,6 +67,7 @@ export default function Studio({ posts = [] }) {
   const [greeting, setGreeting] = useState(0)
   const [greetingVisible, setGreetingVisible] = useState(false)
   const [ambience, setAmbience] = useState(true)
+  const [environment, setEnvironment] = useState('sunny')
   const [discoveries, setDiscoveries] = useState([])
   const [harvested, setHarvested] = useState(false)
   const [giftOpen, setGiftOpen] = useState(false)
@@ -83,6 +85,7 @@ export default function Studio({ posts = [] }) {
           )
         ])
       setHarvested(saved.harvested === true)
+      setEnvironment(normalizeEnvironment(saved.environment))
     } catch {
       /* A private browsing session can disable storage. */
     }
@@ -93,12 +96,12 @@ export default function Studio({ posts = [] }) {
     try {
       sessionStorage.setItem(
         'orange-island-passport',
-        JSON.stringify({ places: discoveries, harvested })
+        JSON.stringify({ places: discoveries, harvested, environment })
       )
     } catch {
       /* Discovery still works without storage. */
     }
-  }, [passportLoaded, discoveries, harvested])
+  }, [passportLoaded, discoveries, harvested, environment])
   const harvest = () => {
     setSelected('')
     setTour(false)
@@ -169,6 +172,7 @@ export default function Studio({ posts = [] }) {
       data-scene-failure={failureReason}
       data-focused={Boolean(selected)}
       data-harvested={harvested}
+      data-environment={environment}
     >
       <div className='orange-world-sky' aria-hidden='true' />
       <div className='orange-stage'>
@@ -178,6 +182,7 @@ export default function Studio({ posts = [] }) {
             rendererMode={rendererMode}
             quality={quality}
             night={isDarkMode}
+            environment={environment}
             view={view}
             focus={selected}
             interaction={interaction}
@@ -258,6 +263,30 @@ export default function Studio({ posts = [] }) {
         <br />
         <span>THE FLOATING STUDIO</span>
         <i>01 — ∞</i>
+      </div>
+      <div className='orange-environment-control'>
+        <label className='orange-environment-picker'>
+          <span aria-hidden='true'>
+            {ENVIRONMENTS.find(item => item.id === environment).icon}
+          </span>
+          <select
+            aria-label='切换小岛场景'
+            value={environment}
+            onChange={event =>
+              setEnvironment(normalizeEnvironment(event.target.value))
+            }
+          >
+            {ENVIRONMENTS.map(item => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+          <span aria-hidden='true'>⌄</span>
+        </label>
+        <p aria-live='polite' className='orange-environment-note'>
+          {ENVIRONMENTS.find(item => item.id === environment).note}
+        </p>
       </div>
       {!selected && (
         <div className='orange-island-pass'>
@@ -359,7 +388,17 @@ export default function Studio({ posts = [] }) {
               <button
                 type='button'
                 onClick={() => setAmbience(value => !value)}
-                aria-label={isDarkMode ? '萤光' : '花雨'}
+                aria-label={
+                  environment === 'rain'
+                    ? '雨丝'
+                    : environment === 'snow'
+                      ? '飘雪'
+                      : environment === 'desert'
+                        ? '流沙微光'
+                        : isDarkMode
+                          ? '萤光'
+                          : '花雨'
+                }
                 aria-pressed={ambience}
                 title='切换氛围'
               >
