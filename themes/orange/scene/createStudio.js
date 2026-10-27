@@ -3,8 +3,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { createCharacter } from './createCharacter'
 import { sampleCameraFlight, reactionEnvelope } from './cameraMotion'
-import { getRenderBudget } from './renderBudget'
+import { getRenderBudget, updateShadowBudget } from './renderBudget'
 import { batchScene } from './batchScene'
+import { createHostWalk } from './hostWalk'
+import { createNeighborhood } from './createNeighborhood'
 
 // Original procedural geometry: no remote models, textures, or model service.
 export function createStudio(host, initial, callbacks) {
@@ -35,7 +37,7 @@ function buildStudio(host, initial, callbacks, scope) {
   let renderer
   try {
     renderer = new THREE.WebGLRenderer({
-      antialias: false,
+      antialias: initial.quality !== 'safe',
       alpha: true,
       powerPreference: initial.quality === 'safe' ? 'low-power' : 'default'
     })
@@ -419,7 +421,8 @@ function buildStudio(host, initial, callbacks, scope) {
   cylinder(0.14, 0.11, 0.28, palette.orange, 0.93, 1.42, 0.19, desk)
   cylinder(0.12, 0.12, 0.012, palette.soil, 0.93, 1.566, 0.19, desk)
   label('02 / MAKE THINGS', 1.5, 0.3, 0, 1.12, 0.69, desk)
-  const chair = group('tools', 1.03, 0, 0.05)
+  const chair = group('tools', 1.85, 0, 0.05)
+  chair.scale.setScalar(0.85)
   box(0.92, 0.18, 0.83, palette.green, 0, 0.7, 0, chair)
   box(0.92, 0.73, 0.14, palette.green, 0, 1.1, 0.35, chair)
   cylinder(0.07, 0.07, 0.5, palette.charcoal, 0, 0.4, 0, chair)
@@ -469,7 +472,20 @@ function buildStudio(host, initial, callbacks, scope) {
   box(0.46, 0.025, 0.36, palette.orange, -1.48, 0.85, 1.1)
 
   const character = createCharacter({ mesh, mat, group })
-  character.root.scale.setScalar(1.42)
+  character.root.scale.setScalar(1.05)
+  character.root.traverse(item => {
+    if (item.isMesh) item.castShadow = false
+  })
+  const walker = createHostWalk()
+  if (state.focus) walker.select(state.focus)
+  const contact = mesh(
+    new THREE.CircleGeometry(0.37, 32),
+    mat('#314039', { transparent: true, opacity: 0.16, depthWrite: false }),
+    [0, 0.008, 0],
+    character.root
+  )
+  contact.rotation.x = -Math.PI / 2
+  contact.castShadow = false
   const welcomeRing = mesh(
     new THREE.TorusGeometry(0.83, 0.014, 6, 64),
     palette.brass,
@@ -597,15 +613,15 @@ function buildStudio(host, initial, callbacks, scope) {
   const island = group('', 0, -0.7, 0)
   const moss = mat('#a6b69c')
   const stone = mat('#b6beb0', { flatShading: true, roughness: 1 })
-  const islandTop = cylinder(5.15, 4.8, 0.34, moss, 0, 0, 0, island)
+  const islandTop = cylinder(8.25, 7.8, 0.34, moss, 0, 0, 0, island)
   islandTop.scale.z = 0.83
   const rock = mesh(
-    new THREE.IcosahedronGeometry(4.75, 1),
+    new THREE.IcosahedronGeometry(7.75, 1),
     stone,
     [0, -0.7, 0],
     island
   )
-  rock.scale.set(1, 0.36, 0.82)
+  rock.scale.set(1, 0.11, 0.82)
   for (let i = 0; i < 18; i++) {
     const a = i * 2.39996
     const shrub = sphere(
@@ -788,10 +804,20 @@ function buildStudio(host, initial, callbacks, scope) {
     return spark
   })
   const registerBatch = geometry => geometries.add(geometry)
+  const neighborhood = createNeighborhood({
+    mesh,
+    mat,
+    group,
+    box,
+    cylinder,
+    palette
+  })
   const batched = batchScene(
     scene,
     [
       character.root,
+      welcomeRing,
+      ...neighborhood.movingRoots,
       tree,
       leaf,
       particles,
@@ -814,14 +840,24 @@ function buildStudio(host, initial, callbacks, scope) {
   const head = character.root.getObjectByName('head')
   const leftArm = character.root.getObjectByName('arm-left')
   const rightArm = character.root.getObjectByName('arm-right')
-  batchScene(character.root, [head, leftArm, rightArm], registerBatch)
+  const legs = ['leg-left', 'leg-right'].map(name =>
+    character.root.getObjectByName(name)
+  )
+  batchScene(character.root, [head, leftArm, rightArm, ...legs], registerBatch)
   batchScene(
     head,
     [head.getObjectByName('eye-left'), head.getObjectByName('eye-right')],
     registerBatch
   )
-  for (const part of [leftArm, rightArm, tree])
+  for (const part of [leftArm, rightArm, ...legs, tree])
     batchScene(part, [], registerBatch)
+  for (const actor of neighborhood.movingRoots) {
+    const person = neighborhood.pedestrians.find(
+      person => person.root === actor
+    )
+    batchScene(actor, person?.legs || [], registerBatch)
+    for (const leg of person?.legs || []) batchScene(leg, [], registerBatch)
+  }
   for (const cloud of clouds) batchScene(cloud, [], registerBatch, true)
   const usedGeometries = new Set()
   scene.traverse(item => {
@@ -852,15 +888,15 @@ function buildStudio(host, initial, callbacks, scope) {
 
   function cameraPose(intro = false) {
     const poses = [
-      { position: [9.8, 7.4, 14.6], target: [-0.6, 1, 0.3] },
-      { position: [0.8, 5.6, 16.5], target: [0, 1.15, 0.4] },
-      { position: [14.5, 6.8, 7.5], target: [0, 1.1, 0.3] }
+      { position: [11.2, 8.4, 16.8], target: [-0.45, 0.7, 0.15] },
+      { position: [0.8, 7, 20], target: [0, 0.8, 0.4] },
+      { position: [16, 8.2, 9], target: [0, 0.8, 0.3] }
     ]
     const focusPoses = {
-      journal: { position: [-0.2, 3.4, 3.7], target: [-2.3, 1.55, -2.05] },
-      tools: { position: [4.5, 3.8, 3.1], target: [1.25, 1.65, -1.3] },
-      profile: { position: [6.7, 3.2, 5.3], target: [3.05, 1.3, 0.85] },
-      about: { position: [3.1, 3.7, 11.3], target: [0.15, 1.95, 2.03] }
+      journal: { position: [0.8, 4.5, 6.4], target: [-2.3, 1.4, -1.9] },
+      tools: { position: [6.5, 4.9, 6], target: [0.95, 1.45, -1.1] },
+      profile: { position: [8.5, 4.4, 7], target: [3.05, 1.3, 0.85] },
+      about: { position: [4.2, 4.8, 12], target: [0.15, 1.4, 2.03] }
     }
     const pose = focusPoses[state.focus] || poses[state.view % poses.length]
     destination.set(...pose.position)
@@ -875,7 +911,7 @@ function buildStudio(host, initial, callbacks, scope) {
     lensStart = camera.fov
     lensTarget = compact ? (state.focus ? 43 : 48) : state.focus ? 32 : 36
     if (intro) {
-      camera.position.copy(destination).multiplyScalar(1.35)
+      camera.position.copy(destination).multiplyScalar(1.12)
       controls.target.copy(targetDestination)
       controls.update()
     }
@@ -892,7 +928,7 @@ function buildStudio(host, initial, callbacks, scope) {
       camera.fov = lensTarget
       camera.updateProjectionMatrix()
       flight = null
-    } else flight = { elapsed: 0, duration: intro ? 3.4 : 2.1 }
+    } else flight = { elapsed: 0, duration: intro ? 1.5 : 2.1 }
   }
 
   function moveCamera(delta) {
@@ -942,14 +978,17 @@ function buildStudio(host, initial, callbacks, scope) {
       host.dataset.drawCalls = renderer.info.render.calls
       host.dataset.triangles = renderer.info.render.triangles
       host.dataset.frameCost = renderCost.toFixed(1)
+      host.dataset.hostPosition = `${walker.state.x.toFixed(2)},${walker.state.z.toFixed(2)}`
+      host.dataset.hostWalking = String(walker.state.walking)
+      host.dataset.hostDestination = walker.state.destination
     }
     if (disposed || contextUnavailable) return false
     try {
       renderer.render(scene, camera)
       renderCost = renderCost * 0.9 + (performance.now() - now) * 0.1
-      if (state.quality === 'auto' && renderCost > 22) {
+      if (state.quality === 'auto' && renderCost > 28) {
         slowFrames += 1
-        if (slowFrames === 45) callbacks.onPerformance?.()
+        if (slowFrames === 90) callbacks.onPerformance?.()
       } else slowFrames = 0
       return !contextUnavailable && !renderer.getContext().isContextLost()
     } catch (error) {
@@ -993,12 +1032,24 @@ function buildStudio(host, initial, callbacks, scope) {
     moveCamera(delta)
     orbitMaterial.opacity +=
       ((state.focus ? 0.08 : 1) - orbitMaterial.opacity) * 0.06
+    const walk = walker.update(delta)
+    character.root.position.x = walk.x
+    character.root.position.z = walk.z
+    character.locomotion(
+      walk.walking || ['journal', 'tools'].includes(walk.destination)
+        ? walk.heading
+        : null,
+      walk.walking
+    )
     character.lookAt(
-      pointer.x,
-      pointer.y,
-      Math.atan2(camera.position.x - 0.15, camera.position.z - 2.03)
+      walk.walking ? 0 : pointer.x,
+      walk.walking ? 0 : pointer.y,
+      Math.atan2(camera.position.x - walk.x, camera.position.z - walk.z)
     )
     character.update(time, false)
+    welcomeRing.position.set(walk.x, 0.14, walk.z)
+    welcomeRing.visible = state.focus === 'about'
+    neighborhood.update(time)
     const energy = reactionEnvelope(time - reactionStart)
     const reactionLocation = beaconLocations[reactionPlace]
     feedback.visible = energy > 0 && Boolean(reactionLocation)
@@ -1106,6 +1157,7 @@ function buildStudio(host, initial, callbacks, scope) {
     cameraPose()
   }
   function setLighting() {
+    neighborhood.lighting(state.night)
     renderer.shadowMap.needsUpdate = true
     ambient.intensity = state.night ? 1.3 : 2.1
     ambient.color.set(state.night ? '#b4bfde' : '#fff3e4')
@@ -1142,15 +1194,8 @@ function buildStudio(host, initial, callbacks, scope) {
       state.quality
     )
     renderer.setPixelRatio(budget.ratio)
-    renderer.shadowMap.enabled = budget.shadows
-    const shadowSize = budget.shadowSize
+    updateShadowBudget(renderer, sun, materials, budget)
     host.dataset.pixelRatio = budget.ratio.toFixed(3)
-    if (sun.shadow.mapSize.width !== shadowSize) {
-      sun.shadow.mapSize.set(shadowSize, shadowSize)
-      sun.shadow.map?.dispose()
-      sun.shadow.map = null
-      sun.shadow.needsUpdate = true
-    }
     renderer.setSize(width, height)
     renderer.shadowMap.needsUpdate = true
     const aspect = width / height
@@ -1314,6 +1359,10 @@ function buildStudio(host, initial, callbacks, scope) {
       const oldHarvested = state.harvested
       const oldQuality = state.quality
       state = { ...state, ...next }
+      if (oldFocus !== state.focus || oldInteraction !== state.interaction) {
+        if (state.focus) walker.select(state.focus)
+        else walker.release()
+      }
       if (oldQuality !== state.quality) resize()
       if (oldHarvested !== state.harvested && state.harvested) react('about')
       if (state.greeting !== oldGreeting) character.wave()
@@ -1331,11 +1380,13 @@ function buildStudio(host, initial, callbacks, scope) {
         setView()
       setLighting()
       if (state.paused || reducedMotion.matches) {
+        walker.update(0, true)
         mailLid.rotation.x = state.harvested ? 1.4 : 0
         letter.visible = Boolean(state.harvested)
         letter.position.y = 1.55
         orbitMaterial.opacity = state.focus ? 0.08 : 1
         character.update(time, true)
+        neighborhood.update(time, true)
         feedback.visible = false
         reactionStart = -10
         drawers.forEach((drawer, index) => {

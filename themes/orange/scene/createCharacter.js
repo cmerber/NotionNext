@@ -46,10 +46,16 @@ export function createCharacter({ mesh, mat, group }) {
       parent
     )
   // Rounded shoes and slightly tapered trousers.
+  const legs = []
   for (const x of [-0.15, 0.15]) {
-    ellipsoid([0.14, 0.07, 0.24], sole, [x, 0.09, 0.08])
-    ellipsoid([0.135, 0.12, 0.22], shirt, [x, 0.16, 0.05])
-    ellipsoid([0.115, 0.31, 0.12], trousers, [x, 0.43, 0])
+    const leg = new THREE.Group()
+    leg.name = x < 0 ? 'leg-left' : 'leg-right'
+    leg.position.set(x, 0.65, 0)
+    root.add(leg)
+    ellipsoid([0.14, 0.07, 0.24], sole, [0, -0.56, 0.08], leg)
+    ellipsoid([0.135, 0.12, 0.22], shirt, [0, -0.49, 0.05], leg)
+    ellipsoid([0.115, 0.31, 0.12], trousers, [0, -0.22, 0], leg)
+    legs.push(leg)
   }
   ellipsoid([0.35, 0.43, 0.235], shirt, [0, 0.94, 0])
   ellipsoid([0.13, 0.16, 0.12], skin, [0, 1.32, 0])
@@ -291,11 +297,12 @@ export function createCharacter({ mesh, mat, group }) {
     for (let i = 0; i < 3; i++)
       tube(
         [
-          [side * 0.15 - 0.055, 0.19 + i * 0.025, 0.23],
-          [side * 0.15 + 0.055, 0.19 + i * 0.025, 0.23]
+          [-0.055, -0.46 + i * 0.025, 0.23],
+          [0.055, -0.46 + i * 0.025, 0.23]
         ],
         0.007,
-        sole
+        sole,
+        legs[side < 0 ? 0 : 1]
       )
   }
   const arms = []
@@ -331,9 +338,16 @@ export function createCharacter({ mesh, mat, group }) {
   let lookX = 0
   let lookY = 0
   let facing = 0.3
+  let travelHeading = null
+  let walking = false
+  let stride = 0
   const clamp = (n, min, max) => Math.min(max, Math.max(min, n))
   return {
     root,
+    locomotion(heading, moving) {
+      travelHeading = heading
+      walking = moving
+    },
     wave() {
       waveStart = lastTime
       waveUntil = lastTime + 3.3
@@ -349,14 +363,26 @@ export function createCharacter({ mesh, mat, group }) {
     },
     update(time, quiet) {
       lastTime = time
+      stride += ((walking && !quiet ? 1 : 0) - stride) * (quiet ? 1 : 0.18)
+      const gait = Math.sin(time * 7.5) * stride
       const age = time - reactionStart
       const bounce =
         !quiet && age >= 0 && age < 1.1
           ? Math.sin((age / 1.1) * Math.PI) * 0.12
           : 0
       root.position.y =
-        0.12 + (quiet ? 0 : Math.sin(time * 1.5) * 0.016 + bounce)
-      root.rotation.y += (facing - root.rotation.y) * (quiet ? 1 : 0.055)
+        0.12 +
+        (quiet
+          ? 0
+          : Math.sin(time * 1.5) * 0.016 + bounce + Math.abs(gait) * 0.025)
+      const heading = travelHeading ?? facing
+      const turn = Math.atan2(
+        Math.sin(heading - root.rotation.y),
+        Math.cos(heading - root.rotation.y)
+      )
+      root.rotation.y += turn * (quiet ? 1 : 0.14)
+      legs[0].rotation.x = gait * 0.53
+      legs[1].rotation.x = -gait * 0.53
       head.rotation.y = quiet
         ? 0
         : THREE.MathUtils.lerp(head.rotation.y, lookX * 0.2, 0.09)
@@ -378,6 +404,8 @@ export function createCharacter({ mesh, mat, group }) {
           clamp((waveUntil - time) / 0.45, 0, 1)
       arms[1].rotation.z = 0.07 + waveBlend * (2.28 + Math.sin(time * 9) * 0.22)
       arms[0].rotation.z = -0.07 + (quiet ? 0 : Math.sin(time * 1.4) * 0.035)
+      arms[0].rotation.x = -gait * 0.4
+      arms[1].rotation.x = gait * 0.4 * (1 - waveBlend)
     }
   }
 }

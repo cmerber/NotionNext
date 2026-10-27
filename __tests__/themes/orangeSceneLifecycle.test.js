@@ -68,11 +68,15 @@ test('a rejected scene chunk keeps a local interactive scene and reports its act
   try {
     loadStudio.mockRejectedValue(new Error('chunk unavailable'))
     render(<StudioCanvas {...sceneProps} onSelect={select} />)
-    fireEvent.click(screen.getByRole('button', { name: '轻量场景：灵感书架' }))
-    expect(select).toHaveBeenCalledWith('journal')
+    expect(screen.getByRole('status')).toHaveTextContent('小岛正在醒来')
+    expect(
+      screen.queryByRole('button', { name: '轻量场景：灵感书架' })
+    ).not.toBeInTheDocument()
     await waitFor(() =>
       expect(sceneProps.onUnavailable).toHaveBeenCalledWith('module-load')
     )
+    fireEvent.click(screen.getByRole('button', { name: '轻量场景：灵感书架' }))
+    expect(select).toHaveBeenCalledWith('journal')
     expect(createStudio).not.toHaveBeenCalled()
   } finally {
     warn.mockRestore()
@@ -88,11 +92,18 @@ test('a stalled import times out and cannot create a renderer after leaving the 
     })
   )
   const { unmount } = render(<StudioCanvas {...sceneProps} />)
+  expect(screen.getByRole('status')).toHaveTextContent('小岛正在醒来')
+  expect(
+    screen.queryByRole('button', { name: '轻量场景：向小主人打招呼' })
+  ).not.toBeInTheDocument()
   await act(async () => {
     jest.advanceTimersByTime(10000)
     await Promise.resolve()
   })
   expect(sceneProps.onUnavailable).toHaveBeenCalledWith('startup-timeout')
+  expect(
+    screen.getByRole('button', { name: '轻量场景：向小主人打招呼' })
+  ).toBeVisible()
   await act(async () => {
     resolve({ createStudio })
     await Promise.resolve()
