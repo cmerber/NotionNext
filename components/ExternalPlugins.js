@@ -22,7 +22,7 @@ import { getPageCanCopy } from '@/lib/utils/copyPermission'
 const ExternalPlugin = props => {
   // 读取自Notion的配置
   const { NOTION_CONFIG } = props
-  const { lang } = useGlobal()
+  const { lang, theme } = useGlobal()
   const [pluginsIdle, setPluginsIdle] = useState(false)
   const innerLinkPages = props?.allLinkPages || props?.allNavPages
   const DISABLE_PLUGIN = siteConfig('DISABLE_PLUGIN', null, NOTION_CONFIG)
@@ -258,7 +258,7 @@ const ExternalPlugin = props => {
       <GlobalStyle />
       {ENABLE_ICON_FONT && <IconFont />}
       {MOUSE_FOLLOW && <MouseFollow />}
-      {pluginsIdle && THEME_SWITCH && <ThemeSwitch />}
+      {pluginsIdle && THEME_SWITCH && (router.query.theme || theme) !== 'orange' && <ThemeSwitch />}
       {DEBUG && <DebugPanel />}
       {ANALYTICS_ACKEE_TRACKER && <Ackee />}
       {ANALYTICS_GOOGLE_ID && <Gtag />}

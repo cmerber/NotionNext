@@ -49,12 +49,96 @@ export function ExperienceStyle() {
         border-radius: 50%;
         background: currentColor;
       }
-      #theme-orange .orange-footer-appearance {
-        border: 0;
-        background: none;
-        padding: 0;
-        color: var(--orange-text);
-        font-size: 11px;
+      #theme-orange .orange-footer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+      }
+      #theme-orange .orange-footer-motto {
+        text-align: center;
+      }
+      #theme-orange .orange-footer-credit {
+        justify-self: end;
+        text-align: right;
+      }
+      #theme-orange .orange-scene-arrival {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        padding-left: 17%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        color: var(--orange-ink);
+        transition: opacity 0.5s ease;
+      }
+      #theme-orange .orange-scene-arrival[data-ready='true'] {
+        opacity: 0;
+      }
+      #theme-orange
+        .orange-scene-arrival[data-ready='true']
+        .orange-arrival-orbit::after {
+        animation-play-state: paused;
+      }
+      #theme-orange .orange-arrival-orbit {
+        width: 96px;
+        height: 96px;
+        display: grid;
+        place-items: center;
+        border: 1px solid #7f987666;
+        border-radius: 50%;
+        position: relative;
+      }
+      #theme-orange .orange-arrival-orbit::after {
+        content: '';
+        position: absolute;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #ba8450;
+        top: -4px;
+        left: 44px;
+        transform-origin: 3px 51px;
+        animation: orange-arrival-spin 4s linear infinite;
+      }
+      #theme-orange .orange-arrival-orbit span {
+        font-size: 36px;
+      }
+      #theme-orange .orange-scene-arrival p {
+        font:
+          19px/1.7 'Songti SC',
+          'SimSun',
+          Georgia,
+          serif;
+        margin: 23px 0 5px;
+      }
+      #theme-orange .orange-scene-arrival small {
+        color: var(--orange-muted);
+        font-size: 10px;
+        letter-spacing: 0.15em;
+      }
+      @keyframes orange-arrival-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (max-width: 760px) {
+        #theme-orange .orange-footer {
+          grid-template-columns: 1fr;
+          justify-items: center;
+          gap: 12px;
+          text-align: center;
+        }
+        #theme-orange .orange-footer-credit {
+          justify-self: center;
+          text-align: center;
+        }
+        #theme-orange .orange-scene-arrival {
+          padding-left: 0;
+          padding-top: 14%;
+        }
       }
       #theme-orange .qcode-toolbox-page,
       #theme-orange .qcode-profile-page {

@@ -128,29 +128,10 @@ function LayoutBase({
       </main>
       <footer className='orange-footer'>
         <SmartLink href='/'>🍊 {siteInfo?.title || '橙子星球'}</SmartLink>
-        <span>把每一次探索，都留在这里。</span>
-        {siteConfig('THEME_SWITCH', true) && (
-          <button
-            type='button'
-            className='orange-footer-appearance'
-            onClick={() =>
-              window.dispatchEvent(new Event('notionnext:open-theme-panel'))
-            }
-          >
-            外观与主题 ↗
-          </button>
-        )}
-        <span>
-          Powered by{' '}
-          <a
-            href='https://github.com/cmerber/NotionNext'
-            target='_blank'
-            rel='noreferrer'
-          >
-            NotionNext
-          </a>{' '}
-          · <SmartLink href='/rss/feed.xml'>RSS ↗</SmartLink>
-        </span>
+        <span className='orange-footer-motto'>把每一次探索，都留在这里。</span>
+        <SmartLink href='/about' className='orange-footer-credit'>
+          由成设计与搭建 · QCODE.IM
+        </SmartLink>
       </footer>
     </div>
   )

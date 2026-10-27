@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import * as THREE from 'three'
+import { updateShadowBudget } from '../../themes/orange/scene/renderBudget.js'
 import {
   sampleCameraFlight,
   reactionEnvelope
@@ -43,16 +45,66 @@ test('large and high-DPI displays stay within drawing-buffer pixel and dimension
     [390, 844, 3],
     [1440, 960, 1]
   ]) {
-    for (const quality of ['auto', 'safe']) {
+    for (const quality of ['auto', 'safe', 'detail']) {
       const budget = getRenderBudget(width, height, dpr, quality)
       const pixels = width * height * budget.ratio ** 2
       assert.ok(Number.isFinite(budget.ratio) && budget.ratio > 0)
-      assert.ok(pixels <= (quality === 'safe' ? 900000 : 2200000) + 1)
+      assert.ok(
+        pixels <=
+          (quality === 'safe'
+            ? 2200000
+            : quality === 'detail'
+              ? 8500000
+              : 5200000) +
+            1
+      )
       assert.ok(
         Math.max(width, height) * budget.ratio <=
-          (quality === 'safe' ? 1600 : 2400) + 1
+          (quality === 'safe' ? 2560 : quality === 'detail' ? 5120 : 4096) + 1
       )
       if (quality === 'safe') assert.equal(budget.shadows, false)
     }
+  }
+  assert.ok(getRenderBudget(3840, 2067, 1, 'auto').ratio > 0.8)
+  assert.equal(getRenderBudget(3840, 2067, 1, 'detail').ratio, 1)
+})
+
+test('desktop-to-phone shadow changes rebuild programs without disposing a disabled render target', () => {
+  let disposed = 0
+  const target = {
+    dispose() {
+      disposed++
+    }
+  }
+  const light = {
+    shadow: { mapSize: new THREE.Vector2(2048, 2048), map: target }
+  }
+  const renderer = { shadowMap: { enabled: true } }
+  const material = new THREE.MeshStandardMaterial()
+  try {
+    updateShadowBudget(renderer, light, [material], {
+      shadows: false,
+      shadowSize: 512
+    })
+    assert.equal(renderer.shadowMap.enabled, false)
+    assert.equal(material.version, 1)
+    assert.equal(light.shadow.map, target)
+    assert.equal(disposed, 0)
+    updateShadowBudget(renderer, light, [material], {
+      shadows: true,
+      shadowSize: 1024
+    })
+    assert.equal(material.version, 2)
+    assert.equal(light.shadow.map, null)
+    assert.equal(disposed, 1)
+    assert.equal(light.shadow.mapSize.width, 1024)
+    updateShadowBudget(renderer, light, [material], {
+      shadows: true,
+      shadowSize: 1024
+    })
+    assert.equal(material.version, 2)
+    assert.equal(disposed, 1)
+  } finally {
+    material.dispose()
   }
 })

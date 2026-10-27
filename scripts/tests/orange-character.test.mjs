@@ -91,3 +91,23 @@ test('gaze is bounded and a greeting returns to rest without accumulating motion
     character.dispose()
   }
 })
+
+test('walking articulates both legs and can face a desk behind the host, while pause restores a still gait', () => {
+  const character = makeCharacter()
+  try {
+    character.locomotion(Math.PI, true)
+    for (let i = 0; i < 100; i++) character.update(i / 30, false)
+    const left = character.root.getObjectByName('leg-left')
+    const right = character.root.getObjectByName('leg-right')
+    assert.ok(Math.abs(left.rotation.x) > 0.1)
+    assert.ok(Math.abs(left.rotation.x + right.rotation.x) < 1e-8)
+    assert.ok(Math.abs(character.root.rotation.y - Math.PI) < 0.01)
+    character.update(4, true)
+    assert.ok(Math.abs(left.rotation.x) < 1e-10)
+    assert.ok(
+      Math.abs(character.root.getObjectByName('arm-left').rotation.x) < 1e-10
+    )
+  } finally {
+    character.dispose()
+  }
+})

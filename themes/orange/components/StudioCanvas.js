@@ -26,6 +26,7 @@ export default function StudioCanvas({
 }) {
   const host = useRef(null)
   const [presented, setPresented] = useState(false)
+  const [failed, setFailed] = useState(false)
   const api = useRef(null)
   const callbacks = useRef({
     onPerformance,
@@ -82,14 +83,15 @@ export default function StudioCanvas({
       callbacks.current.onReady?.()
       return
     }
-    // A visible local scene is already present. Bound this async work so a
-    // missing chunk or a stalled first GPU frame cannot leave an empty stage.
+    // Show one quiet arrival screen while WebGL loads. Only mount the
+    // compatibility world after a confirmed failure, never as a loading frame.
     const timer = setTimeout(() => {
       if (!cancelled && !ready) {
         cancelled = true
         instance?.dispose()
         instance = null
         api.current = null
+        setFailed(true)
         callbacks.current.onUnavailable('startup-timeout')
       }
     }, 10000)
@@ -97,6 +99,7 @@ export default function StudioCanvas({
       if (cancelled) return
       cancelled = true
       clearTimeout(timer)
+      setFailed(true)
       if (error) console.warn(`[Orange 3D] ${reason}`, error.message)
       callbacks.current.onUnavailable(reason)
     }
@@ -163,7 +166,7 @@ export default function StudioCanvas({
 
   return (
     <>
-      {(rendererMode === 'compat' || !presented) && (
+      {(rendererMode === 'compat' || failed) && (
         <CompatScene
           focus={focus}
           view={view}
@@ -178,15 +181,31 @@ export default function StudioCanvas({
           onAction={onAction}
         />
       )}
+      {rendererMode !== 'compat' && !failed && (
+        <div
+          className='orange-scene-arrival'
+          data-ready={presented}
+          role={presented ? undefined : 'status'}
+          aria-hidden={presented}
+        >
+          <div className='orange-arrival-orbit' aria-hidden='true'>
+            <span>🍊</span>
+          </div>
+          <p>小岛正在醒来…</p>
+          <small>很快，和你见面</small>
+        </div>
+      )}
       {rendererMode !== 'compat' && (
         <div
           ref={host}
           className='orange-canvas'
-          style={{ visibility: presented ? 'visible' : 'hidden' }}
+          style={{
+            visibility: presented ? 'visible' : 'hidden'
+          }}
           data-render-quality={quality || 'auto'}
           data-renderer='webgl'
           role='img'
-          aria-label='可旋转的治愈系微缩工作室，有棕发黑色上衣的小主人、书架、电脑和档案柜。点击人物会挥手，也可以使用下方按钮选择入口。'
+          aria-label='可旋转的微缩小岛，主人能走到书架和电脑旁，室外有树木、小屋、行驶的汽车和散步的行人。点击人物会挥手，也可以使用下方按钮选择入口。'
         />
       )}
     </>
