@@ -55,6 +55,7 @@ function build(host, initial, callbacks, disposers, release) {
   host.appendChild(renderer.domElement)
   disposers.push(() => {
     renderer.dispose()
+    renderer.forceContextLoss()
     renderer.domElement.remove()
   })
   renderer.outputColorSpace = THREE.SRGBColorSpace

@@ -14,6 +14,8 @@ export default function WorldCanvas({
   latest.current = { options, onSelect, onInteract, onPerformance }
   const [status, setStatus] = useState('loading')
   const [attempt, setAttempt] = useState(0)
+  const [manualRetries, setManualRetries] = useState(0)
+  const recoveries = useRef(0)
   const [skipped, setSkipped] = useState(false)
   const [phase, setPhase] = useState('正在寻找云间的小岛')
   useEffect(() => {
@@ -25,22 +27,39 @@ export default function WorldCanvas({
       ready = false,
       instance,
       timer,
+      healthyTimer,
       frame,
       task
-    const fail = () => {
+    const fail = (reason = 'initialization') => {
       if (cancelled) return
       cancelled = true
       clearTimeout(timer)
+      clearTimeout(healthyTimer)
       clearTimeout(task)
       cancelAnimationFrame(frame)
       instance?.dispose()
+      instance = null
       api.current = null
+      if (host.current) host.current.dataset.failure = reason
+      if (
+        ready &&
+        ['context-lost', 'render'].includes(reason) &&
+        recoveries.current < 2
+      ) {
+        recoveries.current++
+        if (host.current)
+          host.current.dataset.recoveries = String(recoveries.current)
+        latest.current.onPerformance()
+        setStatus('loading')
+        setAttempt(v => v + 1)
+        return
+      }
       setStatus('fallback')
     }
     const arm = () => {
       clearTimeout(timer)
       if (!cancelled && !ready && !document.hidden)
-        timer = setTimeout(fail, 12000)
+        timer = setTimeout(() => fail('startup-timeout'), 12000)
     }
     setStatus('loading')
     setPhase('正在寻找云间的小岛')
@@ -61,6 +80,9 @@ export default function WorldCanvas({
                 if (!cancelled) {
                   ready = true
                   clearTimeout(timer)
+                  healthyTimer = setTimeout(() => {
+                    recoveries.current = 0
+                  }, 20000)
                   setStatus('ready')
                 }
               },
@@ -71,10 +93,11 @@ export default function WorldCanvas({
           }, 0)
         })
       })
-      .catch(fail)
+      .catch(() => fail('module'))
     return () => {
       cancelled = true
       clearTimeout(timer)
+      clearTimeout(healthyTimer)
       clearTimeout(task)
       cancelAnimationFrame(frame)
       document.removeEventListener('visibilitychange', arm)
@@ -168,12 +191,14 @@ export default function WorldCanvas({
             ))}
           </div>
           <p>当前为轻量探索地图，所有内容都可以打开。</p>
-          {enabled && attempt < 2 && (
+          {enabled && manualRetries < 2 && (
             <button
               type='button'
               className='island-text-link'
               onClick={() => {
                 setSkipped(false)
+                recoveries.current = 0
+                setManualRetries(v => v + 1)
                 setAttempt(v => v + 1)
               }}
             >
