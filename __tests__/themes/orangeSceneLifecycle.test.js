@@ -13,7 +13,7 @@ beforeEach(() => {
   loadStudio.mockResolvedValue({ createStudio })
 })
 
-test('camera and lighting changes reuse the renderer, and leaving the scene releases it', async () => {
+test('camera, lighting and all weather changes reuse the renderer, and leaving releases it', async () => {
   const instance = { update: jest.fn(), dispose: jest.fn() }
   const ready = jest.fn()
   createStudio.mockImplementation((host, options, callbacks) => {
@@ -45,6 +45,13 @@ test('camera and lighting changes reuse the renderer, and leaving the scene rele
   expect(instance.update).toHaveBeenLastCalledWith(
     expect.objectContaining({ focus: 'journal', interaction: 2 })
   )
+  for (const environment of ['rain', 'snow', 'desert', 'sunny']) {
+    rerender(<StudioCanvas {...props} environment={environment} paused />)
+    expect(instance.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ environment, paused: true })
+    )
+  }
+  expect(createStudio).toHaveBeenCalledTimes(1)
   unmount()
   expect(instance.dispose).toHaveBeenCalledTimes(1)
 })

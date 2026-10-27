@@ -217,6 +217,18 @@ export function createNeighborhood({
     cars,
     trees,
     update,
+    environment(mode) {
+      const colors = {
+        sunny: ['#687772', '#d8c8a9', '#829b73', '#adbc8b'],
+        rain: ['#425d61', '#a9b6aa', '#587d6c', '#87a08a'],
+        snow: ['#899ca3', '#e3e9e6', '#a9c3b8', '#d0ded8'],
+        desert: ['#9b8567', '#e4c48e', '#9ba575', '#b7b786']
+      }[mode] || ['#687772', '#d8c8a9', '#829b73', '#adbc8b']
+      ;[road, path, leaf, lightLeaf].forEach((material, i) =>
+        material.color.set(colors[i])
+      )
+      road.roughness = mode === 'rain' ? 0.2 : 0.9
+    },
     lighting(night) {
       lamps.emissiveIntensity = night ? 1.7 : 0.25
     }

@@ -743,6 +743,123 @@ export function ExperienceStyle() {
           radial-gradient(ellipse at 12% 65%, #a8c4b8 0, transparent 55%),
           linear-gradient(155deg, #dfe4d5, #bed2c5 53%, #dec2a7);
       }
+      #theme-orange .orange-environment-control {
+        position: absolute;
+        top: 104px;
+        left: 5%;
+        z-index: 4;
+      }
+      #theme-orange .orange-environment-picker {
+        display: flex;
+        align-items: center;
+        width: fit-content;
+        height: 44px;
+        padding: 0 14px;
+        gap: 10px;
+        border: 1px solid #fff7;
+        border-radius: 24px;
+        background: #faf7ec99;
+        box-shadow: 0 5px 20px #30493f09;
+        color: var(--orange-ink);
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      #theme-orange .orange-environment-picker:focus-within {
+        outline: 2px solid var(--orange-accent);
+        outline-offset: 4px;
+      }
+      #theme-orange .orange-environment-picker select {
+        appearance: none;
+        background: transparent;
+        color: inherit;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        height: 100%;
+        min-width: 82px;
+        outline: none;
+        cursor: pointer;
+      }
+      #theme-orange .orange-environment-picker option {
+        background: var(--orange-surface);
+        color: var(--orange-ink);
+      }
+      #theme-orange .orange-environment-note {
+        margin: 9px 0 0 4px;
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        color: var(--orange-muted);
+      }
+      .dark #theme-orange .orange-environment-picker {
+        background: #223a3fbb;
+        border-color: #dce8e344;
+      }
+      #theme-orange [data-environment='rain'] .orange-world-sky {
+        background:
+          radial-gradient(ellipse at 70% 15%, #d6d4ba77, transparent 48%),
+          linear-gradient(150deg, #c7d5d5, #9cb8b8 55%, #a4b5be);
+      }
+      #theme-orange [data-environment='snow'] .orange-world-sky {
+        background:
+          radial-gradient(ellipse at 75% 20%, #fff0cf, transparent 45%),
+          linear-gradient(155deg, #e3edef, #c9dce2 55%, #d5d7e7);
+      }
+      #theme-orange [data-environment='desert'] .orange-world-sky {
+        background:
+          radial-gradient(ellipse at 75% 20%, #ffe2a4, transparent 50%),
+          linear-gradient(155deg, #e8d7af, #e4bd8e 55%, #d29e80);
+      }
+      .dark #theme-orange [data-environment='rain'] .orange-world-sky {
+        background:
+          radial-gradient(ellipse at 70% 20%, #576177, transparent 65%),
+          linear-gradient(150deg, #1a343b, #2f4a53, #3d465a);
+      }
+      .dark #theme-orange [data-environment='snow'] .orange-world-sky {
+        background:
+          radial-gradient(ellipse at 75% 20%, #67627c, transparent 60%),
+          linear-gradient(150deg, #253d51, #455870, #5c5d76);
+      }
+      .dark #theme-orange [data-environment='desert'] .orange-world-sky {
+        background:
+          radial-gradient(ellipse at 75% 20%, #99747466, transparent 60%),
+          linear-gradient(150deg, #3e3d56, #6e5364, #886550);
+      }
+      #theme-orange .compat-weather {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 2;
+      }
+      #theme-orange .compat-weather i {
+        position: absolute;
+        top: -10%;
+        width: 1px;
+        height: 24px;
+        background: #e1f0f7bb;
+        animation: orange-weather-fall linear infinite;
+      }
+      #theme-orange [data-environment='snow'] .compat-weather i {
+        width: 5px;
+        height: 5px;
+        background: #fffef4;
+        border-radius: 50%;
+      }
+      #theme-orange .orange-compat[data-ambience='false'] .compat-weather {
+        display: none;
+      }
+      @keyframes orange-weather-fall {
+        to {
+          transform: translate(-35px, 110vh);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #theme-orange .compat-weather {
+          display: none;
+        }
+      }
       #theme-orange .orange-island-pass {
         position: absolute;
         left: 5%;
@@ -1071,7 +1188,14 @@ export function ExperienceStyle() {
         }
         #theme-orange .orange-immersive .orange-world-title {
           left: 7%;
-          top: 108px;
+          top: 148px;
+        }
+        #theme-orange .orange-environment-control {
+          top: 82px;
+          left: 7%;
+        }
+        #theme-orange .orange-environment-note {
+          display: none;
         }
         #theme-orange .orange-immersive .orange-world-title h1 {
           font-size: 29px;

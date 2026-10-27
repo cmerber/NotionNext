@@ -5,6 +5,7 @@ import { loadStudio } from '../scene/loadStudio'
 export default function StudioCanvas({
   rendererMode = 'auto',
   night,
+  environment = 'sunny',
   view,
   focus,
   interaction,
@@ -52,6 +53,7 @@ export default function StudioCanvas({
   }
   const options = useRef({
     night,
+    environment,
     view,
     focus,
     interaction,
@@ -64,6 +66,7 @@ export default function StudioCanvas({
   })
   options.current = {
     night,
+    environment,
     view,
     focus,
     interaction,
@@ -141,6 +144,7 @@ export default function StudioCanvas({
   useEffect(() => {
     api.current?.update({
       night,
+      environment,
       view,
       focus,
       interaction,
@@ -153,6 +157,7 @@ export default function StudioCanvas({
     })
   }, [
     night,
+    environment,
     view,
     focus,
     interaction,
@@ -175,6 +180,7 @@ export default function StudioCanvas({
           greeting={greeting}
           interaction={interaction}
           ambience={ambience}
+          environment={environment}
           onSelect={onSelect}
           onInteract={onInteract}
           onGreet={onGreet}

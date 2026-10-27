@@ -7,6 +7,8 @@ import { getRenderBudget, updateShadowBudget } from './renderBudget'
 import { batchScene } from './batchScene'
 import { createHostWalk } from './hostWalk'
 import { createNeighborhood } from './createNeighborhood'
+import { createWeather } from './createWeather'
+import { environmentPalette } from './environments'
 
 // Original procedural geometry: no remote models, textures, or model service.
 export function createStudio(host, initial, callbacks) {
@@ -812,12 +814,15 @@ function buildStudio(host, initial, callbacks, scope) {
     cylinder,
     palette
   })
+  const weather = createWeather({ scene, geometries, materials })
+  for (const root of weather.scenery) batchScene(root, [], registerBatch)
   const batched = batchScene(
     scene,
     [
       character.root,
       welcomeRing,
       ...neighborhood.movingRoots,
+      ...weather.roots,
       tree,
       leaf,
       particles,
@@ -963,7 +968,8 @@ function buildStudio(host, initial, callbacks, scope) {
       focus: state.focus || 'world',
       interaction: String(state.interaction || 0),
       cameraMotion: flight ? 'flying' : 'settled',
-      reaction: feedback.visible ? reactionPlace : ''
+      reaction: feedback.visible ? reactionPlace : '',
+      environment: state.environment || 'sunny'
     }
     for (const key of Object.keys(telemetry))
       if (host.dataset[key] !== telemetry[key])
@@ -1050,6 +1056,7 @@ function buildStudio(host, initial, callbacks, scope) {
     welcomeRing.position.set(walk.x, 0.14, walk.z)
     welcomeRing.visible = state.focus === 'about'
     neighborhood.update(time)
+    weather.update(time)
     const energy = reactionEnvelope(time - reactionStart)
     const reactionLocation = beaconLocations[reactionPlace]
     feedback.visible = energy > 0 && Boolean(reactionLocation)
@@ -1141,6 +1148,7 @@ function buildStudio(host, initial, callbacks, scope) {
     if (frame) cancelAnimationFrame(frame)
     frame = 0
     previous = 0
+    configureWeather()
     const presented = render()
     if (
       !disposed &&
@@ -1157,12 +1165,14 @@ function buildStudio(host, initial, callbacks, scope) {
     cameraPose()
   }
   function setLighting() {
+    const setting = environmentPalette(state.environment, state.night)
+    neighborhood.environment(setting.mode)
     neighborhood.lighting(state.night)
     renderer.shadowMap.needsUpdate = true
-    ambient.intensity = state.night ? 1.3 : 2.1
-    ambient.color.set(state.night ? '#b4bfde' : '#fff3e4')
-    sun.intensity = state.night ? 1.3 : 2.8
-    sun.color.set(state.night ? '#b8c8ed' : '#ffead4')
+    ambient.intensity = setting.ambient
+    ambient.color.set(setting.ambientColor)
+    sun.intensity = setting.sun
+    sun.color.set(setting.sunColor)
     lampLight.intensity = state.night ? 13 : 2.5
     rim.color.set(state.night ? '#b3c8ff' : '#ffe2b5')
     rim.intensity = state.night ? 3.2 : 2.4
@@ -1170,15 +1180,29 @@ function buildStudio(host, initial, callbacks, scope) {
     bulbMaterial.emissiveIntensity = state.night ? 3 : 1.5
     palette.screen.emissiveIntensity = state.night ? 1 : 0.45
     renderer.toneMappingExposure = state.night ? 1.05 : 1.05
-    scene.fog.color.set(state.night ? '#344652' : '#e3e5db')
-    cloudMaterial.color.set(state.night ? '#65737f' : '#fff5e7')
-    stars.visible = state.night && state.ambience !== false
+    scene.fog.color.set(setting.fog)
+    scene.fog.density = setting.fogDensity
+    cloudMaterial.color.set(setting.cloud)
+    moss.color.set(setting.moss)
+    stone.color.set(setting.stone)
+    stars.visible =
+      state.night && setting.mode !== 'rain' && state.ambience !== false
     moonMaterial.emissiveIntensity = state.night ? 1.5 : 0.4
     moon.scale.setScalar(state.night ? 0.72 : 1)
-    particles.visible = state.ambience !== false
+    particles.visible = state.ambience !== false && setting.mode === 'sunny'
     drifting.forEach(petal => {
       petal.material = state.night ? glowMaterial : petalMaterial
       petal.scale.set(...(state.night ? [0.8, 0.8, 0.8] : [1.8, 0.4, 1]))
+    })
+  }
+  function configureWeather() {
+    weather.configure({
+      environment: state.environment,
+      night: state.night,
+      ambience: state.ambience !== false,
+      compact,
+      safe: state.quality === 'safe',
+      reducedMotion: reducedMotion.matches
     })
   }
   function resize() {
@@ -1187,6 +1211,7 @@ function buildStudio(host, initial, callbacks, scope) {
     if (!width || !height) return
     const wasCompact = compact
     compact = width < 600
+    configureWeather()
     const budget = getRenderBudget(
       width,
       height,
