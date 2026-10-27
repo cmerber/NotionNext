@@ -676,58 +676,232 @@ export function ExperienceStyle() {
           radial-gradient(ellipse at 12% 65%, #a8c4b8 0, transparent 55%),
           linear-gradient(155deg, #dfe4d5, #bed2c5 53%, #dec2a7);
       }
-      #theme-orange .orange-environment-control {
+      #theme-orange .orange-scene-settings {
         position: absolute;
         top: 104px;
-        left: 5%;
-        z-index: 4;
-      }
-      #theme-orange .orange-environment-picker {
+        right: 5%;
+        z-index: 12;
         display: flex;
         align-items: center;
-        width: fit-content;
-        height: 44px;
-        padding: 0 14px;
         gap: 10px;
-        border: 1px solid #fff7;
-        border-radius: 24px;
-        background: #faf7ec99;
-        box-shadow: 0 5px 20px #30493f09;
+      }
+      #theme-orange .orange-environment-control {
+        position: relative;
+      }
+      #theme-orange .orange-environment-shade {
+        display: none;
+      }
+      #theme-orange .orange-environment-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 44px;
+        min-width: 136px;
+        padding: 0 15px;
+        gap: 10px;
+        border: 1px solid #fff9;
+        border-radius: 16px;
+        background: #faf9f0d9;
         color: var(--orange-ink);
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
-      #theme-orange .orange-environment-picker:focus-within {
-        outline: 2px solid var(--orange-accent);
-        outline-offset: 4px;
-      }
-      #theme-orange .orange-environment-picker select {
-        appearance: none;
-        background: transparent;
-        color: inherit;
         font-size: 12px;
-        letter-spacing: 0.08em;
-        border: 0;
-        border-radius: 0;
-        padding: 0;
-        height: 100%;
-        min-width: 82px;
-        outline: none;
+        letter-spacing: 0.04em;
         cursor: pointer;
+        transition:
+          background-color 0.2s,
+          border-color 0.2s;
       }
-      #theme-orange .orange-environment-picker option {
+      #theme-orange .orange-environment-trigger > svg {
+        width: 20px;
+        height: 20px;
+        flex: none;
+      }
+      #theme-orange .orange-environment-trigger > .orange-environment-chevron {
+        width: 12px;
+        height: 12px;
+        opacity: 0.65;
+        transition: transform 0.2s;
+      }
+      #theme-orange
+        .orange-environment-trigger[aria-expanded='true']
+        > .orange-environment-chevron {
+        transform: rotate(180deg);
+      }
+      #theme-orange .orange-environment-trigger:hover,
+      #theme-orange .orange-environment-trigger[aria-expanded='true'] {
+        border-color: #7c98767a;
+        background: var(--orange-surface);
+      }
+      #theme-orange .orange-environment-trigger:focus-visible,
+      #theme-orange .orange-environment-panel button:focus-visible {
+        outline: 2px solid #54745f;
+        outline-offset: 3px;
+      }
+      #theme-orange .orange-environment-panel {
+        position: absolute;
+        z-index: 1;
+        top: calc(100% + 12px);
+        right: 0;
+        width: min(312px, calc(100vw - 48px));
+        max-height: calc(100svh - 176px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 18px;
+        border: 1px solid var(--orange-line);
+        border-radius: 22px;
         background: var(--orange-surface);
         color: var(--orange-ink);
+        box-shadow: 0 18px 55px #22392e24;
+        animation: orange-environment-open 0.18s ease both;
       }
-      #theme-orange .orange-environment-note {
-        margin: 9px 0 0 4px;
-        font-size: 10px;
-        letter-spacing: 0.12em;
+      #theme-orange .orange-environment-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: -6px -6px 10px 2px;
+      }
+      #theme-orange .orange-environment-heading > span {
+        font:
+          18px/1.5 'Songti SC',
+          'SimSun',
+          Georgia,
+          serif;
+        letter-spacing: 0.06em;
+      }
+      #theme-orange .orange-environment-heading > button {
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--orange-muted);
+        font-size: 22px;
+      }
+      #theme-orange .orange-environment-heading > button:hover {
+        background: var(--orange-soft);
+      }
+      #theme-orange .orange-environment-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      #theme-orange .orange-environment-grid > button {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 92px;
+        padding: 13px 8px;
+        border: 1px solid var(--orange-line);
+        border-radius: 14px;
+        background: transparent;
+        color: var(--orange-ink);
+        font-size: 12px;
+        transition:
+          background-color 0.18s,
+          border-color 0.18s;
+      }
+      #theme-orange .orange-environment-grid > button:hover {
+        background: var(--orange-soft);
+      }
+      #theme-orange .orange-environment-grid > button[aria-checked='true'] {
+        border-color: #789171;
+        background: #b9c9a822;
+      }
+      #theme-orange .orange-weather-glyph {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+      }
+      #theme-orange .orange-weather-glyph svg {
+        width: 32px;
+        height: 32px;
+      }
+      #theme-orange [data-weather='sunny'] .orange-weather-glyph {
+        color: #b28b51;
+      }
+      #theme-orange [data-weather='rain'] .orange-weather-glyph {
+        color: #6f929d;
+      }
+      #theme-orange [data-weather='snow'] .orange-weather-glyph {
+        color: #849faf;
+      }
+      #theme-orange [data-weather='desert'] .orange-weather-glyph {
+        color: #b39867;
+      }
+      #theme-orange .orange-weather-check {
+        position: absolute;
+        top: 7px;
+        right: 8px;
+        color: #607e57;
+        font-size: 11px;
+      }
+      #theme-orange .orange-environment-caption {
+        margin: 16px 0 0;
+        padding-top: 13px;
+        border-top: 1px solid var(--orange-line);
+        font-size: 11px;
+        line-height: 1.7;
+        text-align: center;
         color: var(--orange-muted);
       }
-      .dark #theme-orange .orange-environment-picker {
-        background: #223a3fbb;
+      #theme-orange .orange-scene-settings .orange-performance-toggle,
+      #theme-orange .orange-scene-settings .orange-compat-notice {
+        position: static;
+        min-height: 44px;
+        max-width: 145px;
+        margin: 0;
+        padding: 0 12px;
+        font-size: 10px;
+        line-height: 1.4;
+        border: 1px solid #fff5;
+        border-radius: 14px;
+        background: #f9f6ec55;
+        color: var(--orange-muted);
+        box-shadow: none;
+      }
+      #theme-orange .orange-world-index {
+        top: max(180px, 20%);
+      }
+      .dark #theme-orange .orange-environment-trigger {
+        background: #263d38e8;
         border-color: #dce8e344;
+      }
+      .dark #theme-orange .orange-scene-settings .orange-performance-toggle,
+      .dark #theme-orange .orange-scene-settings .orange-compat-notice {
+        background: #223a3f44;
+        border-color: #dce8e326;
+      }
+      .dark
+        #theme-orange
+        .orange-environment-grid
+        > button[aria-checked='true'] {
+        border-color: #a4ba95;
+        background: #a4ba951c;
+      }
+      .dark #theme-orange .orange-weather-check {
+        color: #b3c7a5;
+      }
+      .dark #theme-orange .orange-environment-trigger:focus-visible,
+      .dark #theme-orange .orange-environment-panel button:focus-visible {
+        outline-color: #bdcfae;
+      }
+      @keyframes orange-environment-open {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (min-width: 761px) and (max-height: 760px) {
+        #theme-orange .orange-world-index {
+          display: none;
+        }
       }
       #theme-orange [data-environment='rain'] .orange-world-sky {
         background:
@@ -1123,12 +1297,39 @@ export function ExperienceStyle() {
           left: 7%;
           top: 148px;
         }
-        #theme-orange .orange-environment-control {
+        #theme-orange .orange-scene-settings {
           top: 82px;
           left: 7%;
+          right: 7%;
+          justify-content: space-between;
+          gap: 8px;
         }
-        #theme-orange .orange-environment-note {
-          display: none;
+        #theme-orange .orange-environment-trigger {
+          min-width: 132px;
+          padding: 0 12px;
+          position: relative;
+          z-index: 2;
+        }
+        #theme-orange .orange-environment-shade {
+          display: block;
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          width: 100%;
+          height: 100%;
+          border: 0;
+          padding: 0;
+          background: #20382d38;
+          touch-action: none;
+        }
+        #theme-orange .orange-environment-panel {
+          position: fixed;
+          top: auto;
+          bottom: 16px;
+          left: 16px;
+          right: 16px;
+          width: auto;
+          max-height: calc(100svh - 160px);
         }
         #theme-orange .orange-immersive .orange-world-title h1 {
           font-size: 29px;

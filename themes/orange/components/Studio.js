@@ -4,7 +4,8 @@ import SmartLink from '@/components/SmartLink'
 import { useGlobal } from '@/lib/global'
 import { siteConfig } from '@/lib/config'
 import CONFIG from '../config'
-import { ENVIRONMENTS, normalizeEnvironment } from '../scene/environments'
+import { normalizeEnvironment } from '../scene/environments'
+import EnvironmentPicker from './EnvironmentPicker'
 
 export const PLACES = [
   {
@@ -220,22 +221,37 @@ export default function Studio({ posts = [] }) {
           </div>
         )}
       </div>
-      {rendererMode === 'compat' && showScene && (
-        <button type='button' className='orange-compat-notice' onClick={retry}>
-          轻量互动场景 · 尝试完整 3D ↗
-        </button>
-      )}
-      {rendererMode !== 'compat' && showScene && (
-        <button
-          type='button'
-          className='orange-performance-toggle'
-          onClick={() =>
-            setQuality(value => (value === 'safe' ? 'detail' : 'safe'))
-          }
-        >
-          {quality === 'safe' ? '流畅优先 · 切换精细 ↗' : '切换流畅模式 ↗'}
-        </button>
-      )}
+      <div className='orange-scene-settings' aria-label='场景与画质'>
+        {rendererMode === 'compat' && showScene && (
+          <button
+            type='button'
+            className='orange-compat-notice'
+            onClick={retry}
+            aria-label='当前为轻量场景，尝试完整 3D'
+          >
+            尝试完整 3D ↗
+          </button>
+        )}
+        {rendererMode !== 'compat' && showScene && (
+          <button
+            type='button'
+            className='orange-performance-toggle'
+            aria-label={
+              quality === 'safe' ? '流畅优先，切换精细画面' : '切换流畅模式'
+            }
+            onClick={() =>
+              setQuality(value => (value === 'safe' ? 'detail' : 'safe'))
+            }
+          >
+            {quality === 'safe'
+              ? '流畅优先'
+              : quality === 'detail'
+                ? '精细画面'
+                : '自动画质'}
+          </button>
+        )}
+        <EnvironmentPicker value={environment} onChange={setEnvironment} />
+      </div>
       {sceneStatus === 'recovering' && showScene && (
         <div className='orange-reconnecting' role='status'>
           正在重新连接星球…
@@ -263,30 +279,6 @@ export default function Studio({ posts = [] }) {
         <br />
         <span>THE FLOATING STUDIO</span>
         <i>01 — ∞</i>
-      </div>
-      <div className='orange-environment-control'>
-        <label className='orange-environment-picker'>
-          <span aria-hidden='true'>
-            {ENVIRONMENTS.find(item => item.id === environment).icon}
-          </span>
-          <select
-            aria-label='切换小岛场景'
-            value={environment}
-            onChange={event =>
-              setEnvironment(normalizeEnvironment(event.target.value))
-            }
-          >
-            {ENVIRONMENTS.map(item => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-          <span aria-hidden='true'>⌄</span>
-        </label>
-        <p aria-live='polite' className='orange-environment-note'>
-          {ENVIRONMENTS.find(item => item.id === environment).note}
-        </p>
       </div>
       {!selected && (
         <div className='orange-island-pass'>
