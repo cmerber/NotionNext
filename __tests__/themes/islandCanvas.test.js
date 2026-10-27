@@ -76,3 +76,25 @@ test('a slow startup and a manual skip both release the scene and expose all fou
   act(() => callbacks.onReady())
   expect(screen.getByLabelText('小岛探索地图')).toBeInTheDocument()
 })
+
+test('a discarded live context rebuilds with a smaller budget and the selected destination, then stops after two failures', async () => {
+  const options = { focus: 'workshop', zoom: 1, night: true }
+  render(<WorldCanvas {...props} options={options} />)
+  await start()
+  for (let i = 0; i < 2; i++) {
+    act(() => callbacks.onReady())
+    act(() => callbacks.onUnavailable('context-lost'))
+    await start()
+  }
+  expect(createIsland).toHaveBeenCalledTimes(3)
+  expect(props.onPerformance).toHaveBeenCalledTimes(2)
+  expect(createIsland.mock.calls.at(-1)[1]).toEqual(options)
+  act(() => callbacks.onReady())
+  act(() => callbacks.onUnavailable('render'))
+  await start()
+  expect(createIsland).toHaveBeenCalledTimes(3)
+  expect(screen.getByLabelText('小岛探索地图')).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: '重新开启立体世界 ↗' })
+  ).toBeInTheDocument()
+})
