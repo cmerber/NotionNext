@@ -117,18 +117,16 @@ test('keyboard focus leaves the loading cover before it becomes hidden', async (
   })
   render(
     <div className='orange-studio'>
-      <label className='orange-environment-picker'>
-        <select aria-label='切换小岛场景'>
-          <option>晴天</option>
-        </select>
-      </label>
+      <button type='button' className='orange-environment-trigger'>
+        切换小岛场景
+      </button>
       <StudioCanvas {...sceneProps} />
     </div>
   )
   await waitFor(() => expect(createStudio).toHaveBeenCalledTimes(1))
   screen.getByRole('link', { name: '先读点文字' }).focus()
   act(() => complete())
-  expect(screen.getByRole('combobox')).toHaveFocus()
+  expect(screen.getByRole('button', { name: '切换小岛场景' })).toHaveFocus()
 })
 
 test('a rejected scene chunk keeps a local interactive scene and reports its actual stage', async () => {

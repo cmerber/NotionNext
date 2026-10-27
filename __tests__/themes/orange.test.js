@@ -116,11 +116,13 @@ test('simplified mode can be entered and left', () => {
 
 test('weather selection persists with discoveries and can be changed while paused', () => {
   const { container, unmount } = render(<Studio />)
-  const weather = screen.getByRole('combobox', { name: '切换小岛场景' })
-  expect(weather).toHaveValue('sunny')
-  expect(screen.getAllByRole('option')).toHaveLength(4)
+  const weather = screen.getByRole('button', { name: /切换小岛场景/ })
+  expect(weather).toHaveTextContent('晴天小岛')
   fireEvent.click(screen.getByRole('button', { name: '暂停动画' }))
-  fireEvent.change(weather, { target: { value: 'snow' } })
+  fireEvent.click(weather)
+  expect(screen.getAllByRole('radio')).toHaveLength(4)
+  fireEvent.click(screen.getByRole('radio', { name: '落雪小岛' }))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   expect(container.querySelector('.orange-studio')).toHaveAttribute(
     'data-environment',
     'snow'
@@ -135,7 +137,9 @@ test('weather selection persists with discoveries and can be changed while pause
   ).toBe('snow')
   unmount()
   render(<Studio />)
-  expect(screen.getByRole('combobox')).toHaveValue('snow')
+  expect(
+    screen.getByRole('button', { name: /切换小岛场景/ })
+  ).toHaveTextContent('落雪小岛')
 })
 
 test('unknown saved weather falls back to sunny without discarding the passport', () => {
@@ -148,7 +152,9 @@ test('unknown saved weather falls back to sunny without discarding the passport'
     })
   )
   render(<Studio />)
-  expect(screen.getByRole('combobox')).toHaveValue('sunny')
+  expect(
+    screen.getByRole('button', { name: /切换小岛场景/ })
+  ).toHaveTextContent('晴天小岛')
   expect(screen.getByLabelText('已发现 1 个角落')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /再收一份/ })).toBeInTheDocument()
 })

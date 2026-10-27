@@ -151,7 +151,7 @@ export default function StudioCanvas({
                   const cover = studio?.querySelector('.orange-scene-arrival')
                   if (cover?.contains(document.activeElement))
                     studio
-                      .querySelector('.orange-environment-picker select')
+                      .querySelector('.orange-environment-trigger')
                       ?.focus({ preventScroll: true })
                   setPresented(true)
                   callbacks.current.onReady?.()
