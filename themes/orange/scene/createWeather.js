@@ -117,8 +117,8 @@ export function createWeather({ scene, geometries, materials }) {
       snowCover,
       snowCap,
       snowMat,
-      [x, -0.49 + 1.69 * size, z],
-      [0.55 * size, 0.24 * size, 0.55 * size]
+      [x, -0.49 + 1.82 * size, z],
+      [0.57 * size, 0.34 * size, 0.57 * size]
     )
   })
   const roof = geometry(new THREE.ConeGeometry(1.08, 0.65, 4))
