@@ -8,6 +8,7 @@ jest.mock('@/themes/orange/scene/createStudio', () => ({
 }))
 
 jest.mock('@/themes/orange/scene/loadStudio', () => ({ loadStudio: jest.fn() }))
+jest.mock('@/themes/orange/arrivalStyle', () => ({ ArrivalStyle: () => null }))
 beforeEach(() => {
   jest.clearAllMocks()
   loadStudio.mockResolvedValue({ createStudio })
@@ -69,6 +70,67 @@ const sceneProps = {
   onUnavailable: jest.fn()
 }
 
+test('the loader waits for a rendered frame and releases its cover without holding back readiness', async () => {
+  const instance = { update: jest.fn(), dispose: jest.fn() }
+  let complete
+  createStudio.mockImplementation((host, options, callbacks) => {
+    complete = callbacks.onReady
+    return instance
+  })
+  const { container } = render(<StudioCanvas {...sceneProps} />)
+  await waitFor(() => expect(createStudio).toHaveBeenCalledTimes(1))
+  expect(screen.getByRole('progressbar')).toHaveAttribute('value', '1')
+  expect(container.querySelector('.orange-canvas')).toHaveStyle({
+    visibility: 'hidden'
+  })
+  act(() => complete())
+  expect(sceneProps.onReady).toHaveBeenCalledTimes(1)
+  expect(container.querySelector('.orange-canvas')).toHaveStyle({
+    visibility: 'visible'
+  })
+  expect(container.querySelector('.orange-canvas').style.opacity).toBe('')
+  expect(container.querySelector('.orange-scene-arrival')).toHaveAttribute(
+    'data-ready',
+    'true'
+  )
+})
+
+test('leaving after the module arrives cancels deferred model construction', async () => {
+  jest.useFakeTimers()
+  const { unmount } = render(<StudioCanvas {...sceneProps} />)
+  await act(async () => {
+    await Promise.resolve()
+  })
+  expect(screen.getByRole('progressbar')).toHaveAttribute('value', '1')
+  expect(createStudio).not.toHaveBeenCalled()
+  unmount()
+  act(() => jest.runOnlyPendingTimers())
+  expect(createStudio).not.toHaveBeenCalled()
+  jest.useRealTimers()
+})
+
+test('keyboard focus leaves the loading cover before it becomes hidden', async () => {
+  let complete
+  createStudio.mockImplementation((host, options, callbacks) => {
+    complete = callbacks.onReady
+    return { update: jest.fn(), dispose: jest.fn() }
+  })
+  render(
+    <div className='orange-studio'>
+      <label className='orange-environment-picker'>
+        <select aria-label='切换小岛场景'>
+          <option>晴天</option>
+        </select>
+      </label>
+      <StudioCanvas {...sceneProps} />
+    </div>
+  )
+  await waitFor(() => expect(createStudio).toHaveBeenCalledTimes(1))
+  screen.getByRole('link', { name: '先读点文字' }).focus()
+  act(() => complete())
+  expect(screen.getByRole('combobox')).toHaveFocus()
+})
+
 test('a rejected scene chunk keeps a local interactive scene and reports its actual stage', async () => {
   const warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
   const select = jest.fn()
@@ -118,6 +180,27 @@ test('a stalled import times out and cannot create a renderer after leaving the 
   expect(createStudio).not.toHaveBeenCalled()
   unmount()
   jest.useRealTimers()
+})
+
+test('a background tab receives a full startup window when it becomes visible', () => {
+  jest.useFakeTimers()
+  const hidden = jest.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+  loadStudio.mockReturnValue(new Promise(() => {}))
+  try {
+    const { unmount } = render(<StudioCanvas {...sceneProps} />)
+    act(() => jest.advanceTimersByTime(30000))
+    expect(sceneProps.onUnavailable).not.toHaveBeenCalled()
+    hidden.mockReturnValue(false)
+    fireEvent(document, new Event('visibilitychange'))
+    act(() => jest.advanceTimersByTime(9999))
+    expect(sceneProps.onUnavailable).not.toHaveBeenCalled()
+    act(() => jest.advanceTimersByTime(1))
+    expect(sceneProps.onUnavailable).toHaveBeenCalledWith('startup-timeout')
+    unmount()
+  } finally {
+    hidden.mockRestore()
+    jest.useRealTimers()
+  }
 })
 
 test('an early scene setup exception does not leave a permanently hidden canvas', async () => {
