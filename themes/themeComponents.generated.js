@@ -13,6 +13,7 @@ const themeComponents = {
   "gitbook": dynamic(() => import("./gitbook").then(renderThemeModule), { loading: ThemeLoading }),
   "heo": dynamic(() => import("./heo").then(renderThemeModule), { loading: ThemeLoading }),
   "hexo": dynamic(() => import("./hexo").then(renderThemeModule), { loading: ThemeLoading }),
+  "island": dynamic(() => import("./island").then(renderThemeModule), { loading: ThemeLoading }),
   "landing": dynamic(() => import("./landing").then(renderThemeModule), { loading: ThemeLoading }),
   "magzine": dynamic(() => import("./magzine").then(renderThemeModule), { loading: ThemeLoading }),
   "matery": dynamic(() => import("./matery").then(renderThemeModule), { loading: ThemeLoading }),

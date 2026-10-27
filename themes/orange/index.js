@@ -11,6 +11,7 @@ import { ImmersiveStyle } from './immersiveStyle'
 import ReadingRoom from './components/ReadingRoom'
 import { ExperienceStyle } from './experienceStyle'
 import IslandStory from './components/IslandStory'
+import ThemeEntry from '@/components/ThemeEntry'
 
 const postHref = post => post.href || `/article/${post.slug || post.id}`
 
@@ -112,6 +113,7 @@ function LayoutBase({
           >
             ⌕
           </SmartLink>
+          <ThemeEntry className='orange-round-button' />
           <button
             type='button'
             className='orange-round-button'

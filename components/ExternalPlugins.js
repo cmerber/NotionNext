@@ -258,7 +258,7 @@ const ExternalPlugin = props => {
       <GlobalStyle />
       {ENABLE_ICON_FONT && <IconFont />}
       {MOUSE_FOLLOW && <MouseFollow />}
-      {pluginsIdle && THEME_SWITCH && (router.query.theme || theme) !== 'orange' && <ThemeSwitch />}
+      {pluginsIdle && THEME_SWITCH && !['orange', 'island'].includes(router.query.theme || theme) && <ThemeSwitch />}
       {DEBUG && <DebugPanel />}
       {ANALYTICS_ACKEE_TRACKER && <Ackee />}
       {ANALYTICS_GOOGLE_ID && <Gtag />}
