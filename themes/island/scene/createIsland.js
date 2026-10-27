@@ -241,7 +241,7 @@ function build(host, initial, callbacks, disposers, release) {
     destination = new THREE.Vector3()
   const homes = {
     library: { position: [3, 7, 8], target: [-4.5, 1.3, -1.4] },
-    workshop: { position: [9.5, 8, 5.5], target: [1, 1.3, -1.8] },
+    workshop: { position: [-2, 7.5, 6], target: [1, 1.3, -1.8] },
     observatory: { position: [12.5, 8, 13], target: [3, 1.5, 2.2] },
     home: { position: [2, 7, 13], target: [-4.9, 1.4, 3.3] },
     animals: { position: [-3.8, 4, 8], target: [-9.6, 0.8, -0.6] }
