@@ -567,11 +567,11 @@ function ThemeConsole ({ meta, isOpen, onClose }) {
  *
  * @returns 主题切换
  */
-const ThemeSwitch = () => {
+const ThemeSwitch = ({ hideFloating = false, initiallyOpen = false }) => {
   const { theme, locale, isDarkMode, toggleDarkMode } = useGlobal()
   const router = useRouter()
   const currentTheme = getQueryParam(router.asPath, 'theme') || theme
-  const [sideBarVisible, setSideBarVisible] = useState(false)
+  const [sideBarVisible, setSideBarVisible] = useState(initiallyOpen)
   const [consoleMounted, setConsoleMounted] = useState(false)
   const [consoleVisible, setConsoleVisible] = useState(false)
 
@@ -604,15 +604,14 @@ const ThemeSwitch = () => {
   }
 
   const changeTheme = newTheme => {
-    const query = router.query
-    query.theme = newTheme
+    const query = { ...router.query, theme: newTheme }
     router.push({ pathname: router.pathname, query }).then(() => {})
   }
 
   return (
     <>
       {/* 悬浮的主题切换按钮 */}
-      {siteConfig('THEME_SWITCH_FLOATING', false) && <Draggable stick={true} handleClassName='theme-drag-handle'>
+      {!hideFloating && siteConfig('THEME_SWITCH_FLOATING', false) && <Draggable stick={true} handleClassName='theme-drag-handle'>
         <div
           id='draggableBox'
           style={{ left: '0px', top: '80vh' }}
@@ -739,7 +738,7 @@ const ThemeSwitch = () => {
           </div>
 
           <div className='space-y-6 px-5 pb-10 pt-6'>
-            {currentTheme === 'orange' && (
+            {['orange', 'island'].includes(currentTheme) && (
               <div className='grid grid-cols-2 gap-2 md:hidden'>
                 <button
                   type='button'
@@ -771,7 +770,7 @@ const ThemeSwitch = () => {
 
             {/* 陈列所有主题 — 仍为同一 map + changeTheme(t) */}
             <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
-              {THEMES?.map(t => {
+              {[...THEMES].sort((a, b) => Number(getThemeSwitchMeta(b).recommended) - Number(getThemeSwitchMeta(a).recommended) || (a === 'orange' ? -1 : b === 'orange' ? 1 : 0)).map(t => {
                 const active = currentTheme === t
                 const meta = getThemeSwitchMeta(t)
                 return (
@@ -782,6 +781,10 @@ const ThemeSwitch = () => {
                         : 'border-gray-100 hover:border-indigo-300 hover:shadow-md dark:border-gray-800 dark:hover:border-indigo-500/40'
                     }`}
                     key={t}
+                    role='button'
+                    tabIndex={0}
+                    aria-label={`使用 ${meta.name}`}
+                    onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); changeTheme(t) } }}
                     onClick={() => {
                       changeTheme(t)
                     }}>
@@ -790,6 +793,7 @@ const ThemeSwitch = () => {
                         {meta.name}
                       </span>
                       <ThemeTierBadge tier={meta.tier} labels={tierLabels} />
+                      {meta.recommended && <span className='rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-200'>推荐</span>}
                     </div>
                     {meta.summary ? (
                       <p className='mb-2 line-clamp-2 px-1 text-center text-[11px] leading-snug text-gray-500 dark:text-gray-400'>

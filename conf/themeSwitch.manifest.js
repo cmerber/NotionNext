@@ -9,9 +9,10 @@
  * - tier    可选；'free' | 'paid'，缺省为 'free'。面板展示对应标签，为后续付费主题预留。
  */
 
-/** @type {Record<string, { name?: string, summary?: string, cover?: string, coverWebp?: string, rootId?: string, tier?: 'free' | 'paid', settings?: Array<{ key: string, label: string, type: 'boolean' | 'text' | 'number' | 'select', defaultValue: string | number | boolean, options?: Array<{ label: string, value: string | number | boolean }> }>, palette?: Array<{ key: string, cssVar: string, label: string, defaultValue: string }> }>} */
+/** @type {Record<string, { recommended?: boolean, name?: string, summary?: string, cover?: string, coverWebp?: string, rootId?: string, tier?: 'free' | 'paid', settings?: Array<{ key: string, label: string, type: 'boolean' | 'text' | 'number' | 'select', defaultValue: string | number | boolean, options?: Array<{ label: string, value: string | number | boolean }> }>, palette?: Array<{ key: string, cssVar: string, label: string, defaultValue: string }> }>} */
 export const THEME_SWITCH_MANIFEST = {
   orange: {
+    recommended: true,
     name: 'Orange 3D · 橙子工作室',
     summary: '全屏云海浮岛，电影感运镜、昼夜流转与立体人物，探索文章、工具与成长。',
     rootId: 'theme-orange',
@@ -30,6 +31,23 @@ export const THEME_SWITCH_MANIFEST = {
       { key: 'ORANGE_COLOR_SURFACE_DARK', cssVar: '--orange-surface', label: '深色：卡片背景', defaultValue: '#23332b' },
       { key: 'ORANGE_COLOR_TEXT_DARK', cssVar: '--orange-text', label: '深色：主文字', defaultValue: '#ece8dc' },
       { key: 'ORANGE_COLOR_ACCENT_DARK', cssVar: '--orange-accent', label: '深色：强调色', defaultValue: '#ffb078' }
+    ]
+  },
+  island: {
+    name: 'Island · 云间小岛',
+    summary: '风声书屋、玻璃工坊与观星塔，和小主人、猫咪一起探索云间的生活。',
+    recommended: true,
+    rootId: 'theme-island',
+    settings: [
+      { key: 'ISLAND_SCENE_ENABLE', label: '交互立体小岛', type: 'boolean', defaultValue: true },
+      { key: 'ISLAND_AMBIENCE_ENABLE', label: '夜间萤火', type: 'boolean', defaultValue: true },
+      { key: 'ISLAND_TITLE', label: '首页标题', type: 'text', defaultValue: '在云端，留一盏灯。' }
+    ],
+    palette: [
+      { key: 'ISLAND_COLOR_BG', cssVar: '--island-bg', label: '羊皮纸背景', defaultValue: '#f3f0e6' },
+      { key: 'ISLAND_COLOR_INK', cssVar: '--island-ink', label: '森林墨色', defaultValue: '#2d453d' },
+      { key: 'ISLAND_COLOR_ACCENT', cssVar: '--island-accent', label: '苔藓绿', defaultValue: '#73896b' },
+      { key: 'ISLAND_COLOR_SURFACE', cssVar: '--island-surface', label: '信纸背景', defaultValue: '#fffdf7' }
     ]
   },
   endspace: {
@@ -566,7 +584,7 @@ function formatConfigLabel(key, themeId) {
 
 /**
  * @param {string} themeId themes 目录名
- * @returns {{ id: string, name: string, summary: string, coverPng: string, coverWebp: string | null, rootId: string | undefined, tier: 'free' | 'paid', settings: Array<{ key: string, label: string, type: 'boolean' | 'text' | 'number' | 'select', defaultValue: string | number | boolean, options?: Array<{ label: string, value: string | number | boolean }> }>, palette: Array<{ key: string, cssVar: string, label: string, defaultValue: string }> }}
+ * @returns {{ recommended: boolean, id: string, name: string, summary: string, coverPng: string, coverWebp: string | null, rootId: string | undefined, tier: 'free' | 'paid', settings: Array<{ key: string, label: string, type: 'boolean' | 'text' | 'number' | 'select', defaultValue: string | number | boolean, options?: Array<{ label: string, value: string | number | boolean }> }>, palette: Array<{ key: string, cssVar: string, label: string, defaultValue: string }> }}
  */
 export function getThemeSwitchMeta(themeId) {
   const id = themeId == null ? '' : String(themeId).trim()
@@ -607,7 +625,7 @@ export function getThemeSwitchMeta(themeId) {
       ? row.rootId.trim()
       : undefined
 
-  return { id, name, summary, coverPng, coverWebp, rootId, tier, settings, palette }
+  return { id, name, summary, coverPng, coverWebp, rootId, tier, settings, palette, recommended: row.recommended === true }
 }
 
 export function formatThemeId(id) {
