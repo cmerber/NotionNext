@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { normalizeClarity, numeric, snapshotKey, snapshotProperties, upsertSnapshot, NotionAPI, main } from '../clarity-notion.mjs'
+import { normalizeClarity, numeric, snapshotKey, snapshotProperties, upsertSnapshot, NotionAPI, main, schemaPatch } from '../clarity-notion.mjs'
 import ownerLinks from '../../lib/ownerLinks.js'
 
 const overview = [{ metricName: 'Traffic', information: [{ totalSessionCount: '12', distantUserCount: '9', totalBotSessionCount: '2', PagesPerSessionPercentage: 1.5 }] }]
@@ -72,4 +72,17 @@ test('does not match a domain containing the author name as a prefix', () => {
 test('conflicting or unknown modes never write to Notion', async () => {
   await assert.rejects(main(['--init', '--dry-run']), /只指定一种模式/)
   await assert.rejects(main(['--unknown']), /只指定一种模式/)
+})
+
+test('adopts the existing gallery without deleting its custom properties', () => {
+  const patch = schemaPatch({ Name: { type: 'title' }, 会话数: { type: 'number' }, 同步键: { type: 'rich_text' }, Tags: { type: 'multi_select' } })
+  assert.deepEqual(patch.Name, { name: '名称' })
+  assert.deepEqual(patch.采集时间, { date: {} })
+  assert.equal(patch.会话数, undefined)
+  assert.equal(patch.Tags, undefined)
+})
+
+test('rejects incompatible existing fields before returning a schema mutation', () => {
+  assert.throws(() => schemaPatch({ 名称: { type: 'title' }, 会话数: { type: 'rich_text' } }), /类型不匹配/)
+  assert.throws(() => schemaPatch({ Name: { type: 'title' }, 名称: { type: 'rich_text' } }), /占用/)
 })

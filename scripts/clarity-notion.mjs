@@ -13,6 +13,31 @@ const number = value => ({ number: value })
 const rich = value => ({ rich_text: rt(value) })
 const heading = text => ({ object: 'block', type: 'heading_2', heading_2: { rich_text: rt(text) } })
 const display = value => value === null ? '待获取' : String(value)
+const snapshotSchema = {
+  名称: { title: {} }, 同步键: { rich_text: {} }, 采集时间: { date: {} }, 统计窗口: { date: {} },
+  会话数: { number: { format: 'number' } }, 访客数: { number: { format: 'number' } },
+  机器人会话: { number: { format: 'number' } }, 每会话页面数: { number: { format: 'number' } },
+  活跃秒数: { number: { format: 'number' } }, 滚动深度: { number: { format: 'number' } },
+  项目: { rich_text: {} }, 来源: { url: {} }
+}
+
+export function schemaPatch(properties) {
+  const title = Object.entries(properties).find(([, field]) => field.type === 'title')
+  if (!title) throw new Error('快照库缺少标题字段。')
+  const patch = {}
+  if (title[0] !== '名称') {
+    if (properties.名称) throw new Error('名称字段已被其他类型占用；未更改结构。')
+    patch[title[0]] = { name: '名称' }
+  }
+  for (const [name, definition] of Object.entries(snapshotSchema)) {
+    if (name === '名称') continue
+    if (!properties[name]) patch[name] = definition
+    else if (properties[name].type !== Object.keys(definition)[0]) {
+      throw new Error(`快照库的 ${name} 字段类型不匹配；未更改结构。`)
+    }
+  }
+  return patch
+}
 
 export function numeric(value) {
   if (value === null || value === undefined || value === '') return null
@@ -183,14 +208,14 @@ async function ensureDashboard(api, notesId, pageId) {
   if (!database) {
     database = await api.request('POST', 'databases', {
       parent: { type: 'page_id', page_id: note.id }, is_inline: true,
-      title: rt(databaseTitle), properties: {
-        名称: { title: {} }, 同步键: { rich_text: {} }, 采集时间: { date: {} }, 统计窗口: { date: {} },
-        会话数: { number: { format: 'number' } }, 访客数: { number: { format: 'number' } },
-        机器人会话: { number: { format: 'number' } }, 每会话页面数: { number: { format: 'number' } },
-        活跃秒数: { number: { format: 'number' } }, 滚动深度: { number: { format: 'number' } },
-        项目: { rich_text: {} }, 来源: { url: {} }
-      }
+      title: rt(databaseTitle), properties: snapshotSchema
     })
+  } else {
+    const existingSchema = await api.request('GET', `databases/${database.id}`)
+    const patch = schemaPatch(existingSchema.properties)
+    if (Object.keys(patch).length) {
+      await api.request('PATCH', `databases/${database.id}`, { properties: patch })
+    }
   }
   return { note, database, summary: blocks.find(block => block.type === 'callout'), popular: blocks.find(block => block.type === 'paragraph' && block.paragraph.rich_text?.some(t => t.plain_text?.startsWith('热门页面：') || t.text?.content?.startsWith('热门页面：'))) }
 }
@@ -252,7 +277,7 @@ export async function main(argv = process.argv.slice(2)) {
   const dashboard = await ensureDashboard(api, notesId, pageId)
   await upsertSnapshot(api, dashboard.database.id, properties)
   await api.request('PATCH', `blocks/${dashboard.summary.id}`, { callout: { rich_text: rt(
-    `最近24小时\n会话 ${display(metrics.sessions)}　访客 ${display(metrics.users)}　机器人会话 ${display(metrics.bots)}\n每会话页面 ${display(metrics.pagesPerSession)}　活跃秒数 ${display(metrics.activeSeconds)}\n采集时间 ${payload.collectedAt} · 来源 Clarity`
+    `最近24小时：会话 ${display(metrics.sessions)}　访客 ${display(metrics.users)}　机器人会话 ${display(metrics.bots)}\n采集：${new Date(payload.collectedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}（北京时间）· Clarity`
   ) } })
   if (dashboard.popular) await api.request('PATCH', `blocks/${dashboard.popular.id}`, { paragraph: { rich_text: rt(
     '热门页面：\n' + (metrics.pages.map(p => `${p.sessions} · ${p.url}`).join('\n') || '接口暂未返回可识别的页面数据')
