@@ -12,6 +12,8 @@ import ReadingRoom from './components/ReadingRoom'
 import { ExperienceStyle } from './experienceStyle'
 import IslandStory from './components/IslandStory'
 import ThemeEntry from '@/components/ThemeEntry'
+import OwnerLinks from '@/components/OwnerLinks'
+import { ownerMenuHref } from '@/lib/ownerLinks'
 
 const postHref = post => post.href || `/article/${post.slug || post.id}`
 
@@ -31,7 +33,9 @@ function MenuLink({ link }) {
       </details>
     )
   return (
-    <SmartLink href={link.href} target={link.target}>
+    <SmartLink
+      href={ownerMenuHref(link.href)}
+      target={ownerMenuHref(link.href) === '#' ? undefined : link.target}>
       {link.name || link.title}
     </SmartLink>
   )
@@ -131,6 +135,7 @@ function LayoutBase({
       <footer className='orange-footer'>
         <SmartLink href='/'>🍊 {siteInfo?.title || '橙子星球'}</SmartLink>
         <span className='orange-footer-motto'>把每一次探索，都留在这里。</span>
+        <OwnerLinks compact />
         <SmartLink href='/about' className='orange-footer-credit'>
           由成设计与搭建 · QCODE.IM
         </SmartLink>
