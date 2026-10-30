@@ -362,7 +362,7 @@
   text-align: left;
   padding: 5px 1px;
   transition:
-    color 0.4s,
+    color 0.15s,
     transform 0.4s;
   font-weight: 400;
   flex-shrink: 0;
@@ -516,6 +516,30 @@
   min-height: 16px;
   margin: 8px 0 5px;
   line-height: 1.5;
+}
+.shareActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.shareActions select {
+  font: inherit;
+  color: inherit;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px;
+  max-width: 105px;
+}
+.copyFallback {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 7px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-size: 11px;
 }
 .collection {
   margin-top: 44px;

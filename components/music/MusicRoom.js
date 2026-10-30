@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { activeLyricIndex, parseLrc } from '@/lib/music/lyrics'
+import { copyText, lyricScrollTop, shareUrl } from '@/lib/music/player'
 import styles from './MusicRoom.module.css'
 
 const clock = time =>
@@ -75,6 +76,8 @@ export default function MusicRoom({ catalog }) {
   const audio = useRef(null)
   const lineRefs = useRef([])
   const lyricBox = useRef(null)
+  const browseTimer = useRef(null)
+  const touchStartY = useRef(null)
   const desiredPlay = useRef(false)
   const attempt = useRef(0)
   const [playing, setPlaying] = useState(false)
@@ -86,6 +89,8 @@ export default function MusicRoom({ catalog }) {
   const [repeat, setRepeat] = useState(false)
   const [notice, setNotice] = useState('')
   const [lyricsFollow, setLyricsFollow] = useState(true)
+  const [shareTarget, setShareTarget] = useState('site')
+  const [copyFallback, setCopyFallback] = useState('')
   const lines = useMemo(() => parseLrc(track?.lrcText), [track?.lrcText])
   const active = activeLyricIndex(lines, time)
 
@@ -108,6 +113,8 @@ export default function MusicRoom({ catalog }) {
     setTime(0)
     setDuration(track.duration)
     setNotice('')
+    setCopyFallback('')
+    clearTimeout(browseTimer.current)
     setLyricsFollow(true)
     player.load()
     if (desiredPlay.current) {
@@ -120,6 +127,34 @@ export default function MusicRoom({ catalog }) {
       })
     }
   }, [track])
+
+  useEffect(() => () => clearTimeout(browseTimer.current), [])
+
+  useEffect(() => {
+    if (!playing || typeof window.requestAnimationFrame !== 'function') return
+    let frame
+    let lastUpdate = 0
+    const followMediaClock = now => {
+      if (now - lastUpdate >= 50) {
+        setTime(audio.current?.currentTime || 0)
+        lastUpdate = now
+      }
+      frame = window.requestAnimationFrame(followMediaClock)
+    }
+    frame = window.requestAnimationFrame(followMediaClock)
+    return () => window.cancelAnimationFrame(frame)
+  }, [playing, track])
+
+  const resumeLyrics = () => {
+    clearTimeout(browseTimer.current)
+    setTime(audio.current?.currentTime || 0)
+    setLyricsFollow(true)
+  }
+  const browseLyrics = () => {
+    clearTimeout(browseTimer.current)
+    setLyricsFollow(false)
+    browseTimer.current = setTimeout(resumeLyrics, 4000)
+  }
 
   useEffect(() => {
     if (audio.current) {
@@ -134,11 +169,7 @@ export default function MusicRoom({ catalog }) {
     const line = lineRefs.current[active]
     if (box && line)
       box.scrollTo({
-        top:
-          line.offsetTop -
-          box.offsetTop -
-          box.clientHeight / 2 +
-          line.clientHeight / 2,
+        top: lyricScrollTop(box, line),
         behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
           ? 'auto'
           : 'smooth'
@@ -224,22 +255,21 @@ export default function MusicRoom({ catalog }) {
     if (!audio.current || !Number.isFinite(next)) return
     audio.current.currentTime = Math.max(0, Math.min(next, duration))
     setTime(audio.current.currentTime)
+    resumeLyrics()
   }
   const share = async () => {
-    const url = `${window.location.origin}/music#${track.id}`
+    const url = shareUrl(track, shareTarget, window.location.origin)
     try {
-      if (navigator.share)
-        await navigator.share({
-          title: `${track.title} · ${track.artist}`,
-          url
-        })
-      else {
-        await navigator.clipboard.writeText(url)
-        setNotice('歌曲链接已复制，分享给想一起听的人。')
-      }
-    } catch (error) {
-      if (error.name !== 'AbortError')
-        setNotice('可以复制浏览器地址，分享这首歌。')
+      await copyText(url)
+      setCopyFallback('')
+      setNotice(
+        shareTarget === 'qq' && url.includes('y.qq.com')
+          ? 'QQ 音乐歌曲链接已复制。'
+          : '本站歌曲链接已复制。'
+      )
+    } catch {
+      setCopyFallback(url)
+      setNotice('浏览器未允许自动复制，可选中下方链接复制。')
     }
   }
   if (!track)
@@ -326,10 +356,13 @@ export default function MusicRoom({ catalog }) {
             <span>歌词 / LYRICS</span>
             <button
               type='button'
-              onClick={() => setLyricsFollow(!lyricsFollow)}
+              onClick={() => {
+                if (lyricsFollow) browseLyrics()
+                else resumeLyrics()
+              }}
               aria-pressed={lyricsFollow}
             >
-              {lyricsFollow ? '随音乐滚动 ↘' : '恢复跟随 ↘'}
+              {lyricsFollow ? '歌词跟随中 ↘' : '恢复跟随 · 4 秒后自动恢复 ↘'}
             </button>
           </div>
           <div
@@ -337,8 +370,35 @@ export default function MusicRoom({ catalog }) {
             className={styles.lyrics}
             tabIndex={0}
             aria-label='滚动歌词，点击歌词跳到对应时间'
-            onWheel={() => setLyricsFollow(false)}
-            onTouchStart={() => setLyricsFollow(false)}
+            onWheel={event => {
+              if (event.deltaY) browseLyrics()
+            }}
+            onTouchStart={event => {
+              touchStartY.current = event.touches[0]?.clientY ?? null
+            }}
+            onTouchMove={event => {
+              if (
+                touchStartY.current !== null &&
+                Math.abs(
+                  (event.touches[0]?.clientY ?? touchStartY.current) -
+                    touchStartY.current
+                ) > 8
+              )
+                browseLyrics()
+            }}
+            onKeyDown={event => {
+              if (
+                [
+                  'ArrowUp',
+                  'ArrowDown',
+                  'PageUp',
+                  'PageDown',
+                  'Home',
+                  'End'
+                ].includes(event.key)
+              )
+                browseLyrics()
+            }}
           >
             {lines.length ? (
               <div className={styles.lyricLines}>
@@ -462,13 +522,41 @@ export default function MusicRoom({ catalog }) {
                 LRC 歌词 ↗
               </a>
             )}
-            <button type='button' onClick={share}>
-              <Icon name='share' width='16' height='16' /> 分享这首
-            </button>
+            <div className={styles.shareActions}>
+              <select
+                aria-label='分享链接类型'
+                value={shareTarget}
+                onChange={event => {
+                  setShareTarget(event.target.value)
+                  setCopyFallback('')
+                }}
+              >
+                <option value='site'>本站歌曲</option>
+                {shareUrl(track, 'qq', '').startsWith('https://y.qq.com/') && (
+                  <option value='qq'>QQ 音乐</option>
+                )}
+              </select>
+              <button
+                type='button'
+                onClick={share}
+                title='直接复制所选歌曲链接'
+              >
+                <Icon name='share' width='16' height='16' /> 复制链接
+              </button>
+            </div>
           </div>
           <p className={styles.notice} role='status'>
             {notice || (loading ? '正在连接这段旋律…' : '\u00a0')}
           </p>
+          {copyFallback && (
+            <input
+              className={styles.copyFallback}
+              aria-label='待复制的歌曲链接'
+              readOnly
+              value={copyFallback}
+              onFocus={event => event.target.select()}
+            />
+          )}
         </div>
         <audio
           ref={audio}
@@ -480,7 +568,9 @@ export default function MusicRoom({ catalog }) {
               setDuration(audio.current.duration)
           }}
           onTimeUpdate={() => setTime(audio.current.currentTime)}
+          onSeeked={resumeLyrics}
           onPlaying={() => {
+            resumeLyrics()
             setPlaying(true)
             setLoading(false)
           }}
