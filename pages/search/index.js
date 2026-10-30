@@ -2,6 +2,7 @@ import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
 import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
 import { DynamicLayout } from '@/themes/theme'
+import { filterSearchPosts, searchKeyword } from '@/lib/search/filterPosts'
 import { useRouter } from 'next/router'
 
 /**
@@ -13,21 +14,8 @@ const Search = props => {
   const { posts } = props
 
   const router = useRouter()
-  const keyword = router?.query?.s
-
-  let filteredPosts
-  // 静态过滤
-  if (keyword) {
-    filteredPosts = posts.filter(post => {
-      const tagContent = post?.tags ? post?.tags.join(' ') : ''
-      const categoryContent = post.category ? post.category.join(' ') : ''
-      const searchContent =
-        post.title + post.summary + tagContent + categoryContent
-      return searchContent.toLowerCase().includes(keyword.toLowerCase())
-    })
-  } else {
-    filteredPosts = []
-  }
+  const keyword = searchKeyword(router?.query?.s)
+  const filteredPosts = filterSearchPosts(posts, keyword)
 
   props = {
     ...props,
