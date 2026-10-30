@@ -34,7 +34,7 @@
 | 色调 | 单选 | dusk 或 spring |
 | QQ音乐、酷狗音乐、网易云音乐、B站 | URL | 歌曲或音乐人主页 |
 
-GitHub 仓库 Secrets 保存 `NOTION_MUSIC_TOKEN` 和 `NOTION_MUSIC_DATABASE_ID`，不在代码、网页或日志中保存令牌。该连接只需访问音乐管理页及其子数据库。
+GitHub 仓库 Secrets 保存 `NOTION_MUSIC_TOKEN` 和 `NOTION_MUSIC_DATABASE_ID`，不在代码、网页或日志中保存令牌。该连接只需访问音乐管理页及其子数据库。配置并验证后，将仓库变量 `NOTION_MUSIC_ENABLED` 设为 `true` 启用同步；未配置时跳过任务。
 
 工作流 `Sync music from Notion` 支持手动触发，并在每小时第 17 分钟尝试同步（GitHub 排队可能延迟）。同步把 Notion 的限时附件复制到仓库的稳定资源路径，提交变更后由现有 Vercel Git 集成构建网站。无内容变化不提交。任何公开歌曲缺少音频、下载失败、歌词越界或平台链接不合法时，同步失败并保留上一版目录；不会发布一半的目录。GitHub Actions 页面可查看每次成功或失败结果。
 

@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   sync:
+    if: ${{ vars.NOTION_MUSIC_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
