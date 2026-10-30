@@ -351,7 +351,8 @@
   align-items: flex-start;
   gap: 0;
 }
-.lyricLines button {
+.lyricLines button,
+:global(#theme-orange) .lyricLines button {
   color: #a2a48f;
   display: block;
   background: none;
@@ -368,12 +369,14 @@
   flex-shrink: 0;
   transform-origin: left;
 }
-.lyricLines .activeLine {
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 600;
+.lyricLines .activeLine,
+:global(#theme-orange) .lyricLines .activeLine {
+  color: #a64f2e;
+  font-size: 20px;
+  font-weight: 700;
 }
-.lyricLines button:hover {
+.lyricLines button:hover,
+:global(#theme-orange) .lyricLines button:hover {
   color: var(--accent);
 }
 .noLyrics {
@@ -762,11 +765,13 @@
 :global(.dark) .intro h1 > span {
   color: #a2af95;
 }
-:global(.dark) .lyricLines button {
+:global(.dark) .lyricLines button,
+:global(.dark) :global(#theme-orange) .lyricLines button {
   color: #7d8b74;
 }
-:global(.dark) .lyricLines .activeLine {
-  color: #e9ddba;
+:global(.dark) .lyricLines .activeLine,
+:global(.dark) :global(#theme-orange) .lyricLines .activeLine {
+  color: #efbf8f;
 }
 :global(.dark) .artistCard {
   background: #2b4030;

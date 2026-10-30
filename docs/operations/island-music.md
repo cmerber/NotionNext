@@ -44,6 +44,10 @@ GitHub 仓库 Secrets 保存 `NOTION_MUSIC_TOKEN` 和 `NOTION_MUSIC_DATABASE_ID`
 
 2026-10-30 已完成首次云端同步验证：[成功任务 41032046405](https://github.com/cmerber/NotionNext/actions/runs/41032046405)，同步产生的提交 `aa26b3f9a27c21d6bfce69a7cfb9a8b6dfc4b7dd` 已由 Vercel 成功部署。此前零 job 的异常队列记录不阻挡这次新任务。每小时触发已启用；GitHub 调度和网站构建仍需要时间。
 
+## 独立音乐仓库
+
+[晴岑来音乐作品集](https://github.com/cmerber/qing-cen-lai-music) 单独保存两首歌曲的原 MP3、封面、LRC 和公开目录，README 提供 qcode.im/music、QQ 音乐歌手主页及单曲入口。该仓库独立从同一个 Notion 音乐库同步，每小时第 27 分钟尝试更新，首次云端任务 [41036558808](https://github.com/cmerber/qing-cen-lai-music/actions/runs/41036558808) 已成功。网站仍按原来的第 17 分钟同步。
+
 ## 验证
 
 `node --test scripts/tests/music-sync.test.mjs scripts/tests/music-player.test.mjs` 验证时间轴边界、真实曲目资产、仅公开勾选行同步、附件落地、令牌不进入目录、错误回退、歌词可见区域定位、歌曲链接和直接复制降级。浏览器另行验证实际媒体加载、进度、切歌、歌词、复制内容和布局。
