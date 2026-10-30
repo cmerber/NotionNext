@@ -35,7 +35,8 @@ function MenuLink({ link }) {
   return (
     <SmartLink
       href={ownerMenuHref(link.href)}
-      target={ownerMenuHref(link.href) === '#' ? undefined : link.target}>
+      target={ownerMenuHref(link.href) === '#' ? undefined : link.target}
+    >
       {link.name || link.title}
     </SmartLink>
   )
@@ -86,6 +87,12 @@ function LayoutBase({
             实用工具
           </SmartLink>
           <SmartLink
+            href='/music'
+            aria-current={path.startsWith('/music') ? 'page' : undefined}
+          >
+            小岛声场
+          </SmartLink>
+          <SmartLink
             href='/profile'
             aria-current={path.startsWith('/profile') ? 'page' : undefined}
           >
@@ -103,9 +110,14 @@ function LayoutBase({
                 link.show !== false &&
                 link.href &&
                 (link.subMenus?.length ||
-                  !['/', '/archive', '/tools', '/profile', '/about'].includes(
-                    link.href
-                  ))
+                  ![
+                    '/',
+                    '/archive',
+                    '/tools',
+                    '/music',
+                    '/profile',
+                    '/about'
+                  ].includes(link.href))
             )
             .map((link, index) => (
               <MenuLink key={link.id || `${link.href}-${index}`} link={link} />
