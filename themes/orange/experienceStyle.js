@@ -1149,7 +1149,7 @@ export function ExperienceStyle() {
           .orange-header
           .orange-brand {
           grid-column: 1 / -1;
-          max-width: calc(100% - 80px);
+          max-width: calc(100% - 120px);
           font-size: 18px;
         }
         #theme-orange:not(:has(.orange-immersive))
@@ -1192,6 +1192,12 @@ export function ExperienceStyle() {
         #theme-orange:not(:has(.orange-immersive))
           .orange-header
           a.orange-round-button {
+          min-height: 32px;
+          right: 80px;
+        }
+        #theme-orange:not(:has(.orange-immersive))
+          .orange-header
+          button.orange-round-button[aria-label='切换主题'] {
           right: 40px;
         }
         #theme-orange .orange-header {
