@@ -411,6 +411,15 @@ const getSEOMeta = (props, router, locale) => {
         slug: 'tools',
         type: 'website'
       }
+    case '/music':
+      return {
+        title: `小岛声场 · 晴岑来的音乐 | ${siteInfo?.title || '橙子星球'}`,
+        description:
+          '晴岑来的小岛声场。在线收听《晚点也没关系》《羊光正好》，跟着歌词听歌，下载音乐，分享生活里的旋律。',
+        image: 'https://qcode.im/music/wan-dian.jpg',
+        slug: 'music',
+        type: 'website'
+      }
     case '/page/[page]':
       return {
         title: `${page} | Page | ${siteInfo?.title}`,
