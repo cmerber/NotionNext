@@ -152,6 +152,8 @@ export function ExperienceStyle() {
       #theme-orange .orange-post-cover {
         display: block;
         position: relative;
+        width: 100%;
+        height: auto;
         aspect-ratio: 1.65;
         overflow: hidden;
         border-bottom: 1px solid var(--orange-line);
