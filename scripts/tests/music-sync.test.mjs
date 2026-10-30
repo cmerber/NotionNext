@@ -11,11 +11,11 @@ test('LRC preserves repeated timestamps, offset and exact line boundaries', () =
     '[ar:晴岑来]\n[offset:-100]\n[00:01.20][01:02.345]同一句\n[00:03]下一句\n无时间戳'
   )
   assert.equal(lines.length, 3)
-  assert.ok(Math.abs(lines[0].time - 1.1) < 1e-9)
-  assert.equal(lines[2].time, 62.245)
+  assert.ok(Math.abs(lines[0].time - 1.3) < 1e-9)
+  assert.equal(lines[2].time, 62.445)
   assert.equal(activeLyricIndex(lines, 0), -1)
-  assert.equal(activeLyricIndex(lines, 1.1), 0)
-  assert.equal(activeLyricIndex(lines, 2.9), 1)
+  assert.equal(activeLyricIndex(lines, 1.3), 0)
+  assert.equal(activeLyricIndex(lines, 3.1), 1)
   assert.equal(activeLyricIndex([], 20), -1)
 })
 

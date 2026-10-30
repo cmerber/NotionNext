@@ -90,9 +90,13 @@ export default function MusicRoom({ catalog }) {
   const active = activeLyricIndex(lines, time)
 
   useEffect(() => {
-    const hash = decodeURIComponent(window.location.hash.slice(1))
-    const found = tracks.findIndex(item => item.id === hash)
-    if (found >= 0) setIndex(found)
+    try {
+      const hash = decodeURIComponent(window.location.hash.slice(1))
+      const found = tracks.findIndex(item => item.id === hash)
+      if (found >= 0) setIndex(found)
+    } catch {
+      // An invalid URL fragment should not prevent playback.
+    }
   }, [tracks])
 
   useEffect(() => {
@@ -142,7 +146,12 @@ export default function MusicRoom({ catalog }) {
   }, [active, lyricsFollow])
 
   useEffect(() => {
-    if (!track || !('mediaSession' in navigator)) return
+    if (
+      !track ||
+      !('mediaSession' in navigator) ||
+      !('MediaMetadata' in window)
+    )
+      return
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: track.artist,
@@ -151,13 +160,21 @@ export default function MusicRoom({ catalog }) {
         {
           src: new URL(track.cover, window.location.origin).href,
           sizes: '360x360',
-          type: 'image/jpeg'
+          type: track.cover.endsWith('.png') ? 'image/png' : 'image/jpeg'
         }
       ]
     })
     const handlers = {
-      play: () => audio.current?.play().catch(() => {}),
-      pause: () => audio.current?.pause(),
+      play: () => {
+        desiredPlay.current = true
+        audio.current?.play().catch(() => {
+          desiredPlay.current = false
+        })
+      },
+      pause: () => {
+        desiredPlay.current = false
+        audio.current?.pause()
+      },
       previoustrack: () => choose((index - 1 + tracks.length) % tracks.length),
       nexttrack: () => choose((index + 1) % tracks.length)
     }
@@ -179,7 +196,7 @@ export default function MusicRoom({ catalog }) {
 
   const choose = next => {
     if (next === index) return
-    desiredPlay.current = playing || loading
+    desiredPlay.current = !audio.current?.paused || desiredPlay.current
     audio.current?.pause()
     setIndex(next)
     window.history.replaceState(null, '', `#${tracks[next].id}`)
