@@ -1,5 +1,5 @@
 const CONFIG = {
-  ORANGE_TITLE: '把日子，过成一颗星球。',
+  ORANGE_TITLE: '把日子，写成诗，也唱成歌。',
   ORANGE_DESCRIPTION:
     '写代码，做研究，也认真生活。欢迎来我的小小工作室坐一坐。',
   ORANGE_SCENE_ENABLE: true,

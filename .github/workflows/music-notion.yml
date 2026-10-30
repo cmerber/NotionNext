@@ -1,0 +1,38 @@
+name: Sync music from Notion
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: notion-music-catalog
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Copy published music and expiring Notion attachments
+        env:
+          NOTION_MUSIC_TOKEN: ${{ secrets.NOTION_MUSIC_TOKEN }}
+          NOTION_MUSIC_DATABASE_ID: ${{ secrets.NOTION_MUSIC_DATABASE_ID }}
+        run: node scripts/music-sync.mjs
+      - name: Save changed catalog
+        run: |
+          git add public/music
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Sync published music from Notion [skip-version]'
+          git pull --rebase origin main
+          git push origin HEAD:main

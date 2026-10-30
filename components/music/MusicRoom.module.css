@@ -1,0 +1,1056 @@
+.room {
+  --paper: #f7f4eb;
+  --ink: #293d33;
+  --muted: #7c8171;
+  --accent: #ae613d;
+  --line: #d9d9ca;
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 56px 46px 18px;
+  color: var(--ink);
+  font-family: inherit;
+}
+.room * {
+  box-sizing: border-box;
+}
+.room button,
+.room a,
+.room input {
+  -webkit-tap-highlight-color: transparent;
+}
+.room button {
+  font: inherit;
+  cursor: pointer;
+}
+.room button:focus-visible,
+.room a:focus-visible,
+.room input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 5px;
+}
+.room a {
+  text-decoration: none;
+}
+.intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 37px;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 10px !important;
+  letter-spacing: 2.2px;
+  font-weight: 500;
+  margin: 0 0 15px !important;
+}
+.eyebrow > span {
+  width: 6px;
+  height: 6px;
+  background: #78885c;
+  border-radius: 50%;
+}
+.intro h1 {
+  font-family: 'Noto Serif SC', 'Songti SC', SimSun, serif;
+  font-weight: 500;
+  font-size: 52px;
+  letter-spacing: 1px;
+  line-height: 1.25;
+  margin: 0;
+}
+.intro h1 > span {
+  font-family: inherit;
+  display: inline-block;
+  font-size: 20px;
+  letter-spacing: 1px;
+  margin-left: 27px;
+  color: #7d816c;
+}
+.introNote {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.9;
+  flex-shrink: 0;
+  margin: 0 0 3px;
+  border-left: 1px solid var(--line);
+  padding-left: 23px;
+}
+.player {
+  display: grid;
+  grid-template-columns: 1.02fr 1fr;
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: 0 18px 40px -35px #3d4229;
+  overflow: hidden;
+}
+.deck {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  background: #e5e4ce;
+  background-image:
+    radial-gradient(ellipse at 80% 5%, #f3dfac9c, transparent 55%),
+    radial-gradient(ellipse at 0% 100%, #a9beaa77, transparent 60%);
+  padding: 24px 25px;
+  color: #626958;
+  border-right: 1px solid var(--line);
+}
+.deckTop,
+.deckBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+.deckTop {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #929a793b;
+}
+.recordStage {
+  position: relative;
+  aspect-ratio: 1.06;
+  display: grid;
+  place-items: center;
+  margin: 22px 0 25px;
+}
+.record {
+  position: relative;
+  width: 83%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle at center,
+    #202623 0px,
+    #202623 1px,
+    #303832 1.3px,
+    #171e1a 2px,
+    #222a24 3px
+  );
+  box-shadow:
+    7px 15px 20px #303d3335,
+    -1px -1px 1px #ffffff44;
+  animation: spin 22s linear infinite;
+  animation-play-state: paused;
+  isolation: isolate;
+}
+.record:before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 40deg,
+    transparent 0deg,
+    #fff2 32deg,
+    transparent 65deg,
+    transparent 185deg,
+    #fff2 225deg,
+    transparent 260deg
+  );
+  z-index: -1;
+}
+.room[data-playing='true'] .record {
+  animation-play-state: running;
+}
+.recordLabel {
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  border: 5px solid #b18a50;
+  background: #b18a50;
+  overflow: hidden;
+}
+.recordLabel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.spindle {
+  position: absolute;
+  left: calc(50% - 5px);
+  top: calc(50% - 5px);
+  height: 10px;
+  width: 10px;
+  border: 3px solid #d3d0b9;
+  background: #22382b;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #2c3b31;
+}
+.orbit {
+  position: absolute;
+  inset: 2%;
+  border: 1px solid #a7ae8f55;
+  border-radius: 50%;
+}
+.orbit:before {
+  content: '✳';
+  position: absolute;
+  bottom: 12%;
+  left: 7%;
+  color: #7d8d5d;
+  font-size: 19px;
+  background: #dedfcd;
+  padding: 6px;
+}
+.tonearm {
+  position: absolute;
+  right: 1%;
+  top: 8%;
+  width: 13px;
+  height: 66%;
+  border: 4px solid #9b9c89;
+  border-top: 25px solid #535b4c;
+  transform-origin: 50% 15px;
+  transform: rotate(-18deg);
+  border-radius: 10px 10px 0 8px;
+  transition: transform 0.8s ease;
+  box-shadow: 3px 2px 3px #36432d22;
+}
+.tonearm:before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: -9px;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #c6c7b4 20%,
+    #737e68 25%,
+    #a5a78f 55%,
+    #69775d 60%
+  );
+  box-shadow: 2px 3px 7px #43503966;
+}
+.tonearm i {
+  position: absolute;
+  bottom: -11px;
+  left: -5px;
+  width: 15px;
+  height: 30px;
+  background: #59664f;
+  border-radius: 2px;
+  transform: rotate(12deg);
+}
+.room[data-playing='true'] .tonearm {
+  transform: rotate(7deg);
+}
+.sideLabel {
+  position: absolute;
+  bottom: -12px;
+  left: 8%;
+  font-size: 8px;
+  letter-spacing: 2px;
+}
+.deckBottom {
+  border-top: 1px solid #929a793b;
+  padding-top: 20px;
+  font-size: 8px;
+}
+.signal {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  height: 16px;
+}
+.signal i {
+  width: 2px;
+  height: calc(5px + var(--n) * 2px);
+  background: #72835d;
+  animation: equalize 0.8s ease-in-out infinite alternate;
+  animation-delay: calc(var(--n) * -0.17s);
+  animation-play-state: paused;
+}
+.signal b {
+  font-size: 8px;
+  font-weight: 400;
+  margin-left: 6px;
+}
+.room[data-playing='true'] .signal i {
+  animation-play-state: running;
+}
+.console {
+  padding: 28px 35px 0;
+  min-width: 0;
+}
+.songMeta {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.songMeta > span:first-child {
+  color: var(--accent);
+}
+.console h2 {
+  font-family: 'Noto Serif SC', 'Songti SC', SimSun, serif;
+  font-size: 32px;
+  line-height: 1.3;
+  letter-spacing: 1px;
+  font-weight: 500;
+  margin: 0 0 9px;
+}
+.artist {
+  font-size: 12px;
+  margin: 0 0 13px;
+  color: #66735f;
+}
+.artist span {
+  padding: 0 8px;
+  color: #a9ae99;
+}
+.description {
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+.lyricHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  letter-spacing: 1.3px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 11px;
+}
+.lyricHeader button {
+  font-size: 9px;
+  letter-spacing: 0;
+  background: none;
+  color: var(--muted);
+  border: 0;
+  padding: 0;
+}
+.lyrics {
+  position: relative;
+  height: 150px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  mask-image: linear-gradient(transparent, #000 15%, #000 85%, transparent);
+  margin: 5px 0 13px;
+}
+.lyrics::-webkit-scrollbar {
+  display: none;
+}
+.lyricLines {
+  padding: 55px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+.lyricLines button {
+  color: #a2a48f;
+  display: block;
+  background: none;
+  border: none;
+  min-height: 35px;
+  line-height: 1.6;
+  font-size: 13px;
+  text-align: left;
+  padding: 5px 1px;
+  transition:
+    color 0.4s,
+    transform 0.4s;
+  font-weight: 400;
+  flex-shrink: 0;
+  transform-origin: left;
+}
+.lyricLines .activeLine {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+.lyricLines button:hover {
+  color: var(--accent);
+}
+.noLyrics {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 2;
+  padding: 22px 0;
+}
+.noLyrics small {
+  font-size: 11px;
+}
+.progress input {
+  --progress: 0%;
+  width: 100%;
+  margin: 0;
+  display: block;
+  appearance: none;
+  height: 3px;
+  border-radius: 5px;
+  background: linear-gradient(
+    to right,
+    var(--accent) var(--progress),
+    #d9dbca var(--progress)
+  );
+  cursor: pointer;
+}
+.progress input::-webkit-slider-thumb {
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--paper);
+}
+.progress input::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent);
+}
+.progress > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  margin-top: 10px;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px 0 18px;
+  gap: 10px;
+}
+.controls button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  color: #6c7765;
+  background: transparent;
+  padding: 6px;
+  position: relative;
+}
+.controls button:hover {
+  color: var(--accent);
+}
+.controls .enabled {
+  color: var(--accent);
+}
+.controls sup {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 8px;
+}
+.transport {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-left: 46px;
+}
+.controls .playButton {
+  height: 52px;
+  width: 52px;
+  border-radius: 50%;
+  background: #344b3b;
+  color: #faf6e9;
+  box-shadow: 0 5px 10px #223d2820;
+  transition: transform 0.2s;
+}
+.controls .playButton:hover {
+  transform: scale(1.05);
+  color: #f6daa9;
+}
+.volume {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.volume input {
+  width: 40px;
+  height: 2px;
+  accent-color: #77856c;
+  cursor: pointer;
+}
+.songActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0 0;
+  border-top: 1px solid var(--line);
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: #69755f;
+}
+.songActions a,
+.songActions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  color: inherit;
+}
+.songActions a:hover,
+.songActions button:hover {
+  color: var(--accent);
+}
+.songActions button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 10px;
+}
+.notice {
+  font-size: 10px;
+  color: var(--accent);
+  min-height: 16px;
+  margin: 8px 0 5px;
+  line-height: 1.5;
+}
+.collection {
+  margin-top: 44px;
+}
+.sectionHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 17px;
+}
+.sectionHeading h2 {
+  font-family: 'Noto Serif SC', 'Songti SC', SimSun, serif;
+  font-weight: 500;
+  letter-spacing: 1px;
+  font-size: 21px;
+  margin: 0;
+}
+.sectionHeading > span {
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  color: var(--muted);
+}
+.trackList {
+  border-top: 1px solid var(--line);
+}
+.trackRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 17px 16px 17px 8px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  transition: background 0.2s;
+}
+.trackRow:hover,
+.selectedTrack {
+  background: #dfe3d43b;
+}
+.trackNumber {
+  font-size: 10px;
+  color: var(--muted);
+  width: 22px;
+  flex-shrink: 0;
+}
+.trackRow img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 3px;
+}
+.trackName {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 140px;
+}
+.trackName strong {
+  font-weight: 500;
+  font-size: 15px;
+}
+.trackName small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.rowDescription {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: auto;
+}
+.rowTime {
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: 42px;
+  font-variant-numeric: tabular-nums;
+}
+.rowPlay {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #cdd3be;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-left: 10px;
+}
+.selectedTrack .rowPlay {
+  background: #3c513d;
+  color: #fff;
+  border-color: #3c513d;
+}
+.artistCard {
+  display: flex;
+  align-items: center;
+  gap: 38px;
+  margin-top: 43px;
+  padding: 31px 35px;
+  background: #e5e8db;
+  border-radius: 5px;
+  border: 1px solid #d6dcc9;
+}
+.artistMark {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 115px;
+  height: 133px;
+  flex-shrink: 0;
+  background: #d0d9bb;
+  border: 1px solid #aebd92;
+  font-family: 'Noto Serif SC', 'Songti SC', SimSun, serif;
+  font-size: 48px;
+  line-height: 1;
+}
+.artistMark span {
+  font-size: 20px;
+  letter-spacing: 4px;
+  margin-top: 10px;
+  padding-left: 5px;
+}
+.artistMark i {
+  position: absolute;
+  top: -11px;
+  right: -10px;
+  font-size: 30px;
+  color: #a97144;
+  font-style: normal;
+}
+.artistBio h2 {
+  font-size: 23px;
+  letter-spacing: 1px;
+  margin: 0 0 12px;
+  font-family: 'Noto Serif SC', 'Songti SC', SimSun, serif;
+  font-weight: 500;
+}
+.artistBio .eyebrow {
+  font-size: 8px !important;
+  letter-spacing: 2px;
+  margin: 0 0 12px !important;
+  color: #78806a;
+}
+.artistBio > p:not(.eyebrow) {
+  color: #6b765f;
+  font-size: 11px;
+  line-height: 1.9;
+  margin: 0 0 16px;
+}
+.platforms {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.platforms a {
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #b7c4a5;
+  padding: 8px 12px;
+  border-radius: 2px;
+  color: #495c3b;
+  transition: background 0.2s;
+}
+.platforms a:hover {
+  background: #d2ddc4;
+}
+.platformNote {
+  display: block;
+  color: #78836c;
+  font-size: 9px;
+  margin-top: 8px;
+}
+.artistAside {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #8c977a;
+  margin-left: auto;
+  letter-spacing: 1px;
+  align-self: flex-end;
+}
+.footnote {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 30px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+.footnote span {
+  font-size: 8px;
+  letter-spacing: 1.3px;
+}
+:global(.dark) .room {
+  --paper: #23342c;
+  --ink: #e5e7d6;
+  --muted: #a2ac96;
+  --accent: #dfaa7c;
+  --line: #465543;
+}
+:global(.dark) .deck {
+  background: #334a3a;
+  background-image: radial-gradient(
+    ellipse at top right,
+    #a28c5333,
+    transparent 65%
+  );
+  color: #b9c5a6;
+}
+:global(.dark) .console .artist {
+  color: #b2bda5;
+}
+:global(.dark) .intro h1 > span {
+  color: #a2af95;
+}
+:global(.dark) .lyricLines button {
+  color: #7d8b74;
+}
+:global(.dark) .lyricLines .activeLine {
+  color: #e9ddba;
+}
+:global(.dark) .artistCard {
+  background: #2b4030;
+  border-color: #4b5b40;
+}
+:global(.dark) .artistBio > p:not(.eyebrow),
+:global(.dark) .platformNote {
+  color: #b1bea2;
+}
+:global(.dark) .artistMark {
+  background: #425a39;
+  color: #e1d7b7;
+  border-color: #7b8a62;
+}
+:global(.dark) .platforms a {
+  color: #c4d2b3;
+  border-color: #697d54;
+}
+:global(.dark) .platforms a:hover {
+  background: #465a38;
+}
+:global(.dark) .controls button,
+:global(.dark) .songActions {
+  color: #c0c9b4;
+}
+:global(.dark) .orbit:before {
+  background: #354c3b;
+}
+:global(.dark) .controls .playButton {
+  background: #b8c7a0;
+  color: #263929;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes equalize {
+  from {
+    transform: scaleY(0.5);
+  }
+  to {
+    transform: scaleY(1.3);
+  }
+}
+@media (min-width: 1400px) {
+  .room {
+    padding-top: 65px;
+  }
+  .lyrics {
+    height: 175px;
+  }
+  .console {
+    padding-top: 32px;
+  }
+  .description {
+    margin-bottom: 23px;
+  }
+  .recordStage {
+    margin-top: 30px;
+    margin-bottom: 33px;
+  }
+}
+@media (max-width: 1000px) {
+  .room {
+    padding: 35px 25px 18px;
+  }
+  .intro h1 {
+    font-size: 42px;
+  }
+  .intro h1 > span {
+    display: block;
+    margin: 10px 0 0;
+    font-size: 17px;
+  }
+  .console {
+    padding: 24px 23px 0;
+  }
+  .console h2 {
+    font-size: 27px;
+  }
+  .deck {
+    padding: 22px 18px;
+  }
+  .deckBottom {
+    flex-wrap: wrap;
+  }
+  .transport {
+    margin-left: 5px;
+    gap: 10px;
+  }
+  .lyrics {
+    height: 140px;
+  }
+  .rowDescription {
+    display: none;
+  }
+  .rowTime {
+    margin-left: auto;
+  }
+  .artistAside {
+    display: none;
+  }
+}
+@media (max-width: 650px) {
+  .room {
+    padding: 25px 18px 12px;
+  }
+  .intro {
+    display: block;
+    margin-bottom: 24px;
+  }
+  .intro h1 {
+    font-size: 37px;
+  }
+  .intro h1 > span {
+    display: inline-block;
+    margin: 0 0 0 17px;
+    font-size: 15px;
+    letter-spacing: 0;
+  }
+  .introNote {
+    border: 0;
+    padding: 0;
+    margin-top: 18px;
+    font-size: 11px;
+    line-height: 1.8;
+  }
+  .introNote br {
+    display: none;
+  }
+  .introNote br:after {
+    content: ' ';
+  }
+  .eyebrow {
+    font-size: 8px !important;
+    letter-spacing: 1.6px;
+    margin-bottom: 12px !important;
+  }
+  .player {
+    grid-template-columns: 1fr;
+    border-radius: 5px;
+  }
+  .deck {
+    padding: 18px 22px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .deckTop {
+    font-size: 8px;
+  }
+  .recordStage {
+    max-width: 310px;
+    width: 100%;
+    margin: 10px auto 13px;
+    aspect-ratio: 1.15;
+  }
+  .record {
+    width: 77%;
+  }
+  .orbit {
+    inset: 3% 9%;
+  }
+  .tonearm {
+    right: 9%;
+    height: 62%;
+  }
+  .sideLabel {
+    left: 11%;
+    bottom: 0;
+    font-size: 7px;
+  }
+  .deckBottom {
+    padding-top: 12px;
+    flex-wrap: nowrap;
+    font-size: 7px;
+  }
+  .deckBottom > span:last-child {
+    font-size: 7px;
+    letter-spacing: 0.7px;
+  }
+  .console {
+    padding: 25px 25px 4px;
+  }
+  .console h2 {
+    font-size: 29px;
+  }
+  .description {
+    font-size: 11px;
+    margin-bottom: 19px;
+  }
+  .lyrics {
+    height: 151px;
+  }
+  .songMeta {
+    font-size: 9px;
+  }
+  .controls {
+    margin-top: 9px;
+  }
+  .transport {
+    margin-left: 26px;
+    gap: 22px;
+  }
+  .volume input {
+    display: none;
+  }
+  .collection {
+    margin-top: 31px;
+  }
+  .sectionHeading h2 {
+    font-size: 18px;
+  }
+  .sectionHeading > span {
+    font-size: 7px;
+    letter-spacing: 0.5px;
+  }
+  .trackRow {
+    gap: 11px;
+    padding: 15px 1px;
+  }
+  .trackRow img {
+    height: 43px;
+    width: 43px;
+  }
+  .trackNumber {
+    width: 15px;
+    font-size: 9px;
+  }
+  .trackName {
+    min-width: 0;
+    gap: 6px;
+  }
+  .trackName strong {
+    font-size: 13px;
+  }
+  .trackName small {
+    font-size: 9px;
+  }
+  .rowTime {
+    font-size: 9px;
+  }
+  .rowPlay {
+    margin-left: 0;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+  }
+  .artistCard {
+    padding: 25px 20px;
+    gap: 20px;
+    margin-top: 29px;
+    align-items: flex-start;
+  }
+  .artistMark {
+    width: 66px;
+    height: 90px;
+    font-size: 33px;
+    margin-top: 5px;
+  }
+  .artistMark span {
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 0;
+  }
+  .artistMark i {
+    font-size: 21px;
+    right: -6px;
+  }
+  .artistBio {
+    min-width: 0;
+  }
+  .artistBio h2 {
+    font-size: 19px;
+    line-height: 1.5;
+    letter-spacing: 0;
+  }
+  .artistBio > p:not(.eyebrow) {
+    font-size: 10px;
+  }
+  .artistBio p br {
+    display: none;
+  }
+  .platforms {
+    gap: 7px;
+  }
+  .platforms a {
+    font-size: 9px;
+    padding: 7px 10px;
+    gap: 10px;
+  }
+  .platformNote {
+    font-size: 8px;
+  }
+  .footnote {
+    font-size: 9px;
+    display: block;
+    line-height: 2;
+  }
+  .footnote span {
+    display: block;
+    font-size: 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
