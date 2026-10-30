@@ -546,20 +546,22 @@ export default function MusicRoom({ catalog }) {
             如果有一句恰好唱进你心里，欢迎在音乐平台找到我。
           </p>
           <div className={styles.platforms}>
-            {(track.platforms?.length
-              ? track.platforms
-              : catalog.platforms || []
-            ).map(link => (
-              <a
-                key={link.name}
-                href={link.url}
-                target='_blank'
-                rel='noopener noreferrer'
-              >
-                {link.name}
-                <Icon name='arrow' width='14' height='14' />
-              </a>
-            ))}
+            {[...(track.platforms || []), ...(catalog.platforms || [])]
+              .filter(
+                (link, n, all) =>
+                  all.findIndex(item => item.url === link.url) === n
+              )
+              .map(link => (
+                <a
+                  key={link.name}
+                  href={link.url}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  {link.name}
+                  <Icon name='arrow' width='14' height='14' />
+                </a>
+              ))}
           </div>
           <small className={styles.platformNote}>{catalog.platformNote}</small>
         </div>
