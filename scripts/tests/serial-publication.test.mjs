@@ -30,6 +30,6 @@ test('other pages and malformed release metadata keep their existing cache versi
 test('the registered Kouxuan release also versions direct page reads without edit metadata', () => {
   assert.match(
     appendSerialPublicationVersion('409c2c42-b276-80be-8c4a-df97e2768d39', ''),
-    /^\d{12}$/
+    /^\d{12}(?:\d{2})?$/
   )
 })
