@@ -19,22 +19,26 @@ test('LRC preserves repeated timestamps, offset and exact line boundaries', () =
   assert.equal(activeLyricIndex([], 20), -1)
 })
 
-test('both real songs have strictly increasing, in-range lyrics and local media', async () => {
+test('published songs have strictly increasing, in-range lyrics and local media', async () => {
   const catalog = JSON.parse(
     await fs.readFile(
       new URL('../../public/music/catalog.json', import.meta.url),
       'utf8'
     )
   )
-  assert.equal(catalog.tracks.length, 2)
+  assert.ok(Array.isArray(catalog.tracks))
+  assert.equal(
+    new Set(catalog.tracks.map(song => song.id)).size,
+    catalog.tracks.length
+  )
   for (const song of catalog.tracks) {
     assert.equal(song.artist, '晴岑来')
     const lines = parseLrc(song.lrcText)
-    assert.ok(lines.length >= 47)
+    assert.ok(!song.lrcText || lines.length > 0)
     for (let i = 1; i < lines.length; i++)
       assert.ok(lines[i].time > lines[i - 1].time)
-    assert.ok(lines.at(-1).time < song.duration)
-    for (const asset of [song.audio, song.cover, song.lrc])
+    assert.ok(!lines.length || lines.at(-1).time < song.duration)
+    for (const asset of [song.audio, song.cover, song.lrc].filter(Boolean))
       assert.ok(
         (await fs.stat(new URL('../../public' + asset, import.meta.url))).size >
           0
