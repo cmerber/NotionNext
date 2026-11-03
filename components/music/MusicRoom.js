@@ -596,7 +596,7 @@ export default function MusicRoom({ catalog }) {
 
       <section className={styles.collection} aria-label='歌曲列表'>
         <div className={styles.sectionHeading}>
-          <h2>两段旋律，一些日常。</h2>
+          <h2>几段旋律，一些日常。</h2>
           <span>THE COLLECTION / {String(tracks.length).padStart(2, '0')}</span>
         </div>
         <div className={styles.trackList}>
